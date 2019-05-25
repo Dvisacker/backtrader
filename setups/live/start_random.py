@@ -1,0 +1,44 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function
+
+if __name__ == "__main__" and __package__ is None:
+    from sys import path
+    from os.path import dirname as dir
+    path.append(dir(dir(path[0])))
+    __package__ = "live"
+
+import math
+import asyncio
+import datetime
+from itertools import product
+
+from strategies.crypto.random import RandomStrategy
+from event import SignalEvent
+from trader import CryptoLiveTrade
+from datahandler.crypto import LiveDataHandler
+from execution.crypto import LiveExecutionHandler
+from portfolio import BitmexPortfolio
+from datetime import datetime, timedelta
+
+if __name__ == "__main__":
+    delta = timedelta(minutes=1)
+    start_date = datetime.min + math.ceil((datetime.now() - datetime.min) / delta) * delta #round to the next minute
+
+    configuration = {
+      'result_dir' : '../results',
+      'exchange_names' : ['bitmex'],
+      'assets': { 'bitmex': ['BTC'] },
+      'instruments' : { 'bitmex': ['BTC/USD', 'ETH/USD'] },
+      'ohlcv_window': 10, #receive the one minute candles
+      'heartbeat' : 1.00,
+      'start_date' : start_date
+    }
+
+    trader = CryptoLiveTrade(
+        configuration, LiveDataHandler, LiveExecutionHandler,
+        BitmexPortfolio, RandomStrategy
+    )
+
+    trader.start_trading()

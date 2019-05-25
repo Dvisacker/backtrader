@@ -1,0 +1,443 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+ABCMeta	../data.py	/^from abc import ABCMeta, abstractmethod$/;"	kind:namespace	line:1
+ABCMeta	../execution.py	/^from abc import ABCMeta, abstractmethod$/;"	kind:namespace	line:3
+ABCMeta	../hft_data.py	/^from abc import ABCMeta, abstractmethod$/;"	kind:namespace	line:8
+ABCMeta	../strategy.py	/^from abc import ABCMeta, abstractmethod$/;"	kind:namespace	line:7
+Backtest	../backtest.py	/^class Backtest(object):$/;"	kind:class	line:17
+Backtest	../intraday_mr.py	/^from backtest import Backtest$/;"	kind:namespace	line:16
+Backtest	../mac.py	/^from backtest import Backtest$/;"	kind:namespace	line:9
+Backtest	../snp_forecast.py	/^from backtest import Backtest$/;"	kind:namespace	line:15
+Contract	../ib_execution.py	/^from ib.ext.Contract import Contract$/;"	kind:namespace	line:11
+CryptoBacktest	../backtest.py	/^class CryptoBacktest(object):$/;"	kind:class	line:144
+CryptoBacktest	../mean_reversion.py	/^from trader import CryptoBacktest$/;"	kind:namespace	line:16
+CryptoBacktest	../moving_avg_crossover.py	/^from trader import CryptoBacktest$/;"	kind:namespace	line:8
+CryptoBacktest	../qda_crypto.py	/^from trader import CryptoBacktest$/;"	kind:namespace	line:16
+CryptoPortfolio	../mean_reversion.py	/^from portfolio import CryptoPortfolio$/;"	kind:namespace	line:19
+CryptoPortfolio	../moving_avg_crossover.py	/^from portfolio import CryptoPortfolio$/;"	kind:namespace	line:11
+CryptoPortfolio	../portfolio.py	/^class CryptoPortfolio(object):$/;"	kind:class	line:259
+CryptoPortfolio	../qda_crypto.py	/^from portfolio import CryptoPortfolio$/;"	kind:namespace	line:19
+DataHandler	../data.py	/^class DataHandler(object):$/;"	kind:class	line:11
+DataHandler	../hft_data.py	/^from datahandler import DataHandler$/;"	kind:namespace	line:16
+Event	../event.py	/^class Event(object):$/;"	kind:class	line:9
+ExecutionHandler	../execution.py	/^class ExecutionHandler(object):$/;"	kind:class	line:13
+ExecutionHandler	../ib_execution.py	/^from execution import ExecutionHandler$/;"	kind:namespace	line:16
+FillEvent	../event.py	/^class FillEvent(Event):$/;"	kind:class	line:93
+FillEvent	../execution.py	/^from event import FillEvent, OrderEvent$/;"	kind:namespace	line:4
+FillEvent	../hft_portfolio.py	/^from event import FillEvent, OrderEvent$/;"	kind:namespace	line:18
+FillEvent	../ib_execution.py	/^from event import FillEvent, OrderEvent$/;"	kind:namespace	line:15
+FillEvent	../portfolio.py	/^from event import FillEvent, OrderEvent$/;"	kind:namespace	line:20
+HistoricCSVCryptoDataHandler	../data.py	/^class HistoricCSVCryptoDataHandler(DataHandler):$/;"	kind:class	line:216
+HistoricCSVCryptoDataHandler	../mean_reversion.py	/^from datahandler.crypto import HistoricCSVCryptoDataHandler$/;"	kind:namespace	line:17
+HistoricCSVCryptoDataHandler	../moving_avg_crossover.py	/^from datahandler.crypto import HistoricCSVCryptoDataHandler$/;"	kind:namespace	line:9
+HistoricCSVCryptoDataHandler	../qda_crypto.py	/^from datahandler.crypto import HistoricCSVCryptoDataHandler$/;"	kind:namespace	line:17
+HistoricCSVDataHandler	../data.py	/^class HistoricCSVDataHandler(DataHandler):$/;"	kind:class	line:58
+HistoricCSVDataHandler	../mac.py	/^from datahandler import HistoricCSVDataHandler$/;"	kind:namespace	line:10
+HistoricCSVDataHandler	../snp_forecast.py	/^from datahandler import HistoricCSVDataHandler$/;"	kind:namespace	line:16
+HistoricCSVDataHandlerHFT	../hft_data.py	/^class HistoricCSVDataHandlerHFT(DataHandler):$/;"	kind:class	line:19
+HistoricCSVDataHandlerHFT	../intraday_mr.py	/^from hft_data import HistoricCSVDataHandlerHFT$/;"	kind:namespace	line:17
+IBExecutionHandler	../ib_execution.py	/^class IBExecutionHandler(ExecutionHandler):$/;"	kind:class	line:19
+IntradayOLSMRStrategy	../intraday_mr.py	/^class IntradayOLSMRStrategy(Strategy):$/;"	kind:class	line:22
+MarketEvent	../data.py	/^from event import MarketEvent$/;"	kind:namespace	line:8
+MarketEvent	../event.py	/^class MarketEvent(Event):$/;"	kind:class	line:18
+MarketEvent	../hft_data.py	/^from event import MarketEvent$/;"	kind:namespace	line:15
+MovingAverageCrossStrategy	../mac.py	/^class MovingAverageCrossStrategy(Strategy):$/;"	kind:class	line:14
+MovingAverageCrossStrategy	../moving_avg_crossover.py	/^class MovingAverageCrossStrategy(Strategy):$/;"	kind:class	line:13
+OLSMeanReversionStrategy	../mean_reversion.py	/^class OLSMeanReversionStrategy(Strategy):$/;"	kind:class	line:21
+Order	../ib_execution.py	/^from ib.ext.Order import Order$/;"	kind:namespace	line:12
+OrderEvent	../event.py	/^class OrderEvent(Event):$/;"	kind:class	line:56
+OrderEvent	../execution.py	/^from event import FillEvent, OrderEvent$/;"	kind:namespace	line:4
+OrderEvent	../hft_portfolio.py	/^from event import FillEvent, OrderEvent$/;"	kind:namespace	line:18
+OrderEvent	../ib_execution.py	/^from event import FillEvent, OrderEvent$/;"	kind:namespace	line:15
+OrderEvent	../portfolio.py	/^from event import FillEvent, OrderEvent$/;"	kind:namespace	line:20
+Portfolio	../mac.py	/^from portfolio import Portfolio$/;"	kind:namespace	line:12
+Portfolio	../portfolio.py	/^class Portfolio(object):$/;"	kind:class	line:24
+Portfolio	../snp_forecast.py	/^from portfolio import Portfolio$/;"	kind:namespace	line:18
+PortfolioHFT	../hft_portfolio.py	/^class PortfolioHFT(object):$/;"	kind:class	line:22
+PortfolioHFT	../intraday_mr.py	/^from hft_portfolio import PortfolioHFT$/;"	kind:namespace	line:18
+QDA	../snp_forecast.py	/^from sklearn.qda import QDA$/;"	kind:namespace	line:11
+QDAStrategy	../qda_crypto.py	/^class QDAStrategy(Strategy):$/;"	kind:class	line:23
+QuadraticDiscriminantAnalysis	../qda_crypto.py	/^from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis$/;"	kind:namespace	line:12
+SPYDailyForecastStrategy	../snp_forecast.py	/^class SPYDailyForecastStrategy(Strategy):$/;"	kind:class	line:22
+SignalEvent	../event.py	/^class SignalEvent(Event):$/;"	kind:class	line:31
+SignalEvent	../intraday_mr.py	/^from event import SignalEvent$/;"	kind:namespace	line:15
+SignalEvent	../mac.py	/^from event import SignalEvent$/;"	kind:namespace	line:8
+SignalEvent	../mean_reversion.py	/^from event import SignalEvent$/;"	kind:namespace	line:15
+SignalEvent	../moving_avg_crossover.py	/^from event import SignalEvent$/;"	kind:namespace	line:7
+SignalEvent	../qda_crypto.py	/^from event import SignalEvent$/;"	kind:namespace	line:15
+SignalEvent	../snp_forecast.py	/^from event import SignalEvent$/;"	kind:namespace	line:14
+SignalEvent	../strategy.py	/^from event import SignalEvent$/;"	kind:namespace	line:18
+SimulatedCryptoExchangeExecutionHandler	../execution.py	/^class SimulatedCryptoExchangeExecutionHandler(ExecutionHandler):$/;"	kind:class	line:69
+SimulatedCryptoExchangeExecutionHandler	../mean_reversion.py	/^from execution import SimulatedCryptoExchangeExecutionHandler$/;"	kind:namespace	line:18
+SimulatedCryptoExchangeExecutionHandler	../moving_avg_crossover.py	/^from execution import SimulatedCryptoExchangeExecutionHandler$/;"	kind:namespace	line:10
+SimulatedCryptoExchangeExecutionHandler	../qda_crypto.py	/^from execution import SimulatedCryptoExchangeExecutionHandler$/;"	kind:namespace	line:18
+SimulatedExecutionHandler	../execution.py	/^class SimulatedExecutionHandler(ExecutionHandler):$/;"	kind:class	line:37
+SimulatedExecutionHandler	../intraday_mr.py	/^from execution import SimulatedExecutionHandler$/;"	kind:namespace	line:19
+SimulatedExecutionHandler	../mac.py	/^from execution import SimulatedExecutionHandler$/;"	kind:namespace	line:11
+SimulatedExecutionHandler	../snp_forecast.py	/^from execution import SimulatedExecutionHandler$/;"	kind:namespace	line:17
+Strategy	../intraday_mr.py	/^from strategy import Strategy$/;"	kind:namespace	line:14
+Strategy	../mac.py	/^from strategy import Strategy$/;"	kind:namespace	line:7
+Strategy	../mean_reversion.py	/^from strategy import Strategy$/;"	kind:namespace	line:14
+Strategy	../moving_avg_crossover.py	/^from strategy import Strategy$/;"	kind:namespace	line:6
+Strategy	../qda_crypto.py	/^from strategy import Strategy$/;"	kind:namespace	line:14
+Strategy	../snp_forecast.py	/^from strategy import Strategy$/;"	kind:namespace	line:13
+Strategy	../strategy.py	/^class Strategy(object):$/;"	kind:class	line:21
+__init__	../backtest.py	/^    def __init__($/;"	kind:member	line:150
+__init__	../backtest.py	/^    def __init__($/;"	kind:member	line:23
+__init__	../data.py	/^    def __init__(self, events, csv_dir, file_list, instruments, start_date):$/;"	kind:member	line:222
+__init__	../data.py	/^    def __init__(self, events, csv_dir, instruments, start_date):$/;"	kind:member	line:64
+__init__	../event.py	/^    def __init__(self):$/;"	kind:member	line:24
+__init__	../event.py	/^    def __init__(self, strategy_id, symbol, datetime, signal_type, strength):$/;"	kind:member	line:37
+__init__	../event.py	/^    def __init__(self, symbol, order_type, quantity, direction):$/;"	kind:member	line:63
+__init__	../event.py	/^    def __init__(self, timeindex, symbol, exchange, quantity, $/;"	kind:member	line:105
+__init__	../execution.py	/^    def __init__(self, events):$/;"	kind:member	line:47
+__init__	../execution.py	/^    def __init__(self, events, exchange_names):$/;"	kind:member	line:79
+__init__	../hft_data.py	/^    def __init__(self, events, csv_dir, instruments):$/;"	kind:member	line:28
+__init__	../hft_portfolio.py	/^    def __init__(self, bars, events, start_date, initial_capital=100000.0):$/;"	kind:member	line:39
+__init__	../ib_execution.py	/^    def __init__($/;"	kind:member	line:26
+__init__	../intraday_mr.py	/^    def __init__($/;"	kind:member	line:33
+__init__	../mac.py	/^    def __init__(self, bars, events, short_window=30, long_window=120):$/;"	kind:member	line:21
+__init__	../mean_reversion.py	/^    def __init__($/;"	kind:member	line:32
+__init__	../moving_avg_crossover.py	/^    def __init__(self, bars, events, short_window=10, long_window=40):$/;"	kind:member	line:20
+__init__	../portfolio.py	/^    def __init__(self, bars, events, start_date, initial_capital=100000.0):$/;"	kind:member	line:266
+__init__	../portfolio.py	/^    def __init__(self, bars, events, start_date, initial_capital=100000.0):$/;"	kind:member	line:37
+__init__	../qda_crypto.py	/^    def __init__(self, bars, events):$/;"	kind:member	line:30
+__init__	../snp_forecast.py	/^    def __init__(self, bars, events):$/;"	kind:member	line:29
+__metaclass__	../data.py	/^    __metaclass__ = ABCMeta$/;"	kind:variable	line:22
+__metaclass__	../execution.py	/^    __metaclass__ = ABCMeta$/;"	kind:variable	line:25
+__metaclass__	../strategy.py	/^    __metaclass__ = ABCMeta$/;"	kind:variable	line:33
+_calculate_initial_bought	../mac.py	/^    def _calculate_initial_bought(self):$/;"	kind:member	line:38
+_calculate_initial_bought	../moving_avg_crossover.py	/^    def _calculate_initial_bought(self):$/;"	kind:member	line:37
+_date_parse	../data.py	/^    def _date_parse(self, timestamp):$/;"	kind:member	line:244
+_error_handler	../ib_execution.py	/^    def _error_handler(self, msg):$/;"	kind:member	line:43
+_generate_trading_instances	../backtest.py	/^    def _generate_trading_instances(self):$/;"	kind:member	line:190
+_generate_trading_instances	../backtest.py	/^    def _generate_trading_instances(self):$/;"	kind:member	line:61
+_get_new_bar	../data.py	/^    def _get_new_bar(self, symbol):$/;"	kind:member	line:120
+_get_new_bar	../data.py	/^    def _get_new_bar(self, symbol):$/;"	kind:member	line:288
+_get_new_bar	../hft_data.py	/^    def _get_new_bar(self, symbol):$/;"	kind:member	line:85
+_open_convert_csv_files	../data.py	/^    def _open_convert_csv_files(self):$/;"	kind:member	line:251
+_open_convert_csv_files	../data.py	/^    def _open_convert_csv_files(self):$/;"	kind:member	line:85
+_open_convert_csv_files	../hft_data.py	/^    def _open_convert_csv_files(self):$/;"	kind:member	line:50
+_output_performance	../backtest.py	/^    def _output_performance(self):$/;"	kind:member	line:116
+_output_performance	../backtest.py	/^    def _output_performance(self):$/;"	kind:member	line:241
+_reply_handler	../ib_execution.py	/^    def _reply_handler(self, msg):$/;"	kind:member	line:48
+_run	../backtest.py	/^    def _run(self):$/;"	kind:member	line:201
+_run	../backtest.py	/^    def _run(self):$/;"	kind:member	line:74
+abstractmethod	../data.py	/^from abc import ABCMeta, abstractmethod$/;"	kind:namespace	line:1
+abstractmethod	../execution.py	/^from abc import ABCMeta, abstractmethod$/;"	kind:namespace	line:3
+abstractmethod	../hft_data.py	/^from abc import ABCMeta, abstractmethod$/;"	kind:namespace	line:8
+abstractmethod	../strategy.py	/^from abc import ABCMeta, abstractmethod$/;"	kind:namespace	line:7
+all_candles	../archives/scrape-bis.py	/^all_candles = []$/;"	kind:variable	line:21
+argparse	../archives/scrape-bis.py	/^import argparse$/;"	kind:namespace	line:7
+argparse	../archives/scrape.py	/^import argparse$/;"	kind:namespace	line:4
+args	../archives/scrape-bis.py	/^args = parser.parse_args()$/;"	kind:variable	line:12
+args	../archives/scrape.py	/^args = parse_args()$/;"	kind:variable	line:35
+ax1	../plot_performance.py	/^    ax1 = fig.add_subplot(311, ylabel='Portfolio value, %')$/;"	kind:variable	line:26
+ax1	../plot_pyfolio.py	/^    ax1 = fig.add_subplot(311, ylabel='Portfolio value, %')$/;"	kind:variable	line:32
+ax2	../plot_performance.py	/^    ax2 = fig.add_subplot(312, ylabel='Period returns, %')$/;"	kind:variable	line:31
+ax2	../plot_pyfolio.py	/^    ax2 = fig.add_subplot(312, ylabel='Period returns, %')$/;"	kind:variable	line:37
+ax3	../plot_performance.py	/^    ax3 = fig.add_subplot(313, ylabel='Drawdowns, %')$/;"	kind:variable	line:36
+ax3	../plot_pyfolio.py	/^    ax3 = fig.add_subplot(313, ylabel='Drawdowns, %')$/;"	kind:variable	line:42
+backtest	../intraday_mr.py	/^    backtest = Backtest($/;"	kind:variable	line:147
+backtest	../mac.py	/^    backtest = Backtest($/;"	kind:variable	line:89
+backtest	../mean_reversion.py	/^    backtest = CryptoBacktest($/;"	kind:variable	line:152
+backtest	../moving_avg_crossover.py	/^    backtest = CryptoBacktest($/;"	kind:variable	line:92
+backtest	../qda_crypto.py	/^    backtest = CryptoBacktest($/;"	kind:variable	line:124
+backtest	../snp_forecast.py	/^    backtest = Backtest($/;"	kind:variable	line:106
+backtest.py	../backtest.py	1;"	kind:file	line:1
+calculate_ib_commission	../event.py	/^    def calculate_ib_commission(self):$/;"	kind:member	line:137
+calculate_signals	../intraday_mr.py	/^    def calculate_signals(self, event):$/;"	kind:member	line:132
+calculate_signals	../mac.py	/^    def calculate_signals(self, event):$/;"	kind:member	line:48
+calculate_signals	../mean_reversion.py	/^    def calculate_signals(self, event):$/;"	kind:member	line:135
+calculate_signals	../moving_avg_crossover.py	/^    def calculate_signals(self, event):$/;"	kind:member	line:47
+calculate_signals	../qda_crypto.py	/^    def calculate_signals(self, event):$/;"	kind:member	line:85
+calculate_signals	../snp_forecast.py	/^    def calculate_signals(self, event):$/;"	kind:member	line:68
+calculate_signals	../strategy.py	/^    def calculate_signals(self):$/;"	kind:member	line:36
+calculate_signals_for_pairs	../intraday_mr.py	/^    def calculate_signals_for_pairs(self):$/;"	kind:member	line:100
+calculate_signals_for_pairs	../mean_reversion.py	/^    def calculate_signals_for_pairs(self):$/;"	kind:member	line:103
+calculate_xy_signals	../intraday_mr.py	/^    def calculate_xy_signals(self, zscore_last):$/;"	kind:member	line:56
+calculate_xy_signals	../mean_reversion.py	/^    def calculate_xy_signals(self, zscore_last):$/;"	kind:member	line:55
+ccxt	../archives/scrape.py	/^import ccxt$/;"	kind:namespace	line:1
+construct_all_holdings	../hft_portfolio.py	/^    def construct_all_holdings(self):$/;"	kind:member	line:71
+construct_all_holdings	../portfolio.py	/^    def construct_all_holdings(self):$/;"	kind:member	line:298
+construct_all_holdings	../portfolio.py	/^    def construct_all_holdings(self):$/;"	kind:member	line:69
+construct_all_positions	../hft_portfolio.py	/^    def construct_all_positions(self):$/;"	kind:member	line:62
+construct_all_positions	../portfolio.py	/^    def construct_all_positions(self):$/;"	kind:member	line:289
+construct_all_positions	../portfolio.py	/^    def construct_all_positions(self):$/;"	kind:member	line:60
+construct_current_holdings	../hft_portfolio.py	/^    def construct_current_holdings(self):$/;"	kind:member	line:83
+construct_current_holdings	../portfolio.py	/^    def construct_current_holdings(self):$/;"	kind:member	line:310
+construct_current_holdings	../portfolio.py	/^    def construct_current_holdings(self):$/;"	kind:member	line:81
+create_contract	../ib_execution.py	/^    def create_contract(self, symbol, sec_type, exch, prim_exch, curr):$/;"	kind:member	line:96
+create_drawdowns	../hft_portfolio.py	/^from performance import create_sharpe_ratio, create_drawdowns$/;"	kind:namespace	line:19
+create_drawdowns	../performance.py	/^def create_drawdowns(pnl):$/;"	kind:function	line:23
+create_drawdowns	../portfolio.py	/^from performance import create_sharpe_ratio, create_drawdowns$/;"	kind:namespace	line:21
+create_equity_curve_dataframe	../hft_portfolio.py	/^    def create_equity_curve_dataframe(self):$/;"	kind:member	line:228
+create_equity_curve_dataframe	../portfolio.py	/^    def create_equity_curve_dataframe(self):$/;"	kind:member	line:226
+create_equity_curve_dataframe	../portfolio.py	/^    def create_equity_curve_dataframe(self):$/;"	kind:member	line:455
+create_fill	../ib_execution.py	/^    def create_fill(self, msg):$/;"	kind:member	line:137
+create_fill_dict_entry	../ib_execution.py	/^    def create_fill_dict_entry(self, msg):$/;"	kind:member	line:123
+create_initial_order_id	../ib_execution.py	/^    def create_initial_order_id(self):$/;"	kind:member	line:74
+create_lagged_crypto_series	../create_lagged_series.py	/^def create_lagged_crypto_series(symbol, data, start_date, end_date, lags=5):$/;"	kind:function	line:19
+create_lagged_crypto_series	../qda_crypto.py	/^from create_lagged_series import create_lagged_crypto_series$/;"	kind:namespace	line:20
+create_lagged_series	../snp_forecast.py	/^from create_lagged_series import create_lagged_series$/;"	kind:namespace	line:19
+create_lagged_series.py	../create_lagged_series.py	1;"	kind:file	line:1
+create_order	../ib_execution.py	/^    def create_order(self, order_type, quantity, action):$/;"	kind:member	line:112
+create_sharpe_ratio	../hft_portfolio.py	/^from performance import create_sharpe_ratio, create_drawdowns$/;"	kind:namespace	line:19
+create_sharpe_ratio	../performance.py	/^def create_sharpe_ratio(returns, periods=252):$/;"	kind:function	line:12
+create_sharpe_ratio	../portfolio.py	/^from performance import create_sharpe_ratio, create_drawdowns$/;"	kind:namespace	line:21
+create_symbol_forecast_model	../qda_crypto.py	/^    def create_symbol_forecast_model(self):$/;"	kind:member	line:60
+create_symbol_forecast_model	../snp_forecast.py	/^    def create_symbol_forecast_model(self):$/;"	kind:member	line:45
+create_tws_connection	../ib_execution.py	/^    def create_tws_connection(self):$/;"	kind:member	line:62
+csv_dir	../intraday_mr.py	/^    csv_dir = '\/path\/to\/your\/csv\/file'  # CHANGE THIS!$/;"	kind:variable	line:141
+csv_dir	../mac.py	/^    csv_dir = '\/home\/david\/Downloads'$/;"	kind:variable	line:83
+csv_dir	../mean_reversion.py	/^    csv_dir = '.\/data'$/;"	kind:variable	line:144
+csv_dir	../moving_avg_crossover.py	/^    csv_dir = '.\/data'$/;"	kind:variable	line:83
+csv_dir	../qda_crypto.py	/^    csv_dir = '.\/data'$/;"	kind:variable	line:116
+csv_dir	../snp_forecast.py	/^    csv_dir = '\/path\/to\/your\/csv\/file'  # CHANGE THIS!$/;"	kind:variable	line:100
+data	../archives/scrape.py	/^data = exchange.fetch_ohlcv(args.symbol, args.timeframe)$/;"	kind:variable	line:76
+data	../plot_performance.py	/^    data = pd.io.parsers.read_csv($/;"	kind:variable	line:14
+data	../plot_pyfolio.py	/^    data = pd.io.parsers.read_csv($/;"	kind:variable	line:15
+data.py	../data.py	1;"	kind:file	line:1
+date_parse	../create_lagged_series.py	/^def date_parse(self, timestamp):$/;"	kind:function	line:12
+date_parse	../qda_crypto.py	/^from utils import date_parse$/;"	kind:namespace	line:21
+date_parse	../utils.py	/^def date_parse(timestamp):$/;"	kind:function	line:3
+datetime	../archives/scrape-bis.py	/^import datetime$/;"	kind:namespace	line:2
+datetime	../archives/scrape.py	/^from datetime import datetime, timedelta, timezone$/;"	kind:namespace	line:2
+datetime	../backtest.py	/^import datetime$/;"	kind:namespace	line:8
+datetime	../create_lagged_series.py	/^import datetime$/;"	kind:namespace	line:6
+datetime	../data.py	/^import datetime$/;"	kind:namespace	line:2
+datetime	../execution.py	/^import datetime$/;"	kind:namespace	line:1
+datetime	../hft_data.py	/^import datetime$/;"	kind:namespace	line:9
+datetime	../hft_portfolio.py	/^import datetime$/;"	kind:namespace	line:8
+datetime	../ib_execution.py	/^import datetime$/;"	kind:namespace	line:8
+datetime	../intraday_mr.py	/^import datetime$/;"	kind:namespace	line:8
+datetime	../mac.py	/^import datetime$/;"	kind:namespace	line:1
+datetime	../mean_reversion.py	/^import datetime$/;"	kind:namespace	line:8
+datetime	../moving_avg_crossover.py	/^import datetime$/;"	kind:namespace	line:1
+datetime	../portfolio.py	/^import datetime$/;"	kind:namespace	line:8
+datetime	../qda_crypto.py	/^import datetime$/;"	kind:namespace	line:7
+datetime	../snp_forecast.py	/^import datetime$/;"	kind:namespace	line:8
+datetime	../strategy.py	/^import datetime$/;"	kind:namespace	line:9
+datetime	../utils.py	/^import datetime$/;"	kind:namespace	line:1
+df	../archives/scrape-bis.py	/^df = df.set_index(["Date"])$/;"	kind:variable	line:26
+df	../archives/scrape-bis.py	/^df = df[["Open", "High", "Low", "Close", "Volume"]]$/;"	kind:variable	line:27
+df	../archives/scrape-bis.py	/^df = pd.DataFrame(all_candles)$/;"	kind:variable	line:25
+df	../archives/scrape.py	/^df = pd.DataFrame(data, columns=header).set_index('Timestamp')$/;"	kind:variable	line:78
+drawdown	../plot_pyfolio.py	/^    drawdown = data['drawdown']$/;"	kind:variable	line:29
+equity_curve	../plot_pyfolio.py	/^    equity_curve = data['equity_curve']$/;"	kind:variable	line:27
+event.py	../event.py	1;"	kind:file	line:1
+exchange	../archives/scrape-bis.py	/^exchange = args.exchange$/;"	kind:variable	line:15
+exchange	../archives/scrape.py	/^    exchange = getattr (ccxt, args.exchange) ()$/;"	kind:variable	line:39
+exchange_names	../mean_reversion.py	/^    exchange_names = ['bitmex']$/;"	kind:variable	line:146
+exchange_names	../moving_avg_crossover.py	/^    exchange_names = ['bitmex']$/;"	kind:variable	line:85
+exchange_names	../qda_crypto.py	/^    exchange_names = ['bitmex']$/;"	kind:variable	line:118
+execute_order	../execution.py	/^    def execute_order(self, event):$/;"	kind:member	line:28
+execute_order	../execution.py	/^    def execute_order(self, event):$/;"	kind:member	line:55
+execute_order	../execution.py	/^    def execute_order(self, event):$/;"	kind:member	line:88
+execute_order	../ib_execution.py	/^    def execute_order(self, event):$/;"	kind:member	line:165
+execution.py	../execution.py	1;"	kind:file	line:1
+fig	../plot_performance.py	/^    fig = plt.figure()$/;"	kind:variable	line:21
+fig	../plot_pyfolio.py	/^    fig = plt.figure(figsize = (15, 10))$/;"	kind:variable	line:23
+file_list	../mean_reversion.py	/^    file_list = ['bitmex-BTCUSD-1m', 'bitmex-ETHUSD-1m']$/;"	kind:variable	line:145
+file_list	../moving_avg_crossover.py	/^    file_list = ['bitmex-BTCUSD-1d']$/;"	kind:variable	line:84
+file_list	../qda_crypto.py	/^    file_list = ['bitmex-BTCUSD-1d']$/;"	kind:variable	line:117
+filename	../archives/scrape.py	/^filename = '{}-{}-{}.csv'.format(args.exchange, symbol_out,args.timeframe)$/;"	kind:variable	line:82
+floor	../hft_portfolio.py	/^from math import floor$/;"	kind:namespace	line:9
+floor	../portfolio.py	/^from math import floor$/;"	kind:namespace	line:9
+generate_naive_order	../hft_portfolio.py	/^    def generate_naive_order(self, signal):$/;"	kind:member	line:186
+generate_naive_order	../portfolio.py	/^    def generate_naive_order(self, signal):$/;"	kind:member	line:184
+generate_naive_order	../portfolio.py	/^    def generate_naive_order(self, signal):$/;"	kind:member	line:413
+get_latest_bar	../data.py	/^    def get_latest_bar(self, symbol):$/;"	kind:member	line:128
+get_latest_bar	../data.py	/^    def get_latest_bar(self, symbol):$/;"	kind:member	line:25
+get_latest_bar	../data.py	/^    def get_latest_bar(self, symbol):$/;"	kind:member	line:296
+get_latest_bar	../hft_data.py	/^    def get_latest_bar(self, symbol):$/;"	kind:member	line:92
+get_latest_bar_datetime	../data.py	/^    def get_latest_bar_datetime(self, symbol):$/;"	kind:member	line:153
+get_latest_bar_datetime	../data.py	/^    def get_latest_bar_datetime(self, symbol):$/;"	kind:member	line:321
+get_latest_bar_datetime	../data.py	/^    def get_latest_bar_datetime(self, symbol):$/;"	kind:member	line:33
+get_latest_bar_datetime	../hft_data.py	/^    def get_latest_bar_datetime(self, symbol):$/;"	kind:member	line:117
+get_latest_bar_value	../data.py	/^    def get_latest_bar_value(self, symbol, val_type):$/;"	kind:member	line:165
+get_latest_bar_value	../data.py	/^    def get_latest_bar_value(self, symbol, val_type):$/;"	kind:member	line:333
+get_latest_bar_value	../data.py	/^    def get_latest_bar_value(self, symbol, val_type):$/;"	kind:member	line:37
+get_latest_bar_value	../hft_data.py	/^    def get_latest_bar_value(self, symbol, val_type):$/;"	kind:member	line:129
+get_latest_bar_values	../data.py	/^    def get_latest_bar_values(self, symbol, val_type, N=1):$/;"	kind:member	line:41
+get_latest_bars	../data.py	/^    def get_latest_bars(self, symbol, N=1):$/;"	kind:member	line:140
+get_latest_bars	../data.py	/^    def get_latest_bars(self, symbol, N=1):$/;"	kind:member	line:29
+get_latest_bars	../data.py	/^    def get_latest_bars(self, symbol, N=1):$/;"	kind:member	line:308
+get_latest_bars	../hft_data.py	/^    def get_latest_bars(self, symbol, N=1):$/;"	kind:member	line:104
+get_latest_bars_values	../data.py	/^    def get_latest_bars_values(self, symbol, val_type, N=1):$/;"	kind:member	line:178
+get_latest_bars_values	../data.py	/^    def get_latest_bars_values(self, symbol, val_type, N=1):$/;"	kind:member	line:346
+get_latest_bars_values	../hft_data.py	/^    def get_latest_bars_values(self, symbol, val_type, N=1):$/;"	kind:member	line:142
+header	../archives/scrape.py	/^header = ['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume']$/;"	kind:variable	line:77
+heartbeat	../intraday_mr.py	/^    heartbeat = 0.0$/;"	kind:variable	line:144
+heartbeat	../mac.py	/^    heartbeat = 0.0$/;"	kind:variable	line:86
+heartbeat	../mean_reversion.py	/^    heartbeat = 0.00$/;"	kind:variable	line:149
+heartbeat	../moving_avg_crossover.py	/^    heartbeat = 0.0$/;"	kind:variable	line:89
+heartbeat	../qda_crypto.py	/^    heartbeat = 0.0$/;"	kind:variable	line:121
+heartbeat	../snp_forecast.py	/^    heartbeat = 0.0$/;"	kind:variable	line:103
+hft_data.py	../hft_data.py	1;"	kind:file	line:1
+hft_portfolio.py	../hft_portfolio.py	1;"	kind:file	line:1
+ibConnection	../ib_execution.py	/^from ib.opt import ibConnection, message$/;"	kind:namespace	line:13
+ib_execution.py	../ib_execution.py	1;"	kind:file	line:1
+index_col	../plot_pyfolio.py	/^        index_col=0$/;"	kind:variable	line:18
+initial_capital	../intraday_mr.py	/^    initial_capital = 100000.0$/;"	kind:variable	line:143
+initial_capital	../mac.py	/^    initial_capital = 100000.0$/;"	kind:variable	line:85
+initial_capital	../mean_reversion.py	/^    initial_capital = 100000.0$/;"	kind:variable	line:148
+initial_capital	../moving_avg_crossover.py	/^    initial_capital = 100000.0$/;"	kind:variable	line:88
+initial_capital	../qda_crypto.py	/^    initial_capital = 100000.0$/;"	kind:variable	line:120
+initial_capital	../snp_forecast.py	/^    initial_capital = 100000.0$/;"	kind:variable	line:102
+intraday_mr.py	../intraday_mr.py	1;"	kind:file	line:1
+mac.py	../mac.py	1;"	kind:file	line:1
+math	../archives/scrape.py	/^import math$/;"	kind:namespace	line:3
+matplotlib	../plot_performance.py	/^import matplotlib.pyplot as plt$/;"	kind:namespace	line:9
+matplotlib	../plot_pyfolio.py	/^import matplotlib.pyplot as plt$/;"	kind:namespace	line:9
+matplotlib	../portfolio.py	/^import matplotlib.pyplot as plt$/;"	kind:namespace	line:17
+mean_reversion.py	../mean_reversion.py	1;"	kind:file	line:1
+message	../ib_execution.py	/^from ib.opt import ibConnection, message$/;"	kind:namespace	line:13
+moving_avg_crossover.py	../moving_avg_crossover.py	1;"	kind:file	line:1
+np	../archives/scrape-bis.py	/^import numpy as np$/;"	kind:namespace	line:1
+np	../create_lagged_series.py	/^import numpy as np$/;"	kind:namespace	line:8
+np	../data.py	/^import numpy as np$/;"	kind:namespace	line:5
+np	../hft_data.py	/^import numpy as np$/;"	kind:namespace	line:12
+np	../hft_portfolio.py	/^import numpy as np$/;"	kind:namespace	line:15
+np	../intraday_mr.py	/^import numpy as np$/;"	kind:namespace	line:10
+np	../mac.py	/^import numpy as np$/;"	kind:namespace	line:3
+np	../mean_reversion.py	/^import numpy as np$/;"	kind:namespace	line:10
+np	../moving_avg_crossover.py	/^import numpy as np$/;"	kind:namespace	line:2
+np	../performance.py	/^import numpy as np$/;"	kind:namespace	line:8
+np	../plot_performance.py	/^import numpy as np$/;"	kind:namespace	line:8
+np	../plot_pyfolio.py	/^import numpy as np$/;"	kind:namespace	line:8
+np	../portfolio.py	/^import numpy as np$/;"	kind:namespace	line:15
+np	../qda_crypto.py	/^import numpy as np$/;"	kind:namespace	line:10
+np	../strategy.py	/^import numpy as np$/;"	kind:namespace	line:15
+os	../data.py	/^import os, os.path$/;"	kind:namespace	line:3
+os	../hft_data.py	/^import os, os.path$/;"	kind:namespace	line:10
+os	../plot_performance.py	/^import os.path$/;"	kind:namespace	line:6
+os	../plot_pyfolio.py	/^import os.path$/;"	kind:namespace	line:6
+os	../qda_crypto.py	/^import os$/;"	kind:namespace	line:11
+output_summary_stats	../hft_portfolio.py	/^    def output_summary_stats(self):$/;"	kind:member	line:239
+output_summary_stats	../portfolio.py	/^    def output_summary_stats(self):$/;"	kind:member	line:237
+output_summary_stats	../portfolio.py	/^    def output_summary_stats(self):$/;"	kind:member	line:466
+output_summary_stats_and_graphs	../portfolio.py	/^    def output_summary_stats_and_graphs(self):$/;"	kind:member	line:487
+pair	../archives/scrape-bis.py	/^pair = args.pair$/;"	kind:variable	line:14
+parse_args	../archives/scrape.py	/^def parse_args():$/;"	kind:function	line:8
+parse_dates	../plot_pyfolio.py	/^        parse_dates=True, $/;"	kind:variable	line:17
+parser	../archives/scrape-bis.py	/^parser = argparse.ArgumentParser()$/;"	kind:variable	line:9
+path	../data.py	/^import os, os.path$/;"	kind:namespace	line:3
+path	../hft_data.py	/^import os, os.path$/;"	kind:namespace	line:10
+path	../plot_performance.py	/^import os.path$/;"	kind:namespace	line:6
+path	../plot_pyfolio.py	/^import os.path$/;"	kind:namespace	line:6
+pd	../archives/scrape-bis.py	/^import pandas as pd$/;"	kind:namespace	line:5
+pd	../archives/scrape.py	/^import pandas as pd$/;"	kind:namespace	line:5
+pd	../create_lagged_series.py	/^import pandas as pd$/;"	kind:namespace	line:9
+pd	../data.py	/^import pandas as pd$/;"	kind:namespace	line:6
+pd	../hft_data.py	/^import pandas as pd$/;"	kind:namespace	line:13
+pd	../hft_portfolio.py	/^import pandas as pd$/;"	kind:namespace	line:16
+pd	../intraday_mr.py	/^import pandas as pd$/;"	kind:namespace	line:11
+pd	../mac.py	/^import pandas as pd$/;"	kind:namespace	line:4
+pd	../mean_reversion.py	/^import pandas as pd$/;"	kind:namespace	line:11
+pd	../moving_avg_crossover.py	/^import pandas as pd$/;"	kind:namespace	line:3
+pd	../performance.py	/^import pandas as pd$/;"	kind:namespace	line:9
+pd	../plot_performance.py	/^import pandas as pd$/;"	kind:namespace	line:10
+pd	../plot_pyfolio.py	/^import pandas as pd$/;"	kind:namespace	line:10
+pd	../portfolio.py	/^import pandas as pd$/;"	kind:namespace	line:16
+pd	../qda_crypto.py	/^import pandas as pd$/;"	kind:namespace	line:9
+pd	../snp_forecast.py	/^import pandas as pd$/;"	kind:namespace	line:10
+pd	../strategy.py	/^import pandas as pd$/;"	kind:namespace	line:16
+performance.py	../performance.py	1;"	kind:file	line:1
+pf	../plot_pyfolio.py	/^import pyfolio as pf$/;"	kind:namespace	line:11
+pf	../portfolio.py	/^import pyfolio as pf$/;"	kind:namespace	line:18
+plot_performance.py	../plot_performance.py	1;"	kind:file	line:1
+plot_pyfolio.py	../plot_pyfolio.py	1;"	kind:file	line:1
+plt	../plot_performance.py	/^import matplotlib.pyplot as plt$/;"	kind:namespace	line:9
+plt	../plot_pyfolio.py	/^import matplotlib.pyplot as plt$/;"	kind:namespace	line:9
+plt	../portfolio.py	/^import matplotlib.pyplot as plt$/;"	kind:namespace	line:17
+portfolio.py	../portfolio.py	1;"	kind:file	line:1
+pprint	../backtest.py	/^import pprint$/;"	kind:namespace	line:9
+print_function	../backtest.py	/^from __future__ import print_function$/;"	kind:namespace	line:6
+print_function	../event.py	/^from __future__ import print_function$/;"	kind:namespace	line:6
+print_function	../hft_data.py	/^from __future__ import print_function$/;"	kind:namespace	line:6
+print_function	../hft_portfolio.py	/^from __future__ import print_function$/;"	kind:namespace	line:6
+print_function	../ib_execution.py	/^from __future__ import print_function$/;"	kind:namespace	line:6
+print_function	../intraday_mr.py	/^from __future__ import print_function$/;"	kind:namespace	line:6
+print_function	../mean_reversion.py	/^from __future__ import print_function$/;"	kind:namespace	line:6
+print_function	../performance.py	/^from __future__ import print_function$/;"	kind:namespace	line:6
+print_function	../portfolio.py	/^from __future__ import print_function$/;"	kind:namespace	line:6
+print_function	../qda_crypto.py	/^from __future__ import print_function$/;"	kind:namespace	line:5
+print_function	../snp_forecast.py	/^from __future__ import print_function$/;"	kind:namespace	line:6
+print_function	../strategy.py	/^from __future__ import print_function$/;"	kind:namespace	line:6
+print_order	../event.py	/^    def print_order(self):$/;"	kind:member	line:83
+qda_crypto.py	../qda_crypto.py	1;"	kind:file	line:1
+queue	../backtest.py	/^    import Queue as queue$/;"	kind:namespace	line:11
+queue	../backtest.py	/^    import queue$/;"	kind:namespace	line:13
+queue	../execution.py	/^    import Queue as queue$/;"	kind:namespace	line:7
+queue	../execution.py	/^    import queue$/;"	kind:namespace	line:9
+queue	../hft_portfolio.py	/^    import Queue as queue$/;"	kind:namespace	line:11
+queue	../hft_portfolio.py	/^    import queue$/;"	kind:namespace	line:13
+queue	../portfolio.py	/^    import Queue as queue$/;"	kind:namespace	line:11
+queue	../portfolio.py	/^    import queue$/;"	kind:namespace	line:13
+queue	../strategy.py	/^    import Queue as queue$/;"	kind:namespace	line:11
+queue	../strategy.py	/^    import queue$/;"	kind:namespace	line:13
+re	../archives/scrape-bis.py	/^import re$/;"	kind:namespace	line:4
+register_handlers	../ib_execution.py	/^    def register_handlers(self):$/;"	kind:member	line:83
+requests	../archives/scrape-bis.py	/^import requests$/;"	kind:namespace	line:6
+resp	../archives/scrape-bis.py	/^resp = requests.get("https:\/\/api.cryptowat.ch\/markets\/{}\/{}\/ohlc?after=1000000000&periods=86400".format(exchange, pair))$/;"	kind:variable	line:17
+resp	../archives/scrape-bis.py	/^resp = resp.json()$/;"	kind:variable	line:18
+resp	../archives/scrape-bis.py	/^resp = resp["result"]["86400"]$/;"	kind:variable	line:19
+returns	../plot_pyfolio.py	/^    returns = data['returns']$/;"	kind:variable	line:28
+scrape-bis.py	../archives/scrape-bis.py	1;"	kind:file	line:1
+scrape.py	../archives/scrape.py	1;"	kind:file	line:1
+start_trading	../backtest.py	/^    def start_trading(self):$/;"	kind:member	line:133
+start_trading	../backtest.py	/^    def start_trading(self):$/;"	kind:member	line:258
+sm	../intraday_mr.py	/^import statsmodels.api as sm$/;"	kind:namespace	line:12
+sm	../mac.py	/^import statsmodels.api as sm$/;"	kind:namespace	line:5
+sm	../mean_reversion.py	/^import statsmodels.api as sm$/;"	kind:namespace	line:12
+sm	../moving_avg_crossover.py	/^import statsmodels.api as sm$/;"	kind:namespace	line:4
+snp_forecast.py	../snp_forecast.py	1;"	kind:file	line:1
+start_date	../intraday_mr.py	/^    start_date = datetime.datetime(2007, 11, 8, 10, 41, 0)$/;"	kind:variable	line:145
+start_date	../mac.py	/^    start_date = datetime.datetime(2014, 1, 1, 0, 0, 0)$/;"	kind:variable	line:87
+start_date	../mean_reversion.py	/^    start_date = datetime.datetime(2019, 3, 25, 0, 0, 0)$/;"	kind:variable	line:150
+start_date	../moving_avg_crossover.py	/^    start_date = datetime.datetime(2017, 1, 1, 0, 0, 0)$/;"	kind:variable	line:90
+start_date	../qda_crypto.py	/^    start_date = datetime.datetime(2018,1,1)$/;"	kind:variable	line:122
+start_date	../snp_forecast.py	/^    start_date = datetime.datetime(2006,1,3)$/;"	kind:variable	line:104
+statsmodels	../intraday_mr.py	/^import statsmodels.api as sm$/;"	kind:namespace	line:12
+statsmodels	../mac.py	/^import statsmodels.api as sm$/;"	kind:namespace	line:5
+statsmodels	../mean_reversion.py	/^import statsmodels.api as sm$/;"	kind:namespace	line:12
+statsmodels	../moving_avg_crossover.py	/^import statsmodels.api as sm$/;"	kind:namespace	line:4
+strategy.py	../strategy.py	1;"	kind:file	line:1
+instruments	../intraday_mr.py	/^    instruments = ['AREX', 'WLL']$/;"	kind:variable	line:142
+instruments	../mac.py	/^    instruments = ['AAPL']$/;"	kind:variable	line:84
+instruments	../mean_reversion.py	/^    instruments = ['BTCUSD', 'ETHUSD']$/;"	kind:variable	line:147
+instruments	../moving_avg_crossover.py	/^    instruments = [ 'BTCUSD' ]$/;"	kind:variable	line:86
+instruments	../qda_crypto.py	/^    instruments = [ 'BTCUSD' ]$/;"	kind:variable	line:119
+instruments	../snp_forecast.py	/^    instruments = ['SPY']$/;"	kind:variable	line:101
+symbol_out	../archives/scrape.py	/^symbol_out = args.symbol.replace("\/","")$/;"	kind:variable	line:81
+test.py	../data/test.py	1;"	kind:file	line:1
+time	../archives/scrape-bis.py	/^import time$/;"	kind:namespace	line:3
+time	../backtest.py	/^import time$/;"	kind:namespace	line:14
+time	../ib_execution.py	/^import time$/;"	kind:namespace	line:9
+timedelta	../archives/scrape.py	/^from datetime import datetime, timedelta, timezone$/;"	kind:namespace	line:2
+timezone	../archives/scrape.py	/^from datetime import datetime, timedelta, timezone$/;"	kind:namespace	line:2
+update_bars	../data.py	/^    def update_bars(self):$/;"	kind:member	line:192
+update_bars	../data.py	/^    def update_bars(self):$/;"	kind:member	line:359
+update_bars	../data.py	/^    def update_bars(self):$/;"	kind:member	line:49
+update_bars	../hft_data.py	/^    def update_bars(self):$/;"	kind:member	line:155
+update_fill	../hft_portfolio.py	/^    def update_fill(self, event):$/;"	kind:member	line:177
+update_fill	../portfolio.py	/^    def update_fill(self, event):$/;"	kind:member	line:175
+update_fill	../portfolio.py	/^    def update_fill(self, event):$/;"	kind:member	line:404
+update_holdings_from_fill	../hft_portfolio.py	/^    def update_holdings_from_fill(self, fill):$/;"	kind:member	line:153
+update_holdings_from_fill	../portfolio.py	/^    def update_holdings_from_fill(self, fill):$/;"	kind:member	line:151
+update_holdings_from_fill	../portfolio.py	/^    def update_holdings_from_fill(self, fill):$/;"	kind:member	line:380
+update_positions_from_fill	../hft_portfolio.py	/^    def update_positions_from_fill(self, fill):$/;"	kind:member	line:136
+update_positions_from_fill	../portfolio.py	/^    def update_positions_from_fill(self, fill):$/;"	kind:member	line:134
+update_positions_from_fill	../portfolio.py	/^    def update_positions_from_fill(self, fill):$/;"	kind:member	line:363
+update_signal	../hft_portfolio.py	/^    def update_signal(self, event):$/;"	kind:member	line:215
+update_signal	../portfolio.py	/^    def update_signal(self, event):$/;"	kind:member	line:213
+update_signal	../portfolio.py	/^    def update_signal(self, event):$/;"	kind:member	line:442
+update_timeindex	../hft_portfolio.py	/^    def update_timeindex(self, event):$/;"	kind:member	line:94
+update_timeindex	../portfolio.py	/^    def update_timeindex(self, event):$/;"	kind:member	line:321
+update_timeindex	../portfolio.py	/^    def update_timeindex(self, event):$/;"	kind:member	line:92
+utils.py	../utils.py	1;"	kind:file	line:1
