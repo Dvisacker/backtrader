@@ -130,14 +130,19 @@ class CryptoBacktest(object):
 
         print("Creating summary stats...")
         stats = self.portfolio.save_stats(backtest_result_dir)
-        pprint.pprint(stats)
+
+        print("Total return: %s" % stats['Total Return'])
+        print("Sharpe Ratio: %s" % stats['Sharpe Ratio'])
+        print("Max drawdown: %s" % stats['Max Drawdown'])
+        print("Drawdown Duration: %s" % stats['Drawdown Duration'])
+        print("Signals: %s" % self.signals)
+        print("Orders: %s" % self.orders)
+        print("Fills: %s" % self.fills)
 
         print("Creating equity curve...")
         print(self.portfolio.equity_curve.tail(10))
 
-        print("Signals: %s" % self.signals)
-        print("Orders: %s" % self.orders)
-        print("Fills: %s" % self.fills)
+
         self.portfolio.output_graphs()
 
     def start_trading(self):

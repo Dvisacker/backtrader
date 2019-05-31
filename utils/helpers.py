@@ -6,6 +6,10 @@ import matplotlib.pyplot as plt
 
 from datetime import datetime
 
+def truncate(n, decimals=0):
+  multiplier = 10 ** decimals
+  return int(n * multiplier) / multiplier
+
 def date_parse(timestamp):
     """
     Parses timestamps into python datetime objects.
@@ -24,6 +28,12 @@ def move_figure(f, x, y):
         # This works for QT and GTK
         # You can also use window.setGeometry
         f.canvas.manager.window.move(x, y)
+
+def plot():
+  try:
+    plt.show()
+  except UnicodeDecodeError:
+    plot()
 
 
 def create_lagged_crypto_series(data, start_date, end_date, lags=5):
@@ -183,6 +193,22 @@ def from_exchange_to_standard_notation(exchange, symbol):
       return 'BTC/USD'
     elif symbol == 'ETHUSD':
       return 'ETH/USD'
+    elif symbol == 'ADAM19':
+      return 'ADA/BTC'
+    elif symbol == "BCHM19":
+      return 'BCH/BTC'
+    elif symbol == "EOSM19":
+      return 'EOS/BTC'
+    elif symbol == "ETHM19":
+      return 'ETH/BTC'
+    elif symbol == "LTCM19":
+      return 'LTC/BTC'
+    elif symbol == "TRXM19":
+      return 'TRX/BTC'
+    elif symbol == "XRPM19":
+      return 'XRP/BTC'
+    elif symbol == "XBTM19":
+      return 'BTC/USD'
     else:
       return symbol
   else:
@@ -190,11 +216,31 @@ def from_exchange_to_standard_notation(exchange, symbol):
 
 def from_standard_to_exchange_notation(exchange, symbol):
   if exchange == 'bitmex':
+    if symbol == "ADA/BTC":
+      return "ADAM19"
+    elif symbol == "BCH/BTC":
+      return "BCHM19"
+    elif symbol == "EOS/BTC":
+      return "EOSM19"
+    elif symbol == "ETH/BTC":
+      return "ETHM19"
+    elif symbol == "LTC/BTC":
+      return "LTCM19"
+    elif symbol == "TRX/BTC":
+      return "TRXM19"
+    elif symbol == "XRP/BTC":
+      return "XRPM19"
+    elif symbol == "BTC/USD":
+      return "XBTM19"
+    elif symbol == "ETH/USD":
+      return "ETHUSD"
+
     symbol = symbol.replace('BTC', 'XBT')
     symbol = symbol.replace('/', "")
     return symbol
   else:
     return symbol
+
 
 def get_ohlcv_window(period):
   if period == 60:

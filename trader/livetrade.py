@@ -55,9 +55,9 @@ class CryptoLiveTrade(object):
         self.orders = 0
         self.fills = 0
         self.num_strats = 1
-        self.heartbeat = configuration['heartbeat']
-        self.result_dir = configuration['result_dir']
-        self.exchange_names = configuration['exchange_names']
+        self.heartbeat = configuration.heartbeat
+        self.result_dir = configuration.result_dir
+        self.exchange_names = configuration.exchange_names
 
         self._generate_trading_instances()
 
@@ -69,7 +69,9 @@ class CryptoLiveTrade(object):
         print("Creating DataHandler, Strategy, Portfolio and ExecutionHandler")
         self.exchanges = create_exchange_instances(self.exchange_names)
         self.data_handler = self.data_handler_cls(self.events, self.configuration, self.exchanges)
-        self.strategy = self.strategy_cls(self.data_handler, self.events)
+        self.strategy = self.strategy_cls(self.data_handler, self.events, self.configuration)
+
+        time.sleep(1)
         self.portfolio = self.portfolio_cls(self.data_handler, self.events, self.configuration, self.exchanges)
         self.execution_handler = self.execution_handler_cls(self.events, self.configuration, self.exchanges)
 
@@ -86,18 +88,23 @@ class CryptoLiveTrade(object):
                 pass
             else:
                 if event is not None:
+                    print(event.type)
                     if event.type == 'MARKET':
                         self.strategy.calculate_signals(event)
                         self.portfolio.update_timeindex(event)
-                        self.portfolio.update_graphs()
+                        # self.portfolio.update_graphs()
 
                     elif event.type == 'SIGNAL':
                         self.signals += 1
-                        self.portfolio.update_signal(event)
+                        self.portfolio.update_signals(event)
 
                     elif event.type == 'ORDER':
                         self.orders += 1
                         self.execution_handler.execute_order(event)
+
+                    elif event.type == 'BULK_ORDER':
+                        self.orders += len(event.events)
+                        self.execution_handler.execute_orders(event)
 
                     elif event.type == 'FILL':
                         self.fills += 1

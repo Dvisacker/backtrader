@@ -11,6 +11,8 @@ if __name__ == "__main__" and __package__ is None:
 
 import os
 import datetime
+import sys
+import warnings
 
 from strategies.crypto import QDAStrategy
 from event import SignalEvent
@@ -19,6 +21,9 @@ from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import CryptoPortfolio
 from configuration import Configuration
+
+if not sys.warnoptions:
+    warnings.simplefilter("ignore")
 
 if __name__ == "__main__":
     configuration = Configuration({

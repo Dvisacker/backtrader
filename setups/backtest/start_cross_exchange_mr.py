@@ -9,6 +9,7 @@ if __name__ == "__main__" and __package__ is None:
     __package__ = "setups"
 
 import datetime
+import warnings
 
 from event import SignalEvent
 from trader import CryptoBacktest
@@ -17,6 +18,9 @@ from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import CryptoPortfolio
 from configuration import Configuration
+
+if not sys.warnoptions:
+    warnings.simplefilter("ignore")
 
 if __name__ == "__main__":
     configuration = Configuration({

@@ -16,7 +16,7 @@ import datetime
 import warnings
 
 from itertools import product
-from strategies.crypto.random import RandomStrategy
+from strategies.crypto.multi_random import MultiRandomStrategy
 from event import SignalEvent
 from trader import CryptoLiveTrade
 from datahandler.crypto import LiveDataHandler
@@ -36,7 +36,7 @@ if __name__ == "__main__":
       'result_dir' : '../results',
       'exchange_names' : ['bitmex'],
       'assets': { 'bitmex': ['BTC'] },
-      'instruments' : { 'bitmex': ['BTC/USD', 'ETH/USD'] },
+      'instruments' : { 'bitmex': ['ETH/BTC', 'LTC/BTC', 'TRX/BTC', 'XRP/BTC', 'BTC/USD', 'ETH/USD'] },
       'ohlcv_window': 10, #receive the one minute candles
       'heartbeat' : 1.00,
       'start_date' : start_date
@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     trader = CryptoLiveTrade(
         configuration, LiveDataHandler, LiveExecutionHandler,
-        BitmexPortfolio, RandomStrategy
+        BitmexPortfolio, MultiRandomStrategy
     )
 
     trader.start_trading()

@@ -14,17 +14,24 @@ class Configuration(object):
     """
 
     def __init__(self, configuration):
-      self.csv_dir = configuration['csv_dir']
       self.result_dir = configuration['result_dir']
       self.instruments = configuration['instruments']
       self.ohlcv_window = configuration['ohlcv_window']
-      self.initial_capital = configuration['initial_capital']
       self.heartbeat = configuration['heartbeat']
       self.start_date = configuration['start_date']
       self.exchange_names = list(self.instruments.keys())
 
+      if 'csv_dir' in configuration:
+        self.csv_dir = configuration['csv_dir']
+
+      if 'initial_capital' in configuration:
+        self.initial_capital = configuration['initial_capital']
+
       if 'graph_refresh_period' in configuration:
         self.graph_refresh_period = configuration['graph_refresh_period']
+
+      if 'assets' in configuration:
+        self.assets = configuration['assets']
 
 
 class MultiMRConfiguration(Configuration):

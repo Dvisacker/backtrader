@@ -24,7 +24,7 @@ plt.style.use('ggplot')
 
 from event import FillEvent, OrderEvent
 from performance import create_sharpe_ratio, create_drawdowns
-from utils.helpers import move_figure, plot
+from utils.helpers import move_figure
 
 class CryptoPortfolio(object):
     """
@@ -50,15 +50,14 @@ class CryptoPortfolio(object):
         self.exchanges = configuration.exchange_names
         self.exchange = configuration.exchange_names[0]
         self.instruments = configuration.instruments
+        self.assets = configuration.assets
         self.start_date = configuration.start_date
         self.result_dir = configuration.result_dir
         self.initial_capital = configuration.initial_capital
-        self.all_positions = []
+        self.all_positions = self.construct_all_positions()
         self.current_positions = self.construct_current_positions()
-        self.all_holdings = []
+        self.all_holdings = self.construct_all_holdings()
         self.current_holdings = self.construct_current_holdings()
-
-        self.legends_added = False
 
 
     def construct_current_positions(self):
@@ -94,13 +93,17 @@ class CryptoPortfolio(object):
           d[e] = { e: {} }
           for s in self.instruments[e]:
             d[e][s] = 0.0
-            d['{}-{}-price'.format(e,s)] = 0
-            d['{}-{}-fill'.format(e,s)] = ''
+            d['{}-{}-close'.format(e,s)] = 0
+
+        for e in self.assets:
+          d[e] = { e: {} }
+          for s in self.assets[e]:
+            d[e][s] = self.initial_assets[e][s]
 
         d['datetime'] = self.start_date
-        d['cash'] = self.initial_capital
         d['commission'] = 0.0
-        d['total'] = self.initial_capital
+        d['total'] = 0.0 # need to modify this
+        d['fill'] = ''
         return [d]
 
     def construct_current_holdings(self):
@@ -108,17 +111,17 @@ class CryptoPortfolio(object):
         This constructs the dictionary which will hold the instantaneous
         value of the portfolio across all symbols.
         """
-        d = {}
-        for e in self.instruments:
-          d[e] = { e: {} }
-          for s in self.instruments[e]:
-              d[e][s] = 0.0
-              d['{}-{}-price'.format(e,s)] = 0
-              d['{}-{}-fill'.format(e,s)] = ''
+        d = dict( (k,v) for k,v in [(e, {}) for e in self.instruments])
+        for e in d:
+          d[e] = dict((k,v) for k,v in [(s, 0.0) for s in self.instruments[e]])
 
-        d['cash'] = self.initial_capital
+        d = dict( (k,v) for k,v in [(e, {}) for e in self.assets])
+        for e in d:
+          d[e] = dict((k,v) for k,v in [(s, 0.0) for s in self.assets[e]])
+
         d['commission'] = 0.0
-        d['total'] = self.initial_capital
+        d['total'] = 0.0
+        d['fill'] = ''
         return d
 
     def update_timeindex(self, event):
@@ -153,10 +156,24 @@ class CryptoPortfolio(object):
         for e in dh:
           dh[e] = dict( (k,v) for k, v in [(s, 0) for s in self.instruments[e]])
 
+        dh = dict( (k,v) for k, v in [(e, {}) for e in self.assets] )
+        for e in dh:
+          dh[e] = dict( (k,v) for k, v in [(s, 0) for s in self.assets[e]])
+
         dh['datetime'] = latest_datetime
-        dh['cash'] = self.current_holdings['cash']
         dh['commission'] = self.current_holdings['commission']
         dh['total'] = self.current_holdings['total']
+
+        # We assume the fill event comes after the update_timeindex call.
+        dh['fill'] = self.current_holdings['fill']
+
+        for e in self.assets:
+          for s in self.assets[e]:
+            instrument = '{}{}'.format(s, "USD")
+            close_price = self.data.get_latest_bar_value(e, instrument, "close")
+            market_value = self.current_holdings[e][s] * close_price
+            dh[e][s] = market_value
+            dh['total'] += market_value
 
         # NOTE This does seem to cover only the case where all the assets are traded against a similar quote currency.
         for e in self.instruments:
@@ -165,17 +182,14 @@ class CryptoPortfolio(object):
             close_price = self.data.get_latest_bar_value(e, s, "close")
             market_value = self.current_positions[e][s] * close_price
             dh[e][s] = market_value
-            dh['{}-{}-fill'.format(e,s)] = self.current_holdings['{}-{}-fill'.format(e,s)]
-            dh['{}-{}-price'.format(e,s)] = close_price
+            dh['{}-{}-close'.format(e,s)] = close_price
             dh['total'] += market_value
 
         # Append the current holdings
         self.all_holdings.append(dh)
 
         # Reset the fill variable
-        for e in self.instruments:
-          for s in self.instruments[e]:
-            self.current_holdings['{}-{}-fill'.format(e,s)] = ''
+        self.current_holdings['fill'] = ''
 
     # ======================
     # FILL/POSITION HANDLING
@@ -209,9 +223,6 @@ class CryptoPortfolio(object):
         fill - The Fill object to update the holdings with.
         """
 
-        symbol = fill.symbol
-        exchange = fill.exchange
-
         # Check whether the fill is a buy or sell
         fill_dir = 0
         if fill.direction == 'BUY':
@@ -220,13 +231,54 @@ class CryptoPortfolio(object):
             fill_dir = -1
 
         # Update holdings list with new quantities
-        fill_cost = self.data.get_latest_bar_value(exchange, symbol, "close")
+        fill_cost = self.data.get_latest_bar_value(fill.exchange, fill.symbol, "close")
         cost = fill_dir * fill_cost * fill.quantity
-        self.current_holdings[exchange][symbol] += cost
+        self.current_holdings[fill.exchange][fill.symbol] += cost
         self.current_holdings['commission'] += fill.commission
         self.current_holdings['cash'] -= (cost + fill.commission)
         self.current_holdings['total'] -= (cost + fill.commission)
-        self.current_holdings['{}-{}-fill'.format(exchange, symbol)] = fill.direction
+        # print('Registering Fill at {}'.format(self.current_holdings['datetime']))
+        self.current_holdings['fill'] = fill.direction
+
+    def update_bitmex_holdings_from_fill(self, fill):
+        # Check whether the fill is a buy or sell
+        direction = fill.direction
+        leverage = fill.leverage
+        quantity = fill.quantity
+        current_price = self.data.get_latest_bar_value(fill.exchange, fill.symbol, "close")
+
+        available_balance = self.current_holdings['cash']
+        new_available_balance = available_balance - fill.quantity / fill.leverage
+
+        self.current_holdings['cash'] =
+        self.current_holdings[fill.exchange][fill.symbol] += fill.quantity
+
+
+
+        # In the case of bitmex: quantity = 100 for example
+
+        # Open a short x (-1)
+        cost = current_price * (1 / quantity)
+
+
+
+
+        fill_dir = 0
+        if fill.direction == 'BUY':
+            fill_dir = 1
+        if fill.direction == 'SELL':
+            fill_dir = -1
+
+        # Update holdings list with new quantities
+        fill_cost = self.data.get_latest_bar_value(fill.exchange, fill.symbol, "close")
+        cost = fill_dir * fill_cost * fill.quantity
+        self.current_holdings[fill.exchange][fill.symbol] += cost
+        self.current_holdings['commission'] += fill.commission
+        self.current_holdings['cash'] -= (cost + fill.commission)
+        self.current_holdings['total'] -= (cost + fill.commission)
+        self.current_holdings['fill'] = fill.direction
+
+        # print('Registering Fill at {}'.format(self.current_holdings['datetime']))
 
     def update_fill(self, event):
         """
@@ -239,7 +291,11 @@ class CryptoPortfolio(object):
 
 
     def generate_order(self, signal):
-        order = self.generate_naive_order(signal)
+        if signal.exchange == "bitmex":
+          order = self.generate_bitmex_order(signal)
+        else:
+          order = self.generate_naive_order(signal)
+
         return order
 
     def generate_naive_order(self, signal):
@@ -254,21 +310,23 @@ class CryptoPortfolio(object):
         exchange = signal.exchange
         symbol = signal.symbol
         direction = signal.signal_type
+        strength = signal.strength
 
+        mkt_quantity = 300
         cur_quantity = self.current_positions[exchange][symbol]
-        cash = self.current_holdings['cash']
-        price = self.data.get_latest_bar_value(exchange, symbol, "close")
-        amount = cash / price
         order_type = 'MKT'
 
-        # fill_cost = self.data.get_latest_bar_value(fill.exchange, fill.symbol, "close")
-        # cost = fill_dir * fill_cost
-        # available_quantity = cost / (fill_dir * fill_cost)
+        fill_cost = self.data.get_latest_bar_value(fill.exchange, fill.symbol, "close")
+        cost = fill_dir * fill_cost
+
+
+
+        available_quantity = cost / (fill_dir * fill_cost)
 
         if direction == 'LONG' and cur_quantity == 0:
-            order = OrderEvent(exchange, symbol, order_type, amount, 'BUY')
+            order = OrderEvent(exchange, symbol, order_type, mkt_quantity, 'BUY')
         if direction == 'SHORT' and cur_quantity == 0:
-            order = OrderEvent(exchange, symbol, order_type, amount, 'SELL')
+            order = OrderEvent(exchange, symbol, order_type, mkt_quantity, 'SELL')
 
         if direction == 'EXIT' and cur_quantity > 0:
             order = OrderEvent(exchange, symbol, order_type, abs(cur_quantity), 'SELL')
@@ -321,6 +379,8 @@ class CryptoPortfolio(object):
           order_side = "SELL"
 
         order = OrderEvent(exchange, symbol, order_type, abs(new_quantity - current_quantity), order_side, new_leverage)
+
+        # order = OrderEvent(exchange, symbol, order_type, (new_quantity - current_quantity), new_leverage)
         return order
 
     def update_signal(self, event):
@@ -384,31 +444,31 @@ class CryptoPortfolio(object):
       fig = plt.figure(figsize=(10,10))
       # Set the outer colour to white
       fig.patch.set_facecolor('white')
-      self.ax1 = fig.add_subplot(211, ylabel='Portfolio value, %')
-      self.ax2 = fig.add_subplot(212, ylabel='Prices')
-
-
-      self.price_axes = {}
-      colors = ['red', 'blue', 'yellow', 'green', 'black']
-      for e in self.instruments:
-        for (i, s) in enumerate(self.instruments[e]):
-          self.price_axes['{}-{}'.format(e,s)] = self.ax2.twinx()
-          self.price_axes['{}-{}'.format(e,s)].tick_params(axis='y', labelcolor=colors[i])
-
-      fig.tight_layout()
+      self.ax1 = fig.add_subplot(311, ylabel='Portfolio value, %')
+      self.ax2 = fig.add_subplot(312, ylabel='Currency prices')
+      self.ax3 = fig.add_subplot(313, ylabel='Positions')
 
       fig = plt.figure(figsize=(10,10))
       move_figure(fig, 1000, 0)
-      self.ax3 = fig.add_subplot(211, ylabel='Positions')
-      self.ax4 = fig.add_subplot(212, ylabel='Currency prices')
+      self.ax4 = fig.add_subplot(111, ylabel='Drawdown underwater')
 
       self.update_graphs()
+      self.ax1.legend(loc='upper left', frameon=False, markerscale=12)
+      self.ax2.legend(loc='upper left', frameon=False, markerscale=12)
+      self.ax3.legend(loc='upper left', frameon=False, markerscale=12)
+
+      # self.ax2 = fig.add_subplot(512, ylabel='Period returns, %')
+      # self.ax3 = fig.add_subplot(513, ylabel='Drawdowns, %')
+      # self.ax5 = fig.add_subplot(514, ylabel=)
+      # fig = plt.figure(figsize=(15,10))
+      # self.ax5 = fig.add_subplot(111, ylabel='Drawdown periods')
+      # fig = plt.figure(figsize=(15,10))
+      # self.ax6 = fig.add_subplot(111, ylabel='Rolling volatlity')
+      # fig = plt.figure(figsize=(15,10))
+      # self.ax7 = fig.add_subplot(111, ylabel='Rolling sharpe')
 
 
     def update_graphs(self):
-      if not self.all_holdings:
-        return
-
       curve = pd.DataFrame(self.all_holdings).copy()
 
       for e in self.instruments:
@@ -420,41 +480,69 @@ class CryptoPortfolio(object):
       curve.set_index('datetime', inplace=True)
       returns = curve['total'].pct_change()
       cash = curve['cash']
-      equity = (1.0+returns).cumprod()
-      drawdown, max_dd, dd_duration = create_drawdowns(equity)
+      equity_curve = (1.0+returns).cumprod()
+      drawdown, max_dd, dd_duration = create_drawdowns(equity_curve)
 
-      equity.plot(ax=self.ax1, color="blue", lw=1., label='Total Portfolio Value')
+      buys = pd.Series({ x: equity_curve[x] if curve['fill'][x] == "BUY" else np.NaN for x in curve.index })
+      sells = pd.Series({ x: equity_curve[x] if curve['fill'][x] == "SELL" else np.NaN for x in curve.index })
+
+      # buys = pd.Series(curve['fill'].index.map(lambda x: equity_curve[x] if curve['fill'][x] == "BUY" else 0))
+      # sells = pd.Series(curve['fill'].index.map(lambda x: equity_curve[x] if curve['fill'][x] == "SELL" else 0))
+
+
+      # print(buys.tail())
+      # print(sells.tail())
 
       # Plot the equity curve
+      equity_curve.plot(ax=self.ax1, color="blue", lw=1., label='Total Portfolio Value')
+      buys.plot(ax=self.ax1, color='green', lw=1., marker='o', label='Buys')
+      sells.plot(ax=self.ax1, color='red', lw=1, marker='x', label='Red')
       cash.plot(ax=self.ax3, color="orange", lw=1., label="Cash")
-      colors = ['red', 'blue', 'yellow', 'green', 'black']
+
+      plt.grid(True)
 
       for e in self.instruments:
-        for (i, s) in enumerate(self.instruments[e]):
-          col = colors[i]
-          ax = self.price_axes['{}-{}'.format(e,s)]
+        for s in self.instruments[e]:
           price_label = '{}-{} Price'.format(e,s).capitalize()
-          position = '{}-{} Position #'.format(e,s).capitalize()
-          curve["{}-{}-price".format(e,s)].plot(ax=ax, lw=1., color=col, label=price_label)
-          curve["{}-{}".format(e,s)][-1000:].plot(ax=self.ax3, lw=1., color=col, label=position)
+          position = '{}-{} Position'.format(e,s).capitalize()
+
+          curve["{}-{}-close".format(e,s)].plot(ax=self.ax2, color="red", lw=1., label=price_label)
+          curve["{}-{}".format(e,s)].plot(ax=self.ax3, color="green", lw=1., label=position)
 
       pf.plot_drawdown_underwater(returns, ax=self.ax4).set_xlabel('Date')
       plt.pause(0.001)
       plt.axis('tight')
 
-      if not self.legends_added:
-        self.ax1.legend(loc='upper left', frameon=False, markerscale=12)
-        self.ax2.legend(loc='upper left', frameon=False, markerscale=12)
-        self.ax3.legend(loc='upper left', frameon=False, markerscale=12)
+      # total = np.array(list(map(lambda x: x['total'], self.all_holdings)))
+      # returns = np.array([100.0 * a1 / a2 - 100 for a1, a2 in zip(total[1:], total)])
 
-        for e in self.instruments:
-          for s in self.instruments[e]:
-            self.price_axes['{}-{}'.format(e,s)].legend(loc='upper left', frameon=False, markerscale=12)
+      # sharpe_ratio = create_sharpe_ratio(returns)
+      # equity_curve = np.cumprod(1 + returns)
+      # drawdown, max_dd, dd_duration = create_drawdowns(equity_curve)
 
+      # Plot the returns
+      # returns.plot(ax=self.ax2, color="black", lw=1.)
+      # plt.grid(True)
 
-      self.legends_added = True
+      # # # Plot the returns
+      # drawdown.plot(ax=self.ax3, color="red", lw=1.)
+      # plt.grid(True)
+      # # pf.show_perf_stats(returns)
+      # # pf.show_worst_drawdown_periods(returns)
+      # pf.plot_drawdown_periods(returns, top=5, ax=self.ax5).set_xlabel('Date')
+      # pf.plot_rolling_volatility(returns, rolling_window=30, ax=self.ax6).set_xlabel('Date')
+      # pf.plot_rolling_sharpe(returns, rolling_window=30, ax=self.ax7).set_xlabel('Date')
+      # plt.figure(figsize = (15, 10))
 
+      # plt.figure(figsize = (15, 10))
+      # pf.plot_returns(returns).set_xlabel('Date')
 
+      # plt.figure(figsize = (15, 10))
+      # pf.plot_return_quantiles(returns).set_xlabel('Timeframe')
+
+      # plt.figure(figsize = (15, 10))
+      # pf.plot_monthly_returns_dist(returns).set_xlabel('Returns')
+      # pf.create_returns_tear_sheet(returns)
 
 
     def output_summary_stats(self, backtest_result_dir):
@@ -485,17 +573,18 @@ class CryptoPortfolio(object):
         Creates a list of summary statistics and plots
         performance graphs
         """
-        curve = self.equity_curve
-        total_return = curve['equity_curve'][-1]
-        returns = curve['returns']
-        pnl = curve['equity_curve']
+
+        total_return = self.equity_curve['equity_curve'][-1]
+        returns = self.equity_curve['returns']
+        pnl = self.equity_curve['equity_curve']
 
         sharpe_ratio = create_sharpe_ratio(returns)
         drawdown, max_dd, dd_duration = create_drawdowns(pnl)
+        self.equity_curve['drawdown'] = drawdown
 
-        returns = curve['returns']
-        equity_curve = curve['equity_curve']
-        drawdown = curve['drawdown']
+        returns = self.equity_curve['returns']
+        equity_curve = self.equity_curve['equity_curve']
+        drawdown = self.equity_curve['drawdown']
 
         # Plot three charts: Equity curve,
         # period returns, drawdowns
@@ -505,34 +594,21 @@ class CryptoPortfolio(object):
 
         # Plot the equity curve
         ax1 = fig.add_subplot(311, ylabel='Portfolio value, %')
-        equity_curve.plot(ax=ax1, color="blue", lw=1.)
+        equity_curve.plot(ax=ax1, color="blue", lw=2.)
         plt.grid(True)
 
         # Plot the returns
         ax2 = fig.add_subplot(312, ylabel='Period returns, %')
-        returns.plot(ax=ax2, color="black", lw=1.)
+        returns.plot(ax=ax2, color="black", lw=2.)
         plt.grid(True)
 
         # Plot the returns
         ax3 = fig.add_subplot(313, ylabel='Drawdowns, %')
-        drawdown.plot(ax=ax3, color="red", lw=1.)
+        drawdown.plot(ax=ax3, color="red", lw=2.)
         plt.grid(True)
 
-        self.price_figure = {}
-        for e in self.instruments:
-          for s in self.instruments[e]:
-            fig = plt.figure(figsize=(15,10))
-            ax = fig.add_subplot(111, ylabel='{}-{} Price'.format(e,s))
-            fill_id = '{}-{}-fill'.format(e,s)
-            price_id = '{}-{}-price'.format(e,s)
-            prices = curve[price_id]
-            fills = curve[fill_id]
-            buys = pd.Series({ x: prices[x] if fills[x] == "BUY" else np.NaN for x in curve.index })
-            sells = pd.Series({ x: prices[x] if fills[x] == "SELL" else np.NaN for x in curve.index })
-            prices.plot(ax=ax, color='blue', lw=1., label='{}-{} Price'.format(e,s))
-            buys.plot(ax=ax, color='green', marker='o', label='Buys')
-            sells.plot(ax=ax, color='red', marker='x', label='Sells')
-            ax.legend(loc='best', frameon=False)
+        # pf.show_perf_stats(returns)
+        # pf.show_worst_drawdown_periods(returns)
 
         plt.figure(figsize = (15, 10))
         pf.plot_drawdown_underwater(returns).set_xlabel('Date')
@@ -556,15 +632,14 @@ class CryptoPortfolio(object):
         pf.plot_rolling_sharpe(returns, rolling_window=30).set_xlabel('Date')
 
         fig = pf.create_returns_tear_sheet(returns, return_fig=True)
-        fig.savefig('../../results/last/returns_tear_sheet.pdf')
-        plt.close(fig)
+        fig.savefig('returns_tear_sheet.pdf')
 
-        # root = 'file:///Users/davidvanisacker/Programming/Trading/backtest/'
-        # result_dir = 'results/last/returns_tear_sheet.pdf'
-        # tearsheet_path = os.path.join(root, result_dir)
-        webbrowser.open_new(r'file:///Users/davidvanisacker/Programming/Trading/backtest/results/last/returns_tear_sheet.pdf')
+        root = 'file:///Users/davidvanisacker/Programming/Trading/backtest/setups/backtest'
+        result_dir = 'results/last/returns_tear_sheet.pdf'
+        tearsheet_path = os.path.join(root, result_dir)
+        webbrowser.open_new(tearsheet_path)
+        plt.show()
 
-        plot()
 
     def save_stats(self, backtest_result_dir):
             """
@@ -579,12 +654,10 @@ class CryptoPortfolio(object):
             drawdown, max_dd, dd_duration = create_drawdowns(pnl)
             self.equity_curve['drawdown'] = drawdown
 
-            stats = {
-              "Total Return": "%0.2f%%" % ((total_return - 1.0) * 100.0),
-              "Sharpe Ratio": "%0.2f" % sharpe_ratio,
-              "Max Drawdown": "%0.2f%%" % (max_dd * 100.0),
-              "Drawdown Duration": "%d" % dd_duration
-            }
+            stats = [("Total Return", "%0.2f%%" % ((total_return - 1.0) * 100.0)),
+                    ("Sharpe Ratio", "%0.2f" % sharpe_ratio),
+                    ("Max Drawdown", "%0.2f%%" % (max_dd * 100.0)),
+                    ("Drawdown Duration", "%d" % dd_duration)]
 
             self.equity_curve.to_csv(os.path.join(self.result_dir, 'last/equity.csv'))
             self.equity_curve.to_csv(os.path.join(backtest_result_dir, 'equity.csv'))

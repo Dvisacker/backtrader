@@ -34,22 +34,13 @@ class LiveDataHandler(DataHandler):
         :param instruments: A list of symbol strings.
         """
 
-        if 'exchange_names' not in configuration:
-          raise AssertionError
-
-        if 'instruments' not in configuration:
-          raise AssertionError
-
-        if 'ohlcv_window' not in configuration:
-          raise AssertionError
-
         self.symbol_data = {}
         self.latest_symbol_data = {}
         self.events = events
         self.exchanges = exchanges
-        self.exchange_names = configuration['exchange_names']
-        self.instruments = configuration['instruments']
-        self.ohlcv_window = configuration['ohlcv_window']
+        self.exchange_names = configuration.exchange_names
+        self.instruments = configuration.instruments
+        self.ohlcv_window = configuration.ohlcv_window
         self.continue_backtest = True
 
         for e in self.instruments:
@@ -63,6 +54,7 @@ class LiveDataHandler(DataHandler):
             self.latest_symbol_data[e][s] = []
 
 
+        print(self.symbol_data)
         self._initialize_exchange_data(self.exchanges)
         Thread(target = self._listen_to_exchange_data).start()
 
@@ -81,7 +73,22 @@ class LiveDataHandler(DataHandler):
       print('Initializing exchange data')
       for e in self.instruments:
         for s in self.instruments[e]:
-          ohlcv = self.exchanges[e].fetch_ohlcv(s, '1m', params={ 'reverse': True })
+          sym = {
+            "ADA/BTC": "ADAM19",
+            "BCH/BTC": "BCHM19",
+            "EOS/BTC": "EOSM19",
+            "ETH/BTC": "ETHM19",
+            "LTC/BTC": "LTCM19",
+            "TRX/BTC": "TRXM19",
+            "XRP/BTC": "XRPM19",
+            "BTC/USD": "BTC/USD",
+            "ETH/USD": "ETH/USD"
+          }[s]
+
+
+          # sym = from_standard_to_exchange_notation(e,s)
+          print(sym)
+          ohlcv = self.exchanges[e].fetch_ohlcv(sym, '1m', params={ 'reverse': True })
           parser = lambda x : { 'time': x[0] / 1000, 'open': x[1], 'high': x[2], 'low': x[3], 'close': x[4], 'timestamp': datetime.fromtimestamp(x[0] / 1000) }
           parsed_ohlcv = list(map(parser, ohlcv))
 
@@ -106,7 +113,6 @@ class LiveDataHandler(DataHandler):
 
           f.add_feed(Bitmex(pairs=symbols, channels=[TRADES], callbacks={TRADES: OHLCV(Callback(self._insert_new_bar_bitmex), start_time=start_time, window=self.ohlcv_window)}))
 
-
       f.run()
 
 
@@ -114,6 +120,7 @@ class LiveDataHandler(DataHandler):
       """
       Insert a new bar into the data feed
       """
+      print(data.keys())
       for instrument in list(data.keys()):
         tick = data[instrument]
         symbol = from_exchange_to_standard_notation('bitmex', instrument)
@@ -122,16 +129,6 @@ class LiveDataHandler(DataHandler):
 
       print('Inserted new bar')
       self.events.put(MarketEvent())
-
-    # async def _insert_new_bar(self, exchange, data=None):
-    #   """
-    #   Insert a new bar into the data feed
-    #   """
-    #   for symbol in list(data.keys()):
-    #     tick = data[symbol]
-    #     self.symbol_data[exchange][symbol].append(tick)
-    #     self.latest_symbol_data[exchange][symbol].append(tick)
-    #     self.events.put(MarketEvent())
 
     def _get_new_bar(self, exchange, symbol):
         """

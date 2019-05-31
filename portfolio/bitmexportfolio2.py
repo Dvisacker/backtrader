@@ -69,18 +69,26 @@ class BitmexPortfolio(object):
         d = dict( (k,v) for k, v in [(s, 0) for s in self.instruments] )
         d['datetime'] = self.start_date
         d['total'] = 0.0
+        d['total-USD'] = 0.0
 
         positions = self.exchange.private_get_position()
 
         for p in positions:
           s = from_exchange_to_standard_notation('bitmex', p['symbol'])
           price = self.data.get_latest_bar_value('bitmex', s, "close") or 0
+          btc_price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', "close") or 0
           quantity = p['currentQty']
           if s in self.instruments:
             d['bitmex-{}'.format(s)] = quantity
             d['bitmex-{}-price'.format(s)] = price
+            d['bitmex-{}-in-BTC'.format(s)] = quantity * price
+            d['bitmex-{}-in-USD'.format(s)] = quantity * price * btc_price
             d['bitmex-{}-leverage'.format(s)] = 1
             d['total'] += quantity * price
+            d['total-USD'] += quantity * price * btc_price
+
+
+        print(d)
 
         return d
 
@@ -90,20 +98,19 @@ class BitmexPortfolio(object):
         value of the portfolio across all symbols.
         """
         d = {}
-        s = 'BTC'
         d['datetime'] = self.start_date
 
         response = self.exchange.fetch_balance()
         balance = response['total']['BTC']
         available_balance = response['total']['BTC']
-        price = self.data.get_latest_bar_value('bitmex', '{}/USD'.format(s), "close")
+        price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', "close")
 
-        d['bitmex-{}-available-balance'.format(s)] = available_balance
-        d['bitmex-{}-balance'.format(s)] = balance
-        d['bitmex-{}-price'.format(s)] = price
-        d['bitmex-{}-value'.format(s)] = balance * price
-        d['bitmex-{}-fill'.format(s)] = ''
-        d['total'] = balance * price
+        d['bitmex-BTC-available-balance'] = available_balance
+        d['bitmex-BTC-balance'] = balance
+        d['bitmex-BTC-price'] = price
+        d['bitmex-BTC-value'] = balance * price
+        d['bitmex-BTC-fill'] = ''
+        d['total-USD'] = balance * price
         d['commission'] = 0
 
         return d
@@ -123,12 +130,21 @@ class BitmexPortfolio(object):
         dp['datetime'] = latest_datetime
 
         for s in self.instruments:
+          quantity = self.current_positions['bitmex-{}'.format(s)]
+          price = self.current_positions['bitmex-{}-price'.format(s)]
+          btc_price = self.current_positions['bitmex-BTC-price']
           dp['bitmex-{}'.format(s)] = self.current_positions['bitmex-{}'.format(s)]
+          dp['bitmex-{}-price'.format(s)] = self.current_positions['bitmex-{}-price'.format(s)]
+          dp['bitmex-{}-in-BTC'.format(s)] = self.current_positions['bitmex-{}-in-BTC'.format(s)]
+          dp['bitmex-{}-in-USD'.format(s)] = self.current_positions['bitmex-{}-in-USD'.format(s)]
 
           if 'bitmex-{}-leverage'.format(s) in self.current_positions:
             dp['bitmex-{}-leverage'.format(s)] = self.current_positions['bitmex-{}-leverage'.format(s)]
           else:
             dp['bitmex-{}-leverage'.format(s)] = 0
+
+          dp['total'] += quantity * price
+          dp['total-USD'] += quantity * price * btc_price
 
         print(dp)
 
@@ -152,7 +168,7 @@ class BitmexPortfolio(object):
           dh['bitmex-{}-price'.format(s)] = price
           dh['bitmex-{}-value'.format(s)] = balance * price
           dh['bitmex-{}-fill'.format(s)] = self.current_holdings['bitmex-{}-fill'.format(s)]
-          dh['total'] += balance * price
+          dh['total-USD'] += balance * price
 
         dh['commission'] += 0.0
 
@@ -194,18 +210,17 @@ class BitmexPortfolio(object):
         if fill.direction == 'SELL':
             fill_dir = -1
 
-        self.current_holdings['total'] = 0
+        balance = balances['BTC']
+        available_balance = balances['BTC']
+        price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', "close")
 
         # Update holdings list with new quantities
-        for s in balances:
-          balance = balances[s]
-          price = self.data.get_latest_bar_value('bitmex', '{}/USD'.format(s), "close")
-          self.current_holdings[symbol] = balance
-          self.current_holdings['bitmex-{}-price'.format(s)] = price
-          self.current_holdings['bitmex-{}-value'.format(s)] = balance * price
-          self.current_holdings['bitmex-{}-fill'.format(s)] = fill.direction
-          self.current_holdings['total'] += balance * price
-          self.current_holdings['commission'] += fill.commission
+        self.current_holdings['bitmex-BTC-available-balance'] = available_balance
+        self.current_holdings['bitmex-BTC-balance'] = balance
+        self.current_holdings['bitmex-BTC-price'] = price
+        self.current_holdings['bitmex-BTC-value'] = balance * price
+        self.current_holdings['bitmex-BTC-fill'] = fill.direction
+        self.current_holdings['commission'] += fill.commission
 
 
     def update_positions_from_fill(self, fill):
@@ -221,10 +236,14 @@ class BitmexPortfolio(object):
         for p in positions:
           s = from_exchange_to_standard_notation('bitmex', p['symbol'])
           price = self.data.get_latest_bar_value('bitmex', s, "close")
+          btc_price = self.data.get_latest_bar_value('bitmex', 'XBTUSD', 'close')
           quantity = p['currentQty']
           if s in self.instruments:
             self.current_positions['bitmex-{}'.format(s)] = quantity
+            self.current_positions['bitmex-BTC-price'] = btc_price
             self.current_positions['bitmex-{}-price'.format(s)] = price
+            self.current_positions['bitmex-{}-in-BTC'.format(s)] = quantity * price
+            self.current_positions['bitmex-{}-in-USD'.format(s)] = quantity * price * btc_price
             self.current_positions['bitmex-{}-leverage'.format(s)] = 1
 
 
@@ -241,10 +260,11 @@ class BitmexPortfolio(object):
             price = self.data.get_latest_bar_value('bitmex', sig.symbol, "close")
             direction = 0
             current_quantity = self.current_positions['bitmex-{}'.format(sig.symbol)]
-            target_quantity = direction * available_balance * sig.strength / total_strength
+            target_allocation = direction * available_balance * sig.strength / total_strength
+            target_quantity = floor(target_allocation / price)
 
             side = 'buy' if (target_quantity - current_quantity) > 0 else 'sell'
-            quantity = floor(abs(target_quantity - current_quantity))
+            quantity = abs(target_quantity - current_quantity)
 
             if (quantity == 0):
                 continue
@@ -259,10 +279,11 @@ class BitmexPortfolio(object):
             price = self.data.get_latest_bar_value('bitmex', sig.symbol, "close")
             direction = { 'LONG': 1, 'SHORT': -1 }[sig.signal_type]
             current_quantity = self.current_positions['bitmex-{}'.format(sig.symbol)]
-            target_quantity = direction * available_balance * sig.strength / total_strength
+            target_allocation = direction * available_balance * sig.strength / total_strength
+            target_quantity = floor(target_allocation / price)
 
             side = 'buy' if (target_quantity - current_quantity) > 0 else 'sell'
-            quantity = floor(abs(target_quantity - current_quantity))
+            quantity = abs(target_quantity - current_quantity)
 
             if (quantity == 0):
                 continue

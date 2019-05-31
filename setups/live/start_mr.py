@@ -9,11 +9,13 @@ if __name__ == "__main__" and __package__ is None:
     path.append(dir(dir(path[0])))
     __package__ = "live"
 
+import sys
 import math
 import asyncio
 import datetime
-from itertools import product
+import warnings
 
+from itertools import product
 from strategies.crypto.mr_11 import OLSMeanReversionStrategy
 from event import SignalEvent
 from trader import CryptoLiveTrade
@@ -21,12 +23,16 @@ from datahandler.crypto import LiveDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import BitmexPortfolio
 from datetime import datetime, timedelta
+from configuration import Configuration
+
+if not sys.warnoptions:
+    warnings.simplefilter("ignore")
 
 if __name__ == "__main__":
     delta = timedelta(minutes=1)
     start_date = datetime.min + math.ceil((datetime.now() - datetime.min) / delta) * delta #round to the next minute
 
-    configuration = {
+    configuration = Configuration({
       'result_dir' : '../results',
       'exchange_names' : ['bitmex'],
       'assets': { 'bitmex': ['BTC'] },
@@ -34,7 +40,7 @@ if __name__ == "__main__":
       'ohlcv_window': 10, #receive the one minute candles
       'heartbeat' : 1.00,
       'start_date' : start_date
-    }
+    })
 
     trader = CryptoLiveTrade(
         configuration, LiveDataHandler, SimulatedCryptoExchangeExecutionHandler,
@@ -42,5 +48,3 @@ if __name__ == "__main__":
     )
 
     trader.start_trading()
-
-    # asyncio.run(trader.start_trading())

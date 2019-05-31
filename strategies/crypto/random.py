@@ -10,7 +10,7 @@ from datetime import datetime
 import random
 
 from .strategy import Strategy
-from event import SignalEvent
+from event import SignalEvent, SignalEvents
 from trader import CryptoBacktest
 from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
@@ -49,6 +49,7 @@ class RandomStrategy(Strategy):
         if event.type == 'MARKET':
           y_signal = None
           x_signal = None
+          id = None
           p0 = self.pair[0]
           p1 = self.pair[1]
           dt = self.datetime
@@ -57,6 +58,7 @@ class RandomStrategy(Strategy):
           if self.long_market:
             if random.choice([True, False]):
               print('EXIT,EXIT')
+              id = 'EXIT,EXIT'
               self.long_market = False
               y_signal = SignalEvent(1, ex, p0, dt, 'EXIT', 1.0)
               x_signal = SignalEvent(1, ex, p1, dt, 'EXIT', 1.0)
@@ -64,6 +66,7 @@ class RandomStrategy(Strategy):
           elif self.short_market:
             if random.choice([True, False]):
               print('EXIT,EXIT')
+              id = 'EXIT,EXIT'
               self.short_market = False
               y_signal = SignalEvent(1, ex, p0, dt, 'EXIT', 1.0)
               x_signal = SignalEvent(1, ex, p1, dt, 'EXIT', 1.0)
@@ -72,15 +75,17 @@ class RandomStrategy(Strategy):
             choice = random.choice([1,2,3,4])
             if choice == 1:
               print('LONG,SHORT')
+              id = 'LONG,SHORT'
               self.long_market = True
               y_signal = SignalEvent(1, ex, p0, dt, 'LONG', 1.0)
               x_signal = SignalEvent(1, ex, p1, dt, 'SHORT', 1.0)
             elif choice == 2:
               print('SHORT,LONG')
+              id = 'SHORT,LONG'
               self.short_market = True
               y_signal = SignalEvent(1, ex, p0, dt, 'SHORT', 1.0)
               x_signal = SignalEvent(1, ex, p1, dt, 'LONG', 1.0)
 
           if y_signal is not None and x_signal is not None:
-              self.events.put(y_signal)
-              self.events.put(x_signal)
+              events = SignalEvents([x_signal, y_signal], id)
+              self.events.put(events)

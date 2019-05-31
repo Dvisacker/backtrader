@@ -1,33 +1,18 @@
 # Python
-
-# try to call a unified method
-# try:
-#     response = await exchange.fetch_order_book('ETH/BTC')
-#     print(ticker)
-# except ccxt.NetworkError as e:
-#     print(exchange.id, 'fetch_order_book failed due to a network error:', str(e))
-#     # retry or whatever
-#     # ...
-# except ccxt.ExchangeError as e:
-#     print(exchange.id, 'fetch_order_book failed due to exchange error:', str(e))
-#     # retry or whatever
-#     # ...
-# except Exception as e:
-#     print(exchange.id, 'fetch_order_book failed with:', str(e))
-#     # retry or whatever
-#     # ...
-
-
 from __future__ import print_function
 
 import datetime
 import time
 import os
 import ccxt
+import json
 
 from .execution import ExecutionHandler
 from abc import ABCMeta, abstractmethod
-from event import FillEvent, OrderEvent
+from event import FillEvent, OrderEvent, BulkOrderEvent
+from utils.helpers import from_standard_to_exchange_notation
+
+
 
 try:
     import Queue as queue
@@ -63,7 +48,6 @@ class LiveExecutionHandler(ExecutionHandler):
         """Handles of server replies"""
         # Handle open order orderId processing
 
-
     def create_order(self, order_type, quantity, action):
         """Create an Order object (Market/Limit) to go long/short.
         order_type - 'MKT', 'LMT' for Market or Limit orders
@@ -83,7 +67,6 @@ class LiveExecutionHandler(ExecutionHandler):
         server message behaviour.
         """
 
-
     def create_fill(self, msg):
         """
         Handles the creation of the FillEvent that will be
@@ -91,13 +74,11 @@ class LiveExecutionHandler(ExecutionHandler):
         being filled.
         """
 
-
     def create_market_order(self, exchange, symbol, type, side, amount, params):
         """
         Creates a market order on the bitmex exchange
         """
         order = exchange.create_order(symbol, side, amount, params)
-        print(order)
 
         return order
 
@@ -106,7 +87,6 @@ class LiveExecutionHandler(ExecutionHandler):
         Creates a limit order on the bitmex exchange
         """
         order = exchange.create_order(symbol, side, amount, price, params)
-        print(order)
 
         return order
 
@@ -132,19 +112,17 @@ class LiveExecutionHandler(ExecutionHandler):
         filled = True
         fill_cost = price
 
-        # Create a fill event object
-        fill = FillEvent(
-            datetime.datetime.utcnow(), symbol,
-            exchange, filled, direction, fill_cost
-        )
+      # Create a fill event object
+      fill = FillEvent(
+          datetime.datetime.utcnow(), symbol,
+          exchange, filled, direction, fill_cost
+      )
 
-        # Make sure that multiple messages don't create
-        # additional fills.
-        self.fill_dict[order_id]["filled"] = True
-        # Place the fill event onto the event queue
-        self.events.put(fill)
-
-
+      # Make sure that multiple messages don't create
+      # additional fills.
+      self.fill_dict[order_id]["filled"] = True
+      # Place the fill event onto the event queue
+      self.events.put(fill)
 
     def execute_market_order(self, event):
       exchange = event.exchange
@@ -152,8 +130,10 @@ class LiveExecutionHandler(ExecutionHandler):
       order_type = event.order_type
       quantity = event.quantity
       direction = event.direction
+      params = event.params
 
-      order = self.exchanges[event.exchange].create_order(symbol, order_type, direction, quantity)
+      order = self.exchanges[event.exchange].create_order(symbol, order_type, direction, quantity, None, params)
+
       order_id = order['id']
       price = order['price']
 
@@ -167,16 +147,21 @@ class LiveExecutionHandler(ExecutionHandler):
         "filled": filled,
         }
 
-        fill_cost = price
-
         # Create a fill event object
         fill = FillEvent(
             datetime.datetime.utcnow(), symbol,
-            exchange, filled, direction, fill_cost
+            exchange, filled, direction, price
         )
 
         # Place the fill event onto the event queue
         self.events.put(fill)
+
+    def execute_cancel_all_orders(self, event):
+      exchange = event.exchange
+      symbol = from_standard_to_exchange_notation(exchange, event.symbol)
+
+      params = { 'symbol': symbol }
+      self.exchanges[exchange].private_delete_order_all(params)
 
 
     def execute_order(self, event):
@@ -185,10 +170,76 @@ class LiveExecutionHandler(ExecutionHandler):
       event - Contains an Event object with order information.
       """
       if event.type == 'ORDER':
-        if event.order_type == "Market":
+        if event.order_type == "Market" or event.order_type == "MarketIfTouched" or event.order_type == "Stop":
           self.execute_market_order(event)
         elif event.order_type == "Limit":
           self.execute_limit_order(event)
+        elif event.order_type == "CancelAll":
+          self.execute_cancel_all_orders(event)
 
       time.sleep(1)
       self.order_id += 1
+
+
+
+
+
+
+
+
+
+
+    # def execute_orders(self, event):
+    #   if event.type == "BULK_ORDER":
+    #     self.execute_bulk_order(event)
+
+
+
+    # def execute_bulk_order(self, event):
+    #   events = event.events
+    #   orders = []
+
+    #   for e in events:
+    #     # Adapt direction
+    #     direction = { 'sell': 'Sell', 'buy': 'Buy' }[e.direction]
+    #     order = {
+    #       "symbol": from_standard_to_exchange_notation(e.exchange, e.symbol),
+    #       "side": direction,
+    #       "ordType": e.order_type,
+    #       "orderQty": e.quantity or 1
+    #     }
+
+    #     if 'stopPx' in e.params:
+    #       order['stopPx'] = e.params['stopPx']
+
+    #     if 'execInst' in e.params:
+    #       order['execInst'] = e.params['execInst']
+
+    #     orders.append(order)
+
+
+    #   order_payload = json.dumps(orders)
+    #   payload = { 'orders': order_payload }
+    #   print(payload)
+    #   result = self.exchanges['bitmex'].private_post_order_bulk(payload)
+    #   print(result)
+
+
+
+
+# try to call a unified method
+# try:
+#     response = await exchange.fetch_order_book('ETH/BTC')
+#     print(ticker)
+# except ccxt.NetworkError as e:
+#     print(exchange.id, 'fetch_order_book failed due to a network error:', str(e))
+#     # retry or whatever
+#     # ...
+# except ccxt.ExchangeError as e:
+#     print(exchange.id, 'fetch_order_book failed due to exchange error:', str(e))
+#     # retry or whatever
+#     # ...
+# except Exception as e:
+#     print(exchange.id, 'fetch_order_book failed with:', str(e))
+#     # retry or whatever
+#     # ...

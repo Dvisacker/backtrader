@@ -10,6 +10,7 @@ if __name__ == "__main__" and __package__ is None:
     __package__ = "setups"
 
 import math
+import warnings
 
 from itertools import product
 from strategies.crypto.mr import OLSMeanReversionStrategy
@@ -21,6 +22,9 @@ from portfolio import CryptoPortfolio
 from datetime import datetime, timedelta
 from configuration import Configuration
 
+if not sys.warnoptions:
+    warnings.simplefilter("ignore")
+
 if __name__ == "__main__":
     configuration = Configuration({
       'csv_dir' : '../../data',
@@ -28,9 +32,9 @@ if __name__ == "__main__":
       'instruments': { 'bitmex': ['BTC/USD', 'ETH/USD'] },
       'initial_capital' : 100000.0,
       'ohlcv_window': 60,
-      'graph_refresh_period': 100,
+      'graph_refresh_period': 500,
       'heartbeat' : 0,
-      'start_date' : datetime(2019, 3, 25, 0, 0, 0),
+      'start_date' : datetime(2019, 3, 26, 0, 0, 0),
     })
 
     backtest = CryptoBacktest(

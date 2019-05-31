@@ -52,6 +52,12 @@ class SignalEvent(Event):
         self.signal_type = signal_type
         self.strength = strength
 
+class SignalEvents(object):
+      def __init__(self, events, id):
+        self.type = 'SIGNAL'
+        self.id = id
+        self.events = events
+
 
 class OrderEvent(Event):
     """
@@ -60,7 +66,7 @@ class OrderEvent(Event):
     quantity and a direction.
     """
 
-    def __init__(self, exchange, symbol, order_type, quantity, direction, leverage=None):
+    def __init__(self, exchange, symbol, order_type, quantity=0, direction='', leverage=1, params={}):
         """
         Initialises the order type, setting whether it is
         a Market order ('MKT') or Limit order ('LMT'), has
@@ -80,8 +86,8 @@ class OrderEvent(Event):
         self.order_type = order_type
         self.quantity = quantity
         self.direction = direction
-        self.leverage = leverage if leverage is not None else 0
-
+        self.leverage = leverage
+        self.params = params
 
     def print_order(self):
         """
@@ -91,6 +97,11 @@ class OrderEvent(Event):
             "Order: Exchange=%s, Symbol=%s, Type=%s, Quantity=%s, Direction=%s" %
             (self.exchange, self.symbol, self.order_type, self.quantity, self.direction)
         )
+
+class BulkOrderEvent(object):
+      def __init__(self, events):
+        self.type = 'BULK_ORDER'
+        self.events = events
 
 
 class FillEvent(Event):
@@ -106,7 +117,7 @@ class FillEvent(Event):
     """
 
     def __init__(self, timeindex, symbol, exchange, quantity,
-                 direction, fill_cost, commission=None):
+                 direction, price, commission=None, leverage=None, entry_price=None):
         """
         Initialises the FillEvent object. Sets the symbol, exchange,
         quantity, direction, cost of fill and an optional
@@ -129,7 +140,13 @@ class FillEvent(Event):
         self.exchange = exchange
         self.quantity = quantity
         self.direction = direction
-        self.fill_cost = fill_cost
+        self.price = price
+        self.leverage = leverage
+
+        if entry_price is None:
+          self.entry_price = 0
+        else:
+          self.entry_price = entry_price
 
         # Calculate commission
         if commission is None:
@@ -151,3 +168,4 @@ class FillEvent(Event):
         else: # Greater than 500
             full_cost = max(1.3, 0.008 * self.quantity)
         return full_cost
+

@@ -14,6 +14,7 @@ import datetime
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+import warnings
 
 from itertools import product
 from strategies.crypto import OLSMeanReversionStrategy
@@ -23,6 +24,9 @@ from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import CryptoPortfolio
 from configuration import MultiMRConfiguration
+
+if not sys.warnoptions:
+    warnings.simplefilter("ignore")
 
 if __name__ == "__main__":
     strat_lookback = [50, 100, 200]

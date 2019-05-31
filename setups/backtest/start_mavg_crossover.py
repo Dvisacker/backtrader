@@ -13,6 +13,7 @@ import datetime
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+import warnings
 
 from strategies.crypto import MovingAverageCrossoverStrategy
 from event import SignalEvent
@@ -21,6 +22,9 @@ from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import CryptoPortfolio
 from configuration import Configuration
+
+if not sys.warnoptions:
+    warnings.simplefilter("ignore")
 
 if __name__ == "__main__":
     configuration = Configuration({

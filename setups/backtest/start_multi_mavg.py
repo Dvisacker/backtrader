@@ -14,6 +14,7 @@ import datetime
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+import warnings
 
 from itertools import product
 from strategies.crypto import MovingAverageCrossoverStrategy
@@ -22,6 +23,9 @@ from backtest import MultiCryptoBacktest
 from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import CryptoPortfolio
+
+if not sys.warnoptions:
+    warnings.simplefilter("ignore")
 
 def compute_param_grid(fixed_params_list, variable_params_list):
       fixed_params = [ [fixed_params_list[key]] for key in list(fixed_params_list.keys()) ]
