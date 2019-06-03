@@ -12,8 +12,6 @@ from abc import ABCMeta, abstractmethod
 from event import FillEvent, OrderEvent, BulkOrderEvent
 from utils.helpers import from_standard_to_exchange_notation
 
-
-
 try:
     import Queue as queue
 except ImportError:
@@ -124,16 +122,28 @@ class LiveExecutionHandler(ExecutionHandler):
       # Place the fill event onto the event queue
       self.events.put(fill)
 
+      # symbol = event.symbol
     def execute_market_order(self, event):
       exchange = event.exchange
-      symbol = event.symbol
+      # symbol = {
+      #   "ADA/BTC": "ADAXBT",
+      #   "BCH/BTC": "BCHXBT",
+      #   "EOS/BTC": "EOSXBT",
+      #   "ETH/BTC": "ETHXBT",
+      #   "LTC/BTC": "LTCXBT",
+      #   "TRX/BTC": "TRXXBT",
+      #   "XRP/BTC": "XRPXBT",
+      #   "BTC/USD": "XBTUSD",
+      #   "ETH/USD": "ETHUSD",
+      # }[event.symbol]
+
+      symbol = from_standard_to_exchange_notation(exchange, event.symbol)
       order_type = event.order_type
       quantity = event.quantity
       direction = event.direction
       params = event.params
 
       order = self.exchanges[event.exchange].create_order(symbol, order_type, direction, quantity, None, params)
-
       order_id = order['id']
       price = order['price']
 

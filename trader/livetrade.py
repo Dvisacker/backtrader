@@ -95,7 +95,7 @@ class CryptoLiveTrade(object):
                         # self.portfolio.update_graphs()
 
                     elif event.type == 'SIGNAL':
-                        self.signals += 1
+                        self.signals += len(event.events)
                         self.portfolio.update_signals(event)
 
                     elif event.type == 'ORDER':
@@ -137,5 +137,5 @@ class CryptoLiveTrade(object):
         """
         Simulates the backtest and outputs portfolio performance.
         """
-        self._run()
+        # self._run()
         Thread(target = self._run).start()

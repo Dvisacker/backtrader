@@ -90,20 +90,19 @@ class BitmexPortfolio(object):
         value of the portfolio across all symbols.
         """
         d = {}
-        s = 'BTC'
         d['datetime'] = self.start_date
 
         response = self.exchange.fetch_balance()
         balance = response['total']['BTC']
         available_balance = response['total']['BTC']
-        price = self.data.get_latest_bar_value('bitmex', '{}/USD'.format(s), "close")
+        price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', "close")
 
-        d['bitmex-{}-available-balance'.format(s)] = available_balance
-        d['bitmex-{}-balance'.format(s)] = balance
-        d['bitmex-{}-price'.format(s)] = price
-        d['bitmex-{}-value'.format(s)] = balance * price
-        d['bitmex-{}-fill'.format(s)] = ''
-        d['total'] = balance * price
+        d['bitmex-BTC-available-balance'] = available_balance
+        d['bitmex-BTC-balance'] = balance
+        d['bitmex-BTC-price'] = price
+        d['bitmex-BTC-value'] = balance * price
+        d['bitmex-BTC-fill'] = ''
+        d['total-USD'] = balance * price
         d['commission'] = 0
 
         return d

@@ -52,7 +52,7 @@ class MultiRandomStrategy(Strategy):
           signals = []
 
           for s in self.instruments:
-            choice = random.choice(range(len(self.instruments)))
+            choice = random.choice(range(20))
             if (state[s] != 'LONG' and state[s] != 'SHORT'):
               if choice == 1:
                 print('LONG {}'. format(s))
@@ -72,6 +72,6 @@ class MultiRandomStrategy(Strategy):
                 signal = SignalEvent(1, ex, s, dt, 'EXIT', 1.0)
                 signals.append(signal)
 
-            if signals is not None:
+            if signals:
               events = SignalEvents(signals, id)
               self.events.put(events)

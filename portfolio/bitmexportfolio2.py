@@ -66,6 +66,7 @@ class BitmexPortfolio(object):
         Constructs the positions list using the start_date
         to determine when the time index will begin.
         """
+
         d = dict( (k,v) for k, v in [(s, 0) for s in self.instruments] )
         d['datetime'] = self.start_date
         d['total'] = 0.0
@@ -73,22 +74,20 @@ class BitmexPortfolio(object):
 
         positions = self.exchange.private_get_position()
 
-        for p in positions:
-          s = from_exchange_to_standard_notation('bitmex', p['symbol'])
-          price = self.data.get_latest_bar_value('bitmex', s, "close") or 0
-          btc_price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', "close") or 0
-          quantity = p['currentQty']
-          if s in self.instruments:
-            d['bitmex-{}'.format(s)] = quantity
-            d['bitmex-{}-price'.format(s)] = price
-            d['bitmex-{}-in-BTC'.format(s)] = quantity * price
-            d['bitmex-{}-in-USD'.format(s)] = quantity * price * btc_price
-            d['bitmex-{}-leverage'.format(s)] = 1
-            d['total'] += quantity * price
-            d['total-USD'] += quantity * price * btc_price
+        for s in self.instruments:
+          price = self.data.get_latest_bar_value('bitmex', s, 'close') or 0
+          btc_price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', 'close')
 
+          ex_symbol = from_standard_to_exchange_notation('bitmex', s)
+          quantity = positions[ex_symbol]['currentQty'] if ex_symbol in positions else 0
 
-        print(d)
+          d['bitmex-{}'.format(s)] = quantity
+          d['bitmex-{}-price'.format(s)] = price
+          d['bitmex-{}-in-BTC'.format(s)] = quantity * price
+          d['bitmex-{}-in-USD'.format(s)] = quantity * price * btc_price
+          d['bitmex-{}-leverage'.format(s)] = 1
+          d['total'] += quantity * price
+          d['total-USD'] += quantity * price * btc_price
 
         return d
 
@@ -122,17 +121,20 @@ class BitmexPortfolio(object):
         current market data at this stage is known (OHLCV).
         Makes use of a MarketEvent from the events queue.
         """
+        print('Updating Time Index')
         latest_datetime = self.data.get_latest_bar_datetime('bitmex', self.instruments[0])
 
         # Update positions
         # ================
         dp = {}
         dp['datetime'] = latest_datetime
+        dp['total'] = 0
+        dp['total-USD'] = 0
 
         for s in self.instruments:
           quantity = self.current_positions['bitmex-{}'.format(s)]
           price = self.current_positions['bitmex-{}-price'.format(s)]
-          btc_price = self.current_positions['bitmex-BTC-price']
+          btc_price = self.current_positions['bitmex-BTC/USD-price']
           dp['bitmex-{}'.format(s)] = self.current_positions['bitmex-{}'.format(s)]
           dp['bitmex-{}-price'.format(s)] = self.current_positions['bitmex-{}-price'.format(s)]
           dp['bitmex-{}-in-BTC'.format(s)] = self.current_positions['bitmex-{}-in-BTC'.format(s)]
@@ -146,8 +148,6 @@ class BitmexPortfolio(object):
           dp['total'] += quantity * price
           dp['total-USD'] += quantity * price * btc_price
 
-        print(dp)
-
         # Append the current positions
         self.all_positions.append(dp)
 
@@ -156,7 +156,7 @@ class BitmexPortfolio(object):
         dh = {}
         dh['datetime'] = latest_datetime
         dh['commission'] = self.current_holdings['commission']
-        dh['total'] = self.current_holdings['total']
+        dh['total-USD'] = 0
 
         for s in self.assets:
           price = self.data.get_latest_bar_value('bitmex', '{}/USD'.format(s), "close")
@@ -174,8 +174,6 @@ class BitmexPortfolio(object):
 
           # Append the current holdings
         self.all_holdings.append(dh)
-
-        print(dh)
 
         for s in self.assets:
           self.current_holdings['bitmex-{}-fill'.format(s)] = 0
@@ -236,7 +234,7 @@ class BitmexPortfolio(object):
         for p in positions:
           s = from_exchange_to_standard_notation('bitmex', p['symbol'])
           price = self.data.get_latest_bar_value('bitmex', s, "close")
-          btc_price = self.data.get_latest_bar_value('bitmex', 'XBTUSD', 'close')
+          btc_price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', 'close')
           quantity = p['currentQty']
           if s in self.instruments:
             self.current_positions['bitmex-{}'.format(s)] = quantity
@@ -246,10 +244,15 @@ class BitmexPortfolio(object):
             self.current_positions['bitmex-{}-in-USD'.format(s)] = quantity * price * btc_price
             self.current_positions['bitmex-{}-leverage'.format(s)] = 1
 
-
     def rebalance_portfolio(self, signals):
-        available_balance = self.current_holdings['total']
-        total_strength = functools.reduce(lambda a,b : a.strength + b.strength, signals.events)
+        """
+        Rebalances the portfolio based on an array of signals. The amount of funds allocated to each
+        signal depends on the relative strength given to each signal by the strategy module.
+        Parameters:
+        signals - Array of signal events
+        """
+        available_balance = self.current_holdings['bitmex-BTC-available-balance']
+        total_strength = len(signals.events)
         exchange = 'bitmex'
         new_order_events = []
         cancel_orders_events = []
