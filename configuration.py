@@ -33,6 +33,9 @@ class Configuration(object):
       if 'assets' in configuration:
         self.assets = configuration['assets']
 
+      if 'default_position_size' in configuration:
+        self.default_position_size = configuration['default_position_size']
+
 
 class MultiMRConfiguration(Configuration):
 

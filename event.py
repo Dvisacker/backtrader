@@ -109,7 +109,7 @@ class OrderEvent(Event):
 
     def print_order(self):
         """
-        Outputs the values within the Order.
+        Outputs the values within the order
         """
         print(
             "Order: Exchange=%s, Symbol=%s, Type=%s, Quantity=%s, Direction=%s" %

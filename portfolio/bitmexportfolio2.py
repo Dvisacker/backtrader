@@ -53,15 +53,10 @@ class BitmexPortfolio(object):
         self.assets = configuration.assets['bitmex']
         self.start_date = configuration.start_date
         self.result_dir = configuration.result_dir
-
-        self.max_positions = 2
-        self.max_absolute_position_size = 0.05
-        self.max_relative_position_size = 0.05
-        self.current_position_nb = 0
+        self.default_position_size = configuration.default_position_size
 
         self.current_positions = self.construct_current_positions()
         self.all_positions = [ self.current_positions ]
-
         self.current_holdings = self.construct_current_holdings()
         self.all_holdings = [ self.current_holdings ]
 
@@ -249,7 +244,7 @@ class BitmexPortfolio(object):
           self.current_positions['bitmex-{}-in-USD'.format(s)] = quantity * price * btc_price
           self.current_positions['bitmex-{}-leverage'.format(s)] = 1
 
-    def rebalance_portfolio(self, signals):
+    def rebalance_portfolio_2(self, signals):
         """
         Rebalances the portfolio based on an array of signals. The amount of funds allocated to each
         signal depends on the relative strength given to each signal by the strategy module.
@@ -263,9 +258,12 @@ class BitmexPortfolio(object):
         cancel_orders_events = []
         events = []
 
+
+
         for sig in signals.events:
           sig.print_signal()
-          # TODO Find out why in some cases the price is equal to 0.
+
+
           price = self.data.get_latest_bar_value('bitmex', sig.symbol, "close")
           if not price:
             continue
@@ -275,15 +273,78 @@ class BitmexPortfolio(object):
             close_position_order = OrderEvent(exchange, sig.symbol, 'ClosePosition')
             cancel_orders_events.append(cancel_open_orders)
             new_order_events.append(close_position_order)
-
           else:
             direction = { 'LONG': 1, 'SHORT': -1 }[sig.signal_type]
-            current_quantity = self.current_positions['bitmex-{}'.format(sig.symbol)]
             target_allocation = direction * available_balance * sig.strength / total_strength
+            current_quantity = self.current_positions['bitmex-{}'.format(sig.symbol)]
             target_quantity = floor(target_allocation / price)
 
             side = 'buy' if (target_quantity - current_quantity) > 0 else 'sell'
             quantity = abs(target_quantity - current_quantity)
+
+            if (quantity == 0):
+                continue
+
+            order = OrderEvent(exchange, sig.symbol, 'Market', quantity, side, 1)
+            precision = get_precision(sig.symbol)
+
+            if side == 'buy':
+              other_side = 'sell'
+              stop_loss_stop_px = truncate(0.9 * price, precision)
+              take_profit_stop_px = truncate(1.1 * price, precision)
+            elif side == 'sell':
+              other_side = 'buy'
+              stop_loss_stop_px = truncate(1.1 * price, precision)
+              take_profit_stop_px = truncate(0.9 * price, precision)
+
+            stop_loss_params = { 'stopPx': stop_loss_stop_px, 'execInst': 'LastPrice,Close' }
+            stop_loss = OrderEvent(exchange, sig.symbol, 'Stop', None, other_side, 1, stop_loss_params)
+            take_profit_params = { 'stopPx': take_profit_stop_px, 'execInst': 'LastPrice,Close' }
+            take_profit = OrderEvent(exchange, sig.symbol, 'MarketIfTouched', None, other_side, 1, take_profit_params)
+            cancel_other_orders = OrderEvent(exchange, sig.symbol, 'CancelAll')
+
+            new_order_events += [order, stop_loss, take_profit]
+            cancel_orders_events.append(cancel_other_orders)
+
+        events = cancel_orders_events + new_order_events
+        return events
+
+
+    def rebalance_portfolio(self, signals):
+        """
+        Rebalances the portfolio based on an array of signals. The amount of funds allocated to each
+        signal depends on the relative strength given to each signal by the strategy module.
+        Parameters:
+        signals - Array of signal events
+        """
+        available_balance = self.current_holdings['bitmex-BTC-available-balance']
+        exchange = 'bitmex'
+        new_order_events = []
+        cancel_orders_events = []
+        events = []
+        default_position_size = self.default_position_size
+
+        for sig in signals.events:
+          sig.print_signal()
+          price = self.data.get_latest_bar_value('bitmex', sig.symbol, "close")
+          if not price:
+            continue
+
+          if sig.signal_type == "EXIT":
+            cancel_open_orders = OrderEvent(exchange, sig.symbol, 'CancelAll')
+            close_position_order = OrderEvent(exchange, sig.symbol, 'ClosePosition')
+            cancel_orders_events.append(cancel_open_orders)
+            new_order_events.append(close_position_order)
+          else:
+            direction = { 'LONG': 1, 'SHORT': -1 }[sig.signal_type]
+            target_allocation = direction * default_position_size * sig.strength
+            current_quantity = self.current_positions['bitmex-{}'.format(sig.symbol)]
+            target_quantity = floor(target_allocation / price)
+            side = 'buy' if (target_quantity - current_quantity) > 0 else 'sell'
+            quantity = abs(target_quantity - current_quantity)
+
+            if (target_allocation > available_balance):
+                continue
 
             if (quantity == 0):
                 continue
