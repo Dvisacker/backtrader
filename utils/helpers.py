@@ -10,11 +10,31 @@ def truncate(n, decimals=0):
   multiplier = 10 ** decimals
   return int(n * multiplier) / multiplier
 
+def get_precision(symbol):
+  return {
+     "BCH/BTC": 4,
+      "BCHM19": 4,
+     "EOS/BTC": 6,
+      "EOSM19": 6,
+     "ETH/BTC": 4,
+      "ETHM19": 4,
+      "ETHXBT": 4,
+     "LTC/BTC": 5,
+      "LTCM19": 5,
+     "TRX/BTC": 7,
+      "TRXM19": 7,
+     "XRP/BTC": 7,
+      "XRPM19": 7,
+     "BTC/USD": 0,
+      "XBTM19": 0,
+     "ETH/USD": 1,
+      "ETHUSD": 1,
+  }[symbol]
+
 def date_parse(timestamp):
     """
     Parses timestamps into python datetime objects.
     """
-
     return datetime.fromtimestamp(int(timestamp))
 
 def move_figure(f, x, y):
@@ -240,7 +260,6 @@ def from_standard_to_exchange_notation(exchange, symbol):
     return symbol
   else:
     return symbol
-
 
 def get_ohlcv_window(period):
   if period == 60:

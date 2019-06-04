@@ -52,11 +52,29 @@ class SignalEvent(Event):
         self.signal_type = signal_type
         self.strength = strength
 
+    def print_signal(self):
+        """
+        Outputs the values within the Order.
+        """
+        print(
+            "Order: Exchange=%s, Symbol=%s, Type=%s, Strength=%s" %
+            (self.exchange, self.symbol, self.signal_type, self.strength)
+        )
+
 class SignalEvents(object):
       def __init__(self, events, id):
         self.type = 'SIGNAL'
         self.id = id
         self.events = events
+
+      def print_signals(self):
+        """
+        Outputs the values of all signals within the SignalEvents object
+        """
+        print(
+            "Order: Exchange=%s, Symbol=%s, Type=%s, Strength=%s" %
+            (self.exchange, self.symbol, self.signal_type, self.strength)
+        )
 
 
 class OrderEvent(Event):
@@ -153,6 +171,15 @@ class FillEvent(Event):
             self.commission = self.calculate_ib_commission()
         else:
             self.commission = commission
+
+    def print_fill(self):
+        """
+        Outputs the values within the Order.
+        """
+        print(
+            "Order: Exchange=%s, Symbol=%s, Quantity=%s, Direction=%s, Price=%s" %
+            (self.exchange, self.symbol, self.quantity, self.direction, self.price)
+        )
 
     def calculate_ib_commission(self):
         """

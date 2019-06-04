@@ -59,6 +59,8 @@ class OHLCV(AggregateCallback):
                 # Case where the OHLCV for this instrument is not initialized
                 if i not in self.data and i not in self.previous_data:
                   self.data[i] = {'open': 0, 'high': 0, 'low': 0, 'close': 0, 'volume': 0, 'vwap': 0}
+                  self.data[i]['timestamp'] = self.last_update
+                  self.data[i]['time'] = datetime.timestamp(self.last_update)
 
                 # We add fields for pairs that are not updated.
                 elif i not in self.data:

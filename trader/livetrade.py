@@ -88,7 +88,7 @@ class CryptoLiveTrade(object):
                 pass
             else:
                 if event is not None:
-                    print(event.type)
+                    print('Receiving {} event. Current Queue size: {}'.format(event.type, self.events.qsize()))
                     if event.type == 'MARKET':
                         self.strategy.calculate_signals(event)
                         self.portfolio.update_timeindex(event)
@@ -99,6 +99,7 @@ class CryptoLiveTrade(object):
                         self.portfolio.update_signals(event)
 
                     elif event.type == 'ORDER':
+                        event.print_order()
                         self.orders += 1
                         self.execution_handler.execute_order(event)
 

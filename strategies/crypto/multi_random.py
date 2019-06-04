@@ -48,30 +48,31 @@ class MultiRandomStrategy(Strategy):
           id = 1
           dt = self.datetime
           ex = self.exchange
-          state = self.state
           signals = []
 
           for s in self.instruments:
+            # For each instrument, we have 1/10 chance to take a position. Respectively 1/20 and 1/20 for long/short
             choice = random.choice(range(20))
-            if (state[s] != 'LONG' and state[s] != 'SHORT'):
+            if (self.state[s] != 'LONG' and self.state[s] != 'SHORT'):
               if choice == 1:
-                print('LONG {}'. format(s))
-                state[s] = 'LONG'
+                print('LONG {}'.format(s))
+                self.state[s] = 'LONG'
                 signal = SignalEvent(1, ex, s, dt, 'LONG', 1.0)
                 signals.append(signal)
               elif choice == 2:
                 print('SHORT {}'.format(s))
-                state[s] = 'SHORT'
+                self.state[s] = 'SHORT'
                 signal = SignalEvent(1, ex, s, dt, 'SHORT', 1.0)
                 signals.append(signal)
 
             else:
-              if choice == 1:
+              # For each instrument, we have 1/10 chance to exit a position
+              if choice == 1 or choice == 2:
                 print('EXIT {}'.format(s))
-                state[s] = 'EXIT'
+                self.state[s] = 'EXIT'
                 signal = SignalEvent(1, ex, s, dt, 'EXIT', 1.0)
                 signals.append(signal)
 
-            if signals:
-              events = SignalEvents(signals, id)
-              self.events.put(events)
+          if signals:
+            events = SignalEvents(signals, id)
+            self.events.put(events)

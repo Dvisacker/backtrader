@@ -135,7 +135,6 @@ class LiveDataHandler(DataHandler):
           self.symbol_data['bitmex'][symbol].append(tick)
           self.latest_symbol_data['bitmex'][symbol].append(tick)
 
-      print(self.symbol_data['bitmex'])
       self.events.put(MarketEvent())
 
     def _get_new_bar(self, exchange, symbol):
@@ -194,9 +193,6 @@ class LiveDataHandler(DataHandler):
             raise
         else:
             return bars_list[-1][val_type]
-            # print(bars_list[-1])
-            # return getattr(b)
-            # return getattr(bars_list[-1], val_type)
 
     def get_latest_bars_values(self, exchange, symbol, val_type, N=1):
         """

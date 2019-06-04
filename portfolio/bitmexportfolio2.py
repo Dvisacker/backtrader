@@ -22,7 +22,7 @@ import seaborn as sns; sns.set()
 
 from event import FillEvent, OrderEvent, BulkOrderEvent
 from performance import create_sharpe_ratio, create_drawdowns
-from utils import ceil_dt, from_exchange_to_standard_notation, from_standard_to_exchange_notation, truncate
+from utils import ceil_dt, from_exchange_to_standard_notation, from_standard_to_exchange_notation, truncate, get_precision
 
 class BitmexPortfolio(object):
     """
@@ -33,7 +33,7 @@ class BitmexPortfolio(object):
 
     def __init__(self, data, events, configuration, exchanges):
         """
-        Initialises the portfolio with data and an event queue.
+        Initializes the portfolio with data and an event queue.
         Also includes a starting datetime index and initial capital
         (USD unless otherwise stated).
         Parameters:
@@ -53,6 +53,11 @@ class BitmexPortfolio(object):
         self.assets = configuration.assets['bitmex']
         self.start_date = configuration.start_date
         self.result_dir = configuration.result_dir
+
+        self.max_positions = 2
+        self.max_absolute_position_size = 0.05
+        self.max_relative_position_size = 0.05
+        self.current_position_nb = 0
 
         self.current_positions = self.construct_current_positions()
         self.all_positions = [ self.current_positions ]
@@ -231,18 +236,18 @@ class BitmexPortfolio(object):
         # Check whether the fill is a buy or sell
         positions = self.exchange.private_get_position()
 
-        for p in positions:
-          s = from_exchange_to_standard_notation('bitmex', p['symbol'])
-          price = self.data.get_latest_bar_value('bitmex', s, "close")
+        for s in self.instruments:
+          price = self.data.get_latest_bar_value('bitmex', s, 'close') or 0
           btc_price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', 'close')
-          quantity = p['currentQty']
-          if s in self.instruments:
-            self.current_positions['bitmex-{}'.format(s)] = quantity
-            self.current_positions['bitmex-BTC-price'] = btc_price
-            self.current_positions['bitmex-{}-price'.format(s)] = price
-            self.current_positions['bitmex-{}-in-BTC'.format(s)] = quantity * price
-            self.current_positions['bitmex-{}-in-USD'.format(s)] = quantity * price * btc_price
-            self.current_positions['bitmex-{}-leverage'.format(s)] = 1
+          exchange_symbol = from_standard_to_exchange_notation('bitmex', s)
+          quantity = positions[exchange_symbol]['currentQty'] if exchange_symbol in positions else 0
+
+          self.current_positions['bitmex-{}'.format(s)] = quantity
+          self.current_positions['bitmex-BTC-price'] = btc_price
+          self.current_positions['bitmex-{}-price'.format(s)] = price
+          self.current_positions['bitmex-{}-in-BTC'.format(s)] = quantity * price
+          self.current_positions['bitmex-{}-in-USD'.format(s)] = quantity * price * btc_price
+          self.current_positions['bitmex-{}-leverage'.format(s)] = 1
 
     def rebalance_portfolio(self, signals):
         """
@@ -258,28 +263,20 @@ class BitmexPortfolio(object):
         cancel_orders_events = []
         events = []
 
-        for (i, sig) in enumerate(signals.events):
+        for sig in signals.events:
+          sig.print_signal()
+          # TODO Find out why in some cases the price is equal to 0.
+          price = self.data.get_latest_bar_value('bitmex', sig.symbol, "close")
+          if not price:
+            continue
+
           if sig.signal_type == "EXIT":
-            price = self.data.get_latest_bar_value('bitmex', sig.symbol, "close")
-            direction = 0
-            current_quantity = self.current_positions['bitmex-{}'.format(sig.symbol)]
-            target_allocation = direction * available_balance * sig.strength / total_strength
-            target_quantity = floor(target_allocation / price)
-
-            side = 'buy' if (target_quantity - current_quantity) > 0 else 'sell'
-            quantity = abs(target_quantity - current_quantity)
-
-            if (quantity == 0):
-                continue
-
-            close_position_order = OrderEvent(exchange, sig.symbol, 'Market', quantity, side, 1)
-            cancel_other_orders = OrderEvent(exchange, sig.symbol, 'CancelAll')
+            cancel_open_orders = OrderEvent(exchange, sig.symbol, 'CancelAll')
+            close_position_order = OrderEvent(exchange, sig.symbol, 'ClosePosition')
+            cancel_orders_events.append(cancel_open_orders)
             new_order_events.append(close_position_order)
-            cancel_orders_events.append(cancel_other_orders)
 
           else:
-            order_type = 'Market'
-            price = self.data.get_latest_bar_value('bitmex', sig.symbol, "close")
             direction = { 'LONG': 1, 'SHORT': -1 }[sig.signal_type]
             current_quantity = self.current_positions['bitmex-{}'.format(sig.symbol)]
             target_allocation = direction * available_balance * sig.strength / total_strength
@@ -291,69 +288,36 @@ class BitmexPortfolio(object):
             if (quantity == 0):
                 continue
 
-            order = OrderEvent(exchange, sig.symbol, order_type, quantity, side, 1)
+            order = OrderEvent(exchange, sig.symbol, 'Market', quantity, side, 1)
+            precision = get_precision(sig.symbol)
 
             if side == 'buy':
               other_side = 'sell'
+              stop_loss_stop_px = truncate(0.9 * price, precision)
+              take_profit_stop_px = truncate(1.1 * price, precision)
             elif side == 'sell':
               other_side = 'buy'
-
-            if other_side == 'sell':
-              stop_loss_stop_px = truncate(1.1 * price)
-              take_profit_stop_px = truncate(0.9 * price)
-            elif other_side == 'buy':
-              stop_loss_stop_px = truncate(0.9 * price)
-              take_profit_stop_px = truncate(1.1 * price)
+              stop_loss_stop_px = truncate(1.1 * price, precision)
+              take_profit_stop_px = truncate(0.9 * price, precision)
 
             stop_loss_params = { 'stopPx': stop_loss_stop_px, 'execInst': 'LastPrice,Close' }
-            stop_loss = OrderEvent(exchange, sig.symbol, 'Stop', None, side, 1, stop_loss_params)
+            stop_loss = OrderEvent(exchange, sig.symbol, 'Stop', None, other_side, 1, stop_loss_params)
             take_profit_params = { 'stopPx': take_profit_stop_px, 'execInst': 'LastPrice,Close' }
-            take_profit = OrderEvent(exchange, sig.symbol, 'MarketIfTouched', None, side, 1, take_profit_params)
+            take_profit = OrderEvent(exchange, sig.symbol, 'MarketIfTouched', None, other_side, 1, take_profit_params)
             cancel_other_orders = OrderEvent(exchange, sig.symbol, 'CancelAll')
 
             new_order_events += [order, stop_loss, take_profit]
             cancel_orders_events.append(cancel_other_orders)
 
-
         events = cancel_orders_events + new_order_events
         return events
-
-    def generate_naive_order(self, signal):
-        """
-        Simply files an Order object as a constant quantity
-        sizing of the signal object, without risk management or
-        position sizing considerations.
-        Parameters:
-        signal - The tuple containing Signal information.
-        """
-        order = None
-        exchange = signal.exchange
-        symbol = signal.symbol
-        direction = signal.signal_type
-        market_quantity = 1
-        current_quantity = self.current_positions['bitmex-{}'.format(symbol)]
-        order_type = 'Market'
-
-        if direction == 'LONG' and current_quantity == 0:
-            order = OrderEvent(exchange, symbol, order_type, market_quantity, 'buy')
-        if direction == 'SHORT' and current_quantity == 0:
-            order = OrderEvent(exchange, symbol, order_type, market_quantity, 'sell')
-
-        if direction == 'EXIT' and current_quantity > 0:
-            order = OrderEvent(exchange, symbol, order_type, abs(current_quantity), 'sell')
-        if direction == 'EXIT' and current_quantity < 0:
-            order = OrderEvent(exchange, symbol, order_type, abs(current_quantity), 'buy')
-
-        return order
 
     def update_signal(self, event):
         """
         Acts on a SignalEvent to generate new orders
         based on the portfolio logic.
         """
-        if event.type == 'SIGNAL':
-            order_event = self.generate_naive_order(event)
-            self.events.put(order_event)
+        pass
 
 
     def update_signals(self, events):
