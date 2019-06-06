@@ -45,7 +45,7 @@ class MultiCryptoBacktest(object):
         self.params_names = configuration.params_names
         self.num_params = len(self.params_names)
         self.configuration = configuration
-        self.backtest_start_time = datetime.now()
+        self.backtest_start_time = datetime.utcnow()
 
         self.data_handler_cls = data_handler
         self.execution_handler_cls = execution_handler

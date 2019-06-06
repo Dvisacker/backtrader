@@ -21,7 +21,7 @@ from decimal import Decimal
 #     def __init__(self, *args, window=300, **kwargs):
 #         super().__init__(*args, **kwargs)
 
-#         now = datetime.now()
+#         now = datetime.utcnow()
 #         delta = timedelta(seconds=window)
 #         self.window = window
 #         self.start_time = datetime.min + math.ceil((now - datetime.min) / delta) * delta
@@ -41,7 +41,7 @@ from decimal import Decimal
 #         self.data[pair]['vwap'] += price * amount
 
 #     async def __call__(self, *, feed: str, pair: str, side: str, amount: Decimal, price: Decimal, order_id=None, timestamp=None):
-#         now = datetime.now()
+#         now = datetime.utcnow()
 
 #         if now < self.start_time:
 #           return

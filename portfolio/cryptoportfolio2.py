@@ -101,7 +101,7 @@ class CryptoPortfolio(object):
             d[e][s] = self.initial_assets[e][s]
 
         d['datetime'] = self.start_date
-        d['commission'] = 0.0
+        d['fee'] = 0.0
         d['total'] = 0.0 # need to modify this
         d['fill'] = ''
         return [d]
@@ -119,7 +119,7 @@ class CryptoPortfolio(object):
         for e in d:
           d[e] = dict((k,v) for k,v in [(s, 0.0) for s in self.assets[e]])
 
-        d['commission'] = 0.0
+        d['fee'] = 0.0
         d['total'] = 0.0
         d['fill'] = ''
         return d
@@ -161,7 +161,7 @@ class CryptoPortfolio(object):
           dh[e] = dict( (k,v) for k, v in [(s, 0) for s in self.assets[e]])
 
         dh['datetime'] = latest_datetime
-        dh['commission'] = self.current_holdings['commission']
+        dh['fee'] = self.current_holdings['fee']
         dh['total'] = self.current_holdings['total']
 
         # We assume the fill event comes after the update_timeindex call.
@@ -234,9 +234,9 @@ class CryptoPortfolio(object):
         fill_cost = self.data.get_latest_bar_value(fill.exchange, fill.symbol, "close")
         cost = fill_dir * fill_cost * fill.quantity
         self.current_holdings[fill.exchange][fill.symbol] += cost
-        self.current_holdings['commission'] += fill.commission
-        self.current_holdings['cash'] -= (cost + fill.commission)
-        self.current_holdings['total'] -= (cost + fill.commission)
+        self.current_holdings['fee'] += fill.fee
+        self.current_holdings['cash'] -= (cost + fill.fee)
+        self.current_holdings['total'] -= (cost + fill.fee)
         # print('Registering Fill at {}'.format(self.current_holdings['datetime']))
         self.current_holdings['fill'] = fill.direction
 
@@ -273,9 +273,9 @@ class CryptoPortfolio(object):
         fill_cost = self.data.get_latest_bar_value(fill.exchange, fill.symbol, "close")
         cost = fill_dir * fill_cost * fill.quantity
         self.current_holdings[fill.exchange][fill.symbol] += cost
-        self.current_holdings['commission'] += fill.commission
-        self.current_holdings['cash'] -= (cost + fill.commission)
-        self.current_holdings['total'] -= (cost + fill.commission)
+        self.current_holdings['fee'] += fill.fee
+        self.current_holdings['cash'] -= (cost + fill.fee)
+        self.current_holdings['total'] -= (cost + fill.fee)
         self.current_holdings['fill'] = fill.direction
 
         # print('Registering Fill at {}'.format(self.current_holdings['datetime']))

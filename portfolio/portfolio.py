@@ -75,7 +75,7 @@ class Portfolio(object):
         d = dict( (k,v) for k, v in [(s, 0.0) for s in self.instruments] )
         d['datetime'] = self.start_date
         d['cash'] = self.initial_capital
-        d['commission'] = 0.0
+        d['fee'] = 0.0
         d['total'] = self.initial_capital
         return [d]
 
@@ -86,7 +86,7 @@ class Portfolio(object):
         """
         d = dict( (k,v) for k, v in [(s, 0.0) for s in self.instruments] )
         d['cash'] = self.initial_capital
-        d['commission'] = 0.0
+        d['fee'] = 0.0
         d['total'] = self.initial_capital
         return d
 
@@ -115,7 +115,7 @@ class Portfolio(object):
         dh = dict( (k,v) for k, v in [(s, 0) for s in self.instruments] )
         dh['datetime'] = latest_datetime
         dh['cash'] = self.current_holdings['cash']
-        dh['commission'] = self.current_holdings['commission']
+        dh['fee'] = self.current_holdings['fee']
         dh['total'] = self.current_holdings['cash']
 
         for s in self.instruments:
@@ -169,9 +169,9 @@ class Portfolio(object):
         )
         cost = fill_dir * fill_cost * fill.quantity
         self.current_holdings[fill.symbol] += cost
-        self.current_holdings['commission'] += fill.commission
-        self.current_holdings['cash'] -= (cost + fill.commission)
-        self.current_holdings['total'] -= (cost + fill.commission)
+        self.current_holdings['fee'] += fill.fee
+        self.current_holdings['cash'] -= (cost + fill.fee)
+        self.current_holdings['total'] -= (cost + fill.fee)
 
     def update_fill(self, event):
         """

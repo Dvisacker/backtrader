@@ -1,4 +1,4 @@
-datetime,bitmex-BTC/USD-close,cash,commission,total,bitmex-BTC/USD,returns,equity_curve,drawdown
+datetime,bitmex-BTC/USD-close,cash,fee,total,bitmex-BTC/USD,returns,equity_curve,drawdown
 2017-01-01 00:00:00,,100000.0,0.0,100000.0,0.0,,,
 2017-01-01 09:00:00,998.99,100000.0,0.0,100000.0,0.0,0.0,1.0,0.0
 2017-01-02 09:00:00,1019.3,100000.0,0.0,100000.0,0.0,0.0,1.0,0.0

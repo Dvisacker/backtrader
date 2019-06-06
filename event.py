@@ -30,8 +30,6 @@ class MarketEvent(Event):
         self.timestamp = timestamp
 
 
-
-
 class SignalEvent(Event):
     """
     Handles the event of sending a Signal from a Strategy object.
@@ -131,7 +129,7 @@ class FillEvent(Event):
     Encapsulates the notion of a Filled Order, as returned
     from a brokerage. Stores the quantity of an instrument
     actually filled and at what price. In addition, stores
-    the commission of the trade from the brokerage.
+    the fee of the trade from the brokerage.
 
     TODO: Currently does not support filling positions at
     different prices. This will be simulated by averaging
@@ -139,12 +137,12 @@ class FillEvent(Event):
     """
 
     def __init__(self, timeindex, symbol, exchange, quantity,
-                 direction, price, commission=None, leverage=None, entry_price=None):
+                 direction, price=None, fee=None, leverage=None, entry_price=None):
         """
         Initialises the FillEvent object. Sets the symbol, exchange,
         quantity, direction, cost of fill and an optional
-        commission.
-        If commission is not provided, the Fill object will
+        fee.
+        If fee is not provided, the Fill object will
         calculate it based on the trade size and Interactive
         Brokers fees.
         Parameters:
@@ -154,7 +152,7 @@ class FillEvent(Event):
         quantity - The filled quantity.
         direction - The direction of fill ('BUY' or 'SELL')
         fill_cost - The holdings value in dollars.
-        commission - An optional commission sent from IB.
+        fee - An optional fee
         """
         self.type = 'FILL'
         self.timeindex = timeindex
@@ -170,11 +168,11 @@ class FillEvent(Event):
         else:
           self.entry_price = entry_price
 
-        # Calculate commission
-        if commission is None:
-            self.commission = self.calculate_ib_commission()
+        # Compute fee
+        if fee is None:
+            self.fee = self.compute_fees()
         else:
-            self.commission = commission
+            self.fee = fee
 
     def print_fill(self):
         """
@@ -185,13 +183,8 @@ class FillEvent(Event):
             (self.exchange, self.symbol, self.quantity, self.direction, self.price)
         )
 
-    def calculate_ib_commission(self):
+    def compute_fees(self):
         """
-        Calculates the fees of trading based on an Interactive
-        Brokers fee structure for API, in USD.
-        This does not include exchange or ECN fees.
-        Based on "US API Directed Orders":
-        https://www.interactivebrokers.com/en/index.php?f=commission&p=stocks2
         """
         full_cost = 1.3
         if self.quantity <= 500:

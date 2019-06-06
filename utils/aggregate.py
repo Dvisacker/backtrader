@@ -48,7 +48,7 @@ class OHLCV(AggregateCallback):
         self.data[pair]['vwap'] += price * amount
 
     async def __call__(self, *, feed: str, pair: str, side: str, amount: Decimal, price: Decimal, order_id=None, timestamp=None):
-        now = datetime.now()
+        now = datetime.utcnow()
         amount = float(amount)
         price = float(price)
 

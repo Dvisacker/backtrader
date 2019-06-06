@@ -99,7 +99,7 @@ class CryptoPortfolio(object):
 
         d['datetime'] = self.start_date
         d['cash'] = self.initial_capital
-        d['commission'] = 0.0
+        d['fee'] = 0.0
         d['total'] = self.initial_capital
         return [d]
 
@@ -117,7 +117,7 @@ class CryptoPortfolio(object):
               d['{}-{}-fill'.format(e,s)] = ''
 
         d['cash'] = self.initial_capital
-        d['commission'] = 0.0
+        d['fee'] = 0.0
         d['total'] = self.initial_capital
         return d
 
@@ -155,7 +155,7 @@ class CryptoPortfolio(object):
 
         dh['datetime'] = latest_datetime
         dh['cash'] = self.current_holdings['cash']
-        dh['commission'] = self.current_holdings['commission']
+        dh['fee'] = self.current_holdings['fee']
         dh['total'] = self.current_holdings['total']
 
         # NOTE This does seem to cover only the case where all the assets are traded against a similar quote currency.
@@ -223,9 +223,9 @@ class CryptoPortfolio(object):
         fill_cost = self.data.get_latest_bar_value(exchange, symbol, "close")
         cost = fill_dir * fill_cost * fill.quantity
         self.current_holdings[exchange][symbol] += cost
-        self.current_holdings['commission'] += fill.commission
-        self.current_holdings['cash'] -= (cost + fill.commission)
-        self.current_holdings['total'] -= (cost + fill.commission)
+        self.current_holdings['fee'] += fill.fee
+        self.current_holdings['cash'] -= (cost + fill.fee)
+        self.current_holdings['total'] -= (cost + fill.fee)
         self.current_holdings['{}-{}-fill'.format(exchange, symbol)] = fill.direction
 
     def update_fill(self, event):

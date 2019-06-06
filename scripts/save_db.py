@@ -17,7 +17,7 @@ positions_indexed = positions.set_index(['datetime'])
 holdings_indexed = holdings.set_index(['datetime'])
 all_data = pd.concat([positions_indexed, holdings_indexed], axis=1, sort=False)
 
-folder_name = './saved/dump-{}'.format(datetime.now())
+folder_name = './saved/dump-{}'.format(datetime.utcnow())
 positions_filename = os.path.join(folder_name, 'positions.csv')
 holdings_filename = os.path.join(folder_name, 'holdings.csv')
 all_data_filename = os.path.join(folder_name, 'data.csv')

@@ -1,0 +1,93 @@
+# Python
+from __future__ import print_function
+
+import datetime
+import time
+import os
+import ccxt
+import json
+
+from .execution import ExecutionHandler
+from abc import ABCMeta, abstractmethod
+from event import FillEvent, OrderEvent, BulkOrderEvent
+from utils.helpers import from_standard_to_exchange_notation
+
+try:
+    import Queue as queue
+except ImportError:
+    import queue
+
+class SimulatedExecutionHandler(ExecutionHandler):
+    """
+    Handles order execution via the Interactive Brokers
+    API, for use against accounts when trading live
+    directly.
+    """
+
+    def __init__(self, events, configuration, exchanges):
+        """
+        Initialises the BitmexExecutionHandler instance.
+        Parameters:
+        events - The Queue of Event objects.
+        """
+        self.events = events
+        self.exchanges = exchanges
+        self.take_profit_gap = 0.5
+        self.stop_loss_gap = 0.5
+        self.fill_dict = {}
+        self.order_id = 1
+
+    def execute_market_order(self, event):
+      exchange = event.exchange
+      symbol = event.symbol
+      quantity = event.quantity
+      direction = event.direction
+
+      # Create a fill event object
+      fill = FillEvent(
+          datetime.datetime.utcnow(), symbol,
+          exchange, quantity, direction,
+      )
+
+      # Place the fill event onto the event queue
+      print("ORDER FILLED")
+      self.events.put(fill)
+
+    def execute_close_position(self, event):
+      print('Executing close {} position'.format(event.symbol))
+      exchange = event.exchange
+      symbol = event.symbol
+      quantity = event.quantity
+      direction = event.direction
+
+      # Create a fill event object
+      fill = FillEvent(
+          datetime.datetime.utcnow(), symbol,
+          exchange, quantity, direction,
+      )
+
+      self.events.put(fill)
+      print('CLOSE POSITION DONE')
+
+
+    def execute_order(self, event):
+      """
+      Parameters:
+      event - Contains an Event object with order information.
+      """
+      if event.type == 'ORDER':
+        if event.order_type == "Market":
+          self.execute_market_order(event)
+        elif event.order_type == "ClosePosition":
+          self.execute_close_position(event)
+
+      self.order_id += 1
+
+
+
+
+
+
+
+
+

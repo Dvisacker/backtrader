@@ -43,7 +43,7 @@ class OHLCV(AggregateCallback):
         super().__init__(*args, **kwargs)
         self.window = window
 
-        now = datetime.now()
+        now = datetime.utcnow()
         self.start_time = datetime(now.year, now.month, now.day, now.hour, now.minute + 1, 0, 0)
         self.last_update = self.start_time
         self.data = {}
@@ -61,7 +61,7 @@ class OHLCV(AggregateCallback):
         self.data[pair]['vwap'] += price * amount
 
     async def __call__(self, *, feed: str, pair: str, side: str, amount: Decimal, price: Decimal, order_id=None, timestamp=None):
-        now = datetime.now()
+        now = datetime.utcnow()
 
         if now < self.start_time:
           return

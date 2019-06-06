@@ -220,7 +220,6 @@ class LiveExecutionHandler(ExecutionHandler):
         elif event.order_type == "ClosePosition":
           self.execute_close_position(event)
 
-      time.sleep(1)
       self.order_id += 1
 
 

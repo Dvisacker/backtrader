@@ -30,7 +30,7 @@ if not sys.warnoptions:
 
 if __name__ == "__main__":
     delta = timedelta(minutes=1)
-    start_date = datetime.min + math.ceil((datetime.now() - datetime.min) / delta) * delta #round to the next minute
+    start_date = datetime.min + math.ceil((datetime.utcnow() - datetime.min) / delta) * delta #round to the next minute
 
     configuration = Configuration({
       'result_dir' : '../results',

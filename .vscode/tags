@@ -149,7 +149,7 @@ backtest	../moving_avg_crossover.py	/^    backtest = CryptoBacktest($/;"	kind:va
 backtest	../qda_crypto.py	/^    backtest = CryptoBacktest($/;"	kind:variable	line:124
 backtest	../snp_forecast.py	/^    backtest = Backtest($/;"	kind:variable	line:106
 backtest.py	../backtest.py	1;"	kind:file	line:1
-calculate_ib_commission	../event.py	/^    def calculate_ib_commission(self):$/;"	kind:member	line:137
+calculate_ib_fee	../event.py	/^    def calculate_ib_fee(self):$/;"	kind:member	line:137
 calculate_signals	../intraday_mr.py	/^    def calculate_signals(self, event):$/;"	kind:member	line:132
 calculate_signals	../mac.py	/^    def calculate_signals(self, event):$/;"	kind:member	line:48
 calculate_signals	../mean_reversion.py	/^    def calculate_signals(self, event):$/;"	kind:member	line:135

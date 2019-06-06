@@ -1,4 +1,4 @@
-datetime,bitmex-BTC/USD-fill,bitmex-BTC/USD-price,cash,commission,total,bitmex-BTC/USD,returns,equity_curve,drawdown
+datetime,bitmex-BTC/USD-fill,bitmex-BTC/USD-price,cash,fee,total,bitmex-BTC/USD,returns,equity_curve,drawdown
 2018-01-01 09:00:00,,13376.0,100000.0,0.0,100000.0,0.0,,,
 2018-01-02 09:00:00,,14722.0,100000.0,0.0,100000.0,0.0,0.0,1.0,0.0
 2018-01-03 09:00:00,,15150.0,100000.0,0.0,100000.0,0.0,0.0,1.0,0.0

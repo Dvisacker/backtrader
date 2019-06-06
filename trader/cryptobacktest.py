@@ -44,7 +44,7 @@ class CryptoBacktest(object):
         self.result_dir = configuration.result_dir
         self.heartbeat = configuration.heartbeat
         self.graph_refresh_period = configuration.graph_refresh_period
-        self.backtest_start_time = datetime.now()
+        self.backtest_start_time = datetime.utcnow()
 
         self.data_handler_cls = data_handler
         self.execution_handler_cls = execution_handler

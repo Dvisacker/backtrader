@@ -113,7 +113,7 @@ class BitmexPortfolio(object):
         d['bitmex-BTC-value'] = balance * price
         d['bitmex-BTC-fill'] = ''
         d['total-USD'] = balance * price
-        d['commission'] = 0
+        d['fee'] = 0
 
         print(d)
 
@@ -160,7 +160,7 @@ class BitmexPortfolio(object):
         # ===============
         dh = {}
         dh['datetime'] = latest_datetime
-        dh['commission'] = self.current_holdings['commission']
+        dh['fee'] = self.current_holdings['fee']
         dh['total-USD'] = 0
 
         for s in self.assets:
@@ -175,7 +175,7 @@ class BitmexPortfolio(object):
           dh['bitmex-{}-fill'.format(s)] = self.current_holdings['bitmex-{}-fill'.format(s)]
           dh['total-USD'] += balance * price
 
-        dh['commission'] += 0.0
+        dh['fee'] += 0.0
 
         # Append the current holdings
         self.all_holdings.append(dh)
@@ -204,7 +204,6 @@ class BitmexPortfolio(object):
         Parameters:
         fill - The Fill object to update the holdings with
         """
-        symbol = fill.symbol
         data = self.exchange.fetch_balance()
         balances = data['total']
 
@@ -225,7 +224,7 @@ class BitmexPortfolio(object):
         self.current_holdings['bitmex-BTC-price'] = price
         self.current_holdings['bitmex-BTC-value'] = balance * price
         self.current_holdings['bitmex-BTC-fill'] = fill.direction
-        self.current_holdings['commission'] += fill.commission
+        self.current_holdings['fee'] += fill.fee
 
 
     def update_positions_from_fill(self, fill):

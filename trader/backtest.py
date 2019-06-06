@@ -40,7 +40,7 @@ class Backtest(object):
         strategy - (Class) Generates signals based on market data.
         """
         self.configuration = configuration
-        self.backtest_start_time = datetime.now()
+        self.backtest_start_time = datetime.utcnow()
         self.data_handler_cls = data_handler
         self.execution_handler_cls = execution_handler
         self.portfolio_cls = portfolio
