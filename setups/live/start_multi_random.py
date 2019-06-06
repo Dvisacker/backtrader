@@ -40,7 +40,7 @@ if __name__ == "__main__":
       'ohlcv_window': 60, #receive the one minute candles
       'heartbeat' : 1.00,
       'start_date' : start_date,
-      'default_position_size': 0.0005
+      'default_position_size': 0.05
     })
 
     trader = CryptoLiveTrade(
