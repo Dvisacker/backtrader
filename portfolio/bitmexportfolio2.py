@@ -8,6 +8,8 @@ import os
 import datetime
 import functools
 from math import floor
+from pathlib import Path
+
 
 try:
     import Queue as queue
@@ -20,6 +22,7 @@ import matplotlib.pyplot as plt
 import pyfolio as pf
 import seaborn as sns; sns.set()
 
+from writer.mongo_writer import MongoWriter
 from event import FillEvent, OrderEvent, BulkOrderEvent
 from performance import create_sharpe_ratio, create_drawdowns
 from utils import ceil_dt, from_exchange_to_standard_notation, from_standard_to_exchange_notation, truncate, get_precision
@@ -60,6 +63,7 @@ class BitmexPortfolio(object):
         self.current_holdings = self.construct_current_holdings()
         self.all_holdings = [ self.current_holdings ]
 
+        self.db = MongoWriter()
 
     def construct_current_positions(self):
         """
@@ -77,9 +81,8 @@ class BitmexPortfolio(object):
         for s in self.instruments:
           price = self.data.get_latest_bar_value('bitmex', s, 'close') or 0
           btc_price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', 'close')
-
-          ex_symbol = from_standard_to_exchange_notation('bitmex', s)
-          quantity = positions[ex_symbol]['currentQty'] if ex_symbol in positions else 0
+          exchange_symbol = from_standard_to_exchange_notation('bitmex', s)
+          quantity = positions[exchange_symbol]['currentQty'] if exchange_symbol in positions else 0
 
           d['bitmex-{}'.format(s)] = quantity
           d['bitmex-{}-price'.format(s)] = price
@@ -172,11 +175,13 @@ class BitmexPortfolio(object):
 
         dh['commission'] += 0.0
 
-          # Append the current holdings
+        # Append the current holdings
         self.all_holdings.append(dh)
 
         for s in self.assets:
           self.current_holdings['bitmex-{}-fill'.format(s)] = 0
+
+        self.write(dp, dh)
 
     # ======================
     # FILL/POSITION HANDLING
@@ -258,11 +263,8 @@ class BitmexPortfolio(object):
         cancel_orders_events = []
         events = []
 
-
-
         for sig in signals.events:
           sig.print_signal()
-
 
           price = self.data.get_latest_bar_value('bitmex', sig.symbol, "close")
           if not price:
@@ -389,6 +391,14 @@ class BitmexPortfolio(object):
     # ========================
     # POST-BACKTEST STATISTICS
     # ========================
+
+    def write(self, current_positions, current_holdings):
+        """
+        """
+        print('Writing positions: {}'.format(current_positions))
+        print('Writing holdings: {}'.format(current_holdings))
+        self.db.insert_positions(current_positions)
+        self.db.insert_holdings(current_holdings)
 
     def create_equity_curve_dataframe(self):
         """

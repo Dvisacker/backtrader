@@ -7,6 +7,7 @@ from cryptofeed.defines import TRADES
 from datetime import datetime, timedelta
 from decimal import Decimal
 from .helpers import from_standard_to_exchange_notation
+from threading import Lock
 
 
 def ceil_dt(dt, delta):
@@ -26,13 +27,16 @@ class OHLCV(AggregateCallback):
         self.exchange = exchange
         self.start_time = datetime.fromtimestamp(start_time)
         self.last_update = datetime.fromtimestamp(start_time)
-        self.instruments = [from_standard_to_exchange_notation(exchange, i) for i in instruments[exchange] ]
+        self.instruments = [from_standard_to_exchange_notation(
+            exchange, i) for i in instruments[exchange]]
         self.previous_data = {}
         self.data = {}
+        self.mutex = Lock()
 
     def _agg(self, pair, amount, price):
         if pair not in self.data:
-            self.data[pair] = {'open': price, 'high': price, 'low': price, 'close': price, 'volume': 0, 'vwap': 0}
+            self.data[pair] = {'open': price, 'high': price,
+                'low': price, 'close': price, 'volume': 0, 'vwap': 0}
 
         self.data[pair]['close'] = price
         self.data[pair]['volume'] += amount
@@ -42,7 +46,6 @@ class OHLCV(AggregateCallback):
         if price < self.data[pair]['low']:
             self.data[pair]['low'] = price
         self.data[pair]['vwap'] += price * amount
-        # self.previous_data = self.data
 
     async def __call__(self, *, feed: str, pair: str, side: str, amount: Decimal, price: Decimal, order_id=None, timestamp=None):
         now = datetime.now()
@@ -50,33 +53,32 @@ class OHLCV(AggregateCallback):
         price = float(price)
 
         if now < self.start_time:
-          return
+            return
 
         if now - self.last_update > timedelta(seconds=self.window):
             self.last_update = self.last_update + timedelta(seconds=self.window)
             for i in self.instruments:
-
-                # Case where the OHLCV for this instrument is not initialized
-                if i not in self.data and i not in self.previous_data:
+            # Case where the OHLCV for this instrument is not initialized
+              if i not in self.data and i not in self.previous_data:
                   self.data[i] = {'open': 0, 'high': 0, 'low': 0, 'close': 0, 'volume': 0, 'vwap': 0}
                   self.data[i]['timestamp'] = self.last_update
                   self.data[i]['time'] = datetime.timestamp(self.last_update)
 
-                # We add fields for pairs that are not updated.
-                elif i not in self.data:
+              # We add fields for pairs that are not updated.
+              elif i not in self.data:
                   self.data[i] = self.previous_data[i]
                   self.data[i]['volume'] = 0.0
                   self.data[i]['vwap'] = 0.0
                   self.data[i]['timestamp'] = self.last_update
                   self.data[i]['time'] = datetime.timestamp(self.last_update)
 
-                # Normal Case
-                else:
+              # Normal Case
+              else:
                   self.data[i]['vwap'] /= self.data[i]['volume']
                   self.data[i]['timestamp'] = self.last_update
                   self.data[i]['time'] = datetime.timestamp(self.last_update)
 
-            await self.handler(data=self.data)
+            await self.handler(data=self.data, timestamp=self.last_update)
             self.previous_data = self.data
             self.data = {}
 

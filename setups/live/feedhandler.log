@@ -753,3 +753,235 @@ Traceback (most recent call last):
 TypeError: list indices must be integers or slices, not str
 2019-06-04 16:44:56,027 : WARNING : BITMEX: received no messages within timeout, restarting connection
 2019-06-04 16:45:16,537 : WARNING : BITMEX: encountered connection issue WebSocket connection is closed: code = 1006 (connection closed abnormally [internal]), no reason - reconnecting...
+2019-06-05 23:22:17,189 : WARNING : BITMEX: received no messages within timeout, restarting connection
+2019-06-05 23:22:48,033 : WARNING : BITMEX: encountered connection issue WebSocket connection is closed: code = 1006 (connection closed abnormally [internal]), no reason - reconnecting...
+2019-06-06 00:56:05,009 : WARNING : BITMEX: received no messages within timeout, restarting connection
+2019-06-06 00:56:06,521 : WARNING : BITMEX: encountered connection issue WebSocket connection is closed: code = 1006 (connection closed abnormally [internal]), no reason - reconnecting...
+2019-06-06 01:50:18,007 : WARNING : BITMEX: received no messages within timeout, restarting connection
+2019-06-06 01:50:48,196 : WARNING : BITMEX: encountered connection issue WebSocket connection is closed: code = 1006 (connection closed abnormally [internal]), no reason - reconnecting...
+2019-06-06 02:25:39,011 : WARNING : BITMEX: received no messages within timeout, restarting connection
+2019-06-06 02:26:09,190 : WARNING : BITMEX: encountered connection issue WebSocket connection is closed: code = 1006 (connection closed abnormally [internal]), no reason - reconnecting...
+2019-06-06 03:00:45,012 : WARNING : BITMEX: received no messages within timeout, restarting connection
+2019-06-06 03:01:15,188 : WARNING : BITMEX: encountered connection issue WebSocket connection is closed: code = 1006 (connection closed abnormally [internal]), no reason - reconnecting...
+2019-06-06 03:54:56,629 : WARNING : BITMEX: received no messages within timeout, restarting connection
+2019-06-06 03:55:26,668 : WARNING : BITMEX: encountered connection issue WebSocket connection is closed: code = 1006 (connection closed abnormally [internal]), no reason - reconnecting...
+2019-06-06 04:30:51,999 : WARNING : BITMEX: received no messages within timeout, restarting connection
+2019-06-06 04:31:22,018 : WARNING : BITMEX: encountered connection issue WebSocket connection is closed: code = 1006 (connection closed abnormally [internal]), no reason - reconnecting...
+2019-06-06 05:07:07,554 : WARNING : BITMEX: received no messages within timeout, restarting connection
+2019-06-06 05:07:37,573 : WARNING : BITMEX: encountered connection issue WebSocket connection is closed: code = 1006 (connection closed abnormally [internal]), no reason - reconnecting...
+2019-06-06 06:01:13,523 : WARNING : BITMEX: received no messages within timeout, restarting connection
+2019-06-06 06:01:43,548 : WARNING : BITMEX: encountered connection issue WebSocket connection is closed: code = 1006 (connection closed abnormally [internal]), no reason - reconnecting...
+2019-06-06 06:55:21,008 : WARNING : BITMEX: received no messages within timeout, restarting connection
+2019-06-06 06:55:51,411 : WARNING : BITMEX: encountered connection issue WebSocket connection is closed: code = 1006 (connection closed abnormally [internal]), no reason - reconnecting...
+2019-06-06 07:49:30,836 : WARNING : BITMEX: received no messages within timeout, restarting connection
+2019-06-06 07:50:00,864 : WARNING : BITMEX: encountered connection issue WebSocket connection is closed: code = 1006 (connection closed abnormally [internal]), no reason - reconnecting...
+2019-06-06 08:43:36,016 : WARNING : BITMEX: received no messages within timeout, restarting connection
+2019-06-06 08:44:06,193 : WARNING : BITMEX: encountered connection issue WebSocket connection is closed: code = 1006 (connection closed abnormally [internal]), no reason - reconnecting...
+2019-06-06 09:37:45,830 : WARNING : BITMEX: received no messages within timeout, restarting connection
+2019-06-06 09:38:15,848 : WARNING : BITMEX: encountered connection issue WebSocket connection is closed: code = 1006 (connection closed abnormally [internal]), no reason - reconnecting...
+2019-06-06 09:40:48,675 : WARNING : BITMEX: encountered connection issue WebSocket connection is closed: code = 1006 (connection closed abnormally [internal]), no reason - reconnecting...
+2019-06-06 10:31:19,759 : WARNING : BITMEX: received no messages within timeout, restarting connection
+2019-06-06 10:31:49,773 : WARNING : BITMEX: encountered connection issue WebSocket connection is closed: code = 1006 (connection closed abnormally [internal]), no reason - reconnecting...
+2019-06-06 10:53:42,190 : WARNING : BITMEX: encountered connection issue WebSocket connection is closed: code = 1006 (connection closed abnormally [internal]), no reason - reconnecting...
+2019-06-06 11:22:32,352 : ERROR : BITMEX: error handling message {"table":"trade","action":"insert","data":[{"timestamp":"2019-06-06T02:22:08.403Z","symbol":"XRPM19","side":"Buy","size":1500,"price":0.00005199,"tickDirection":"ZeroPlusTick","trdMatchID":"a796cded-3dd3-fd49-70da-ea2e041db707","grossValue":7798500,"homeNotional":1500,"foreignNotional":0.077985}]}
+2019-06-06 11:22:32,762 : ERROR : BITMEX: encountered an exception, reconnecting
+Traceback (most recent call last):
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 163, in _connect
+    await self._handler(websocket, feed.message_handler, feed.id)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 181, in _handler
+    await handler(message)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 220, in message_handler
+    await self._trade(msg)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 84, in _trade
+    timestamp=data['timestamp'])
+  File "/Users/davidvanisacker/Programming/Trading/backtest/utils/aggregate.py", line 79, in __call__
+    await self.handler(data=self.data, timestamp=self.last_update)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/callback.py", line 24, in __call__
+    await loop.run_in_executor(None, self.callback, **kwargs)
+TypeError: run_in_executor() got an unexpected keyword argument 'data'
+2019-06-06 11:22:35,322 : ERROR : BITMEX: error handling message {"table":"trade","action":"partial","keys":[],"types":{"timestamp":"timestamp","symbol":"symbol","side":"symbol","size":"long","price":"float","tickDirection":"symbol","trdMatchID":"guid","grossValue":"long","homeNotional":"float","foreignNotional":"float"},"foreignKeys":{"symbol":"instrument","side":"side"},"attributes":{"timestamp":"sorted","symbol":"grouped"},"filter":{"symbol":"ETHM19"},"data":[{"timestamp":"2019-06-06T02:10:19.641Z","symbol":"ETHM19","side":"Buy","size":20,"price":0.03182,"tickDirection":"ZeroMinusTick","trdMatchID":"e148c7b8-2972-81d0-d4f6-247d9a396209","grossValue":63640000,"homeNotional":20,"foreignNotional":0.6364}]}
+2019-06-06 11:22:35,612 : ERROR : BITMEX: encountered an exception, reconnecting
+Traceback (most recent call last):
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 163, in _connect
+    await self._handler(websocket, feed.message_handler, feed.id)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 181, in _handler
+    await handler(message)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 220, in message_handler
+    await self._trade(msg)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 84, in _trade
+    timestamp=data['timestamp'])
+  File "/Users/davidvanisacker/Programming/Trading/backtest/utils/aggregate.py", line 75, in __call__
+    self.data[i]['vwap'] /= self.data[i]['volume']
+ZeroDivisionError: division by zero
+2019-06-06 11:22:38,190 : ERROR : BITMEX: error handling message {"table":"trade","action":"partial","keys":[],"types":{"timestamp":"timestamp","symbol":"symbol","side":"symbol","size":"long","price":"float","tickDirection":"symbol","trdMatchID":"guid","grossValue":"long","homeNotional":"float","foreignNotional":"float"},"foreignKeys":{"symbol":"instrument","side":"side"},"attributes":{"timestamp":"sorted","symbol":"grouped"},"filter":{"symbol":"ETHM19"},"data":[{"timestamp":"2019-06-06T02:10:19.641Z","symbol":"ETHM19","side":"Buy","size":20,"price":0.03182,"tickDirection":"ZeroMinusTick","trdMatchID":"e148c7b8-2972-81d0-d4f6-247d9a396209","grossValue":63640000,"homeNotional":20,"foreignNotional":0.6364}]}
+2019-06-06 11:22:38,496 : ERROR : BITMEX: encountered an exception, reconnecting
+Traceback (most recent call last):
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 163, in _connect
+    await self._handler(websocket, feed.message_handler, feed.id)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 181, in _handler
+    await handler(message)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 220, in message_handler
+    await self._trade(msg)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 84, in _trade
+    timestamp=data['timestamp'])
+  File "/Users/davidvanisacker/Programming/Trading/backtest/utils/aggregate.py", line 75, in __call__
+    self.data[i]['vwap'] /= self.data[i]['volume']
+ZeroDivisionError: division by zero
+2019-06-06 11:22:41,056 : ERROR : BITMEX: error handling message {"table":"trade","action":"partial","keys":[],"types":{"timestamp":"timestamp","symbol":"symbol","side":"symbol","size":"long","price":"float","tickDirection":"symbol","trdMatchID":"guid","grossValue":"long","homeNotional":"float","foreignNotional":"float"},"foreignKeys":{"symbol":"instrument","side":"side"},"attributes":{"timestamp":"sorted","symbol":"grouped"},"filter":{"symbol":"ETHM19"},"data":[{"timestamp":"2019-06-06T02:10:19.641Z","symbol":"ETHM19","side":"Buy","size":20,"price":0.03182,"tickDirection":"ZeroMinusTick","trdMatchID":"e148c7b8-2972-81d0-d4f6-247d9a396209","grossValue":63640000,"homeNotional":20,"foreignNotional":0.6364}]}
+2019-06-06 11:22:41,363 : ERROR : BITMEX: encountered an exception, reconnecting
+Traceback (most recent call last):
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 163, in _connect
+    await self._handler(websocket, feed.message_handler, feed.id)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 181, in _handler
+    await handler(message)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 220, in message_handler
+    await self._trade(msg)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 84, in _trade
+    timestamp=data['timestamp'])
+  File "/Users/davidvanisacker/Programming/Trading/backtest/utils/aggregate.py", line 75, in __call__
+    self.data[i]['vwap'] /= self.data[i]['volume']
+ZeroDivisionError: division by zero
+2019-06-06 11:22:52,012 : ERROR : BITMEX: error handling message {"table":"trade","action":"insert","data":[{"timestamp":"2019-06-06T02:22:28.191Z","symbol":"XRPM19","side":"Sell","size":103,"price":0.00005198,"tickDirection":"MinusTick","trdMatchID":"98966081-a2b9-a94b-fc77-4c61bc99dad2","grossValue":535394,"homeNotional":103,"foreignNotional":0.00535394},{"timestamp":"2019-06-06T02:22:28.191Z","symbol":"XRPM19","side":"Sell","size":4897,"price":0.00005198,"tickDirection":"ZeroMinusTick","trdMatchID":"b4934c52-798a-1df8-6184-5142580a2f4f","grossValue":25454606,"homeNotional":4897,"foreignNotional":0.25454606}]}
+2019-06-06 11:22:52,320 : ERROR : BITMEX: encountered an exception, reconnecting
+Traceback (most recent call last):
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 163, in _connect
+    await self._handler(websocket, feed.message_handler, feed.id)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 181, in _handler
+    await handler(message)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 220, in message_handler
+    await self._trade(msg)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 84, in _trade
+    timestamp=data['timestamp'])
+  File "/Users/davidvanisacker/Programming/Trading/backtest/utils/aggregate.py", line 79, in __call__
+    await self.handler(data=self.data, timestamp=self.last_update)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/callback.py", line 24, in __call__
+    await loop.run_in_executor(None, self.callback, **kwargs)
+TypeError: run_in_executor() got an unexpected keyword argument 'data'
+2019-06-06 11:23:10,750 : ERROR : BITMEX: error handling message {"table":"trade","action":"insert","data":[{"timestamp":"2019-06-06T02:22:47.179Z","symbol":"XBTM19","side":"Buy","size":16,"price":7816.5,"tickDirection":"MinusTick","trdMatchID":"9dc89daf-94e0-b19b-59dd-a9ce7ebf242b","grossValue":204688,"homeNotional":0.00204688,"foreignNotional":16},{"timestamp":"2019-06-06T02:22:47.179Z","symbol":"XBTM19","side":"Buy","size":3984,"price":7816.5,"tickDirection":"ZeroMinusTick","trdMatchID":"2b885866-0884-6e92-e697-d92823809b23","grossValue":50967312,"homeNotional":0.50967312,"foreignNotional":3984}]}
+2019-06-06 11:23:11,058 : ERROR : BITMEX: encountered an exception, reconnecting
+Traceback (most recent call last):
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 163, in _connect
+    await self._handler(websocket, feed.message_handler, feed.id)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 181, in _handler
+    await handler(message)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 220, in message_handler
+    await self._trade(msg)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 84, in _trade
+    timestamp=data['timestamp'])
+  File "/Users/davidvanisacker/Programming/Trading/backtest/utils/aggregate.py", line 79, in __call__
+    await self.handler(data=self.data, timestamp=self.last_update)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/callback.py", line 24, in __call__
+    await loop.run_in_executor(None, self.callback, **kwargs)
+TypeError: run_in_executor() got an unexpected keyword argument 'data'
+2019-06-06 11:23:13,721 : ERROR : BITMEX: error handling message {"table":"trade","action":"partial","keys":[],"types":{"timestamp":"timestamp","symbol":"symbol","side":"symbol","size":"long","price":"float","tickDirection":"symbol","trdMatchID":"guid","grossValue":"long","homeNotional":"float","foreignNotional":"float"},"foreignKeys":{"symbol":"instrument","side":"side"},"attributes":{"timestamp":"sorted","symbol":"grouped"},"filter":{"symbol":"ETHM19"},"data":[{"timestamp":"2019-06-06T02:10:19.641Z","symbol":"ETHM19","side":"Buy","size":20,"price":0.03182,"tickDirection":"ZeroMinusTick","trdMatchID":"e148c7b8-2972-81d0-d4f6-247d9a396209","grossValue":63640000,"homeNotional":20,"foreignNotional":0.6364}]}
+2019-06-06 11:23:14,027 : ERROR : BITMEX: encountered an exception, reconnecting
+Traceback (most recent call last):
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 163, in _connect
+    await self._handler(websocket, feed.message_handler, feed.id)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 181, in _handler
+    await handler(message)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 220, in message_handler
+    await self._trade(msg)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 84, in _trade
+    timestamp=data['timestamp'])
+  File "/Users/davidvanisacker/Programming/Trading/backtest/utils/aggregate.py", line 79, in __call__
+    await self.handler(data=self.data, timestamp=self.last_update)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/callback.py", line 24, in __call__
+    await loop.run_in_executor(None, self.callback, **kwargs)
+TypeError: run_in_executor() got an unexpected keyword argument 'data'
+2019-06-06 11:23:21,707 : ERROR : BITMEX: error handling message {"table":"trade","action":"insert","data":[{"timestamp":"2019-06-06T02:22:58.198Z","symbol":"LTCM19","side":"Buy","size":8,"price":0.0135,"tickDirection":"PlusTick","trdMatchID":"389efbd7-7cda-91fd-345a-4e0a42a408a9","grossValue":10800000,"homeNotional":8,"foreignNotional":0.108}]}
+2019-06-06 11:23:22,015 : ERROR : BITMEX: encountered an exception, reconnecting
+Traceback (most recent call last):
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 163, in _connect
+    await self._handler(websocket, feed.message_handler, feed.id)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 181, in _handler
+    await handler(message)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 220, in message_handler
+    await self._trade(msg)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 84, in _trade
+    timestamp=data['timestamp'])
+  File "/Users/davidvanisacker/Programming/Trading/backtest/utils/aggregate.py", line 79, in __call__
+    await self.handler(data=self.data, timestamp=self.last_update)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/callback.py", line 24, in __call__
+    await loop.run_in_executor(None, self.callback, **kwargs)
+TypeError: run_in_executor() got an unexpected keyword argument 'data'
+2019-06-06 11:24:04,612 : ERROR : BITMEX: error handling message {"table":"trade","action":"insert","data":[{"timestamp":"2019-06-06T02:23:39.788Z","symbol":"XBTM19","side":"Sell","size":1,"price":7816,"tickDirection":"MinusTick","trdMatchID":"a443ae47-f417-449d-d446-53e9d420c1bb","grossValue":12794,"homeNotional":0.00012794,"foreignNotional":1},{"timestamp":"2019-06-06T02:23:39.788Z","symbol":"XBTM19","side":"Sell","size":750,"price":7816,"tickDirection":"ZeroMinusTick","trdMatchID":"b44dc715-4489-8948-9792-7adce33ef436","grossValue":9595500,"homeNotional":0.095955,"foreignNotional":750},{"timestamp":"2019-06-06T02:23:39.788Z","symbol":"XBTM19","side":"Sell","size":2,"price":7815.5,"tickDirection":"MinusTick","trdMatchID":"33e17346-3563-2bb4-6abc-603d5ff80292","grossValue":25590,"homeNotional":0.0002559,"foreignNotional":2},{"timestamp":"2019-06-06T02:23:39.788Z","symbol":"XBTM19","side":"Sell","size":247,"price":7815,"tickDirection":"MinusTick","trdMatchID":"6fcb7125-e730-b63d-10aa-c5c46e929ca7","grossValue":3160612,"homeNotional":0.03160612,"foreignNotional":247}]}
+2019-06-06 11:24:04,919 : ERROR : BITMEX: encountered an exception, reconnecting
+Traceback (most recent call last):
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 163, in _connect
+    await self._handler(websocket, feed.message_handler, feed.id)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 181, in _handler
+    await handler(message)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 220, in message_handler
+    await self._trade(msg)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 84, in _trade
+    timestamp=data['timestamp'])
+  File "/Users/davidvanisacker/Programming/Trading/backtest/utils/aggregate.py", line 79, in __call__
+    await self.handler(data=self.data, timestamp=self.last_update)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/callback.py", line 24, in __call__
+    await loop.run_in_executor(None, self.callback, **kwargs)
+TypeError: run_in_executor() got an unexpected keyword argument 'data'
+2019-06-06 11:24:07,479 : ERROR : BITMEX: error handling message {"table":"trade","action":"partial","keys":[],"types":{"timestamp":"timestamp","symbol":"symbol","side":"symbol","size":"long","price":"float","tickDirection":"symbol","trdMatchID":"guid","grossValue":"long","homeNotional":"float","foreignNotional":"float"},"foreignKeys":{"symbol":"instrument","side":"side"},"attributes":{"timestamp":"sorted","symbol":"grouped"},"filter":{"symbol":"ETHM19"},"data":[{"timestamp":"2019-06-06T02:10:19.641Z","symbol":"ETHM19","side":"Buy","size":20,"price":0.03182,"tickDirection":"ZeroMinusTick","trdMatchID":"e148c7b8-2972-81d0-d4f6-247d9a396209","grossValue":63640000,"homeNotional":20,"foreignNotional":0.6364}]}
+2019-06-06 11:24:07,763 : ERROR : BITMEX: encountered an exception, reconnecting
+Traceback (most recent call last):
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 163, in _connect
+    await self._handler(websocket, feed.message_handler, feed.id)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 181, in _handler
+    await handler(message)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 220, in message_handler
+    await self._trade(msg)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 84, in _trade
+    timestamp=data['timestamp'])
+  File "/Users/davidvanisacker/Programming/Trading/backtest/utils/aggregate.py", line 79, in __call__
+    await self.handler(data=self.data, timestamp=self.last_update)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/callback.py", line 24, in __call__
+    await loop.run_in_executor(None, self.callback, **kwargs)
+TypeError: run_in_executor() got an unexpected keyword argument 'data'
+2019-06-06 11:24:10,346 : ERROR : BITMEX: error handling message {"table":"trade","action":"partial","keys":[],"types":{"timestamp":"timestamp","symbol":"symbol","side":"symbol","size":"long","price":"float","tickDirection":"symbol","trdMatchID":"guid","grossValue":"long","homeNotional":"float","foreignNotional":"float"},"foreignKeys":{"symbol":"instrument","side":"side"},"attributes":{"timestamp":"sorted","symbol":"grouped"},"filter":{"symbol":"ETHM19"},"data":[{"timestamp":"2019-06-06T02:10:19.641Z","symbol":"ETHM19","side":"Buy","size":20,"price":0.03182,"tickDirection":"ZeroMinusTick","trdMatchID":"e148c7b8-2972-81d0-d4f6-247d9a396209","grossValue":63640000,"homeNotional":20,"foreignNotional":0.6364}]}
+2019-06-06 11:24:10,653 : ERROR : BITMEX: encountered an exception, reconnecting
+Traceback (most recent call last):
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 163, in _connect
+    await self._handler(websocket, feed.message_handler, feed.id)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 181, in _handler
+    await handler(message)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 220, in message_handler
+    await self._trade(msg)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 84, in _trade
+    timestamp=data['timestamp'])
+  File "/Users/davidvanisacker/Programming/Trading/backtest/utils/aggregate.py", line 79, in __call__
+    await self.handler(data=self.data, timestamp=self.last_update)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/callback.py", line 24, in __call__
+    await loop.run_in_executor(None, self.callback, **kwargs)
+TypeError: run_in_executor() got an unexpected keyword argument 'data'
+2019-06-06 11:24:13,372 : ERROR : BITMEX: error handling message {"table":"trade","action":"partial","keys":[],"types":{"timestamp":"timestamp","symbol":"symbol","side":"symbol","size":"long","price":"float","tickDirection":"symbol","trdMatchID":"guid","grossValue":"long","homeNotional":"float","foreignNotional":"float"},"foreignKeys":{"symbol":"instrument","side":"side"},"attributes":{"timestamp":"sorted","symbol":"grouped"},"filter":{"symbol":"ETHM19"},"data":[{"timestamp":"2019-06-06T02:10:19.641Z","symbol":"ETHM19","side":"Buy","size":20,"price":0.03182,"tickDirection":"ZeroMinusTick","trdMatchID":"e148c7b8-2972-81d0-d4f6-247d9a396209","grossValue":63640000,"homeNotional":20,"foreignNotional":0.6364}]}
+2019-06-06 11:24:13,725 : ERROR : BITMEX: encountered an exception, reconnecting
+Traceback (most recent call last):
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 163, in _connect
+    await self._handler(websocket, feed.message_handler, feed.id)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 181, in _handler
+    await handler(message)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 220, in message_handler
+    await self._trade(msg)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 84, in _trade
+    timestamp=data['timestamp'])
+  File "/Users/davidvanisacker/Programming/Trading/backtest/utils/aggregate.py", line 79, in __call__
+    await self.handler(data=self.data, timestamp=self.last_update)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/callback.py", line 24, in __call__
+    await loop.run_in_executor(None, self.callback, **kwargs)
+TypeError: run_in_executor() got an unexpected keyword argument 'data'
+2019-06-06 11:24:16,900 : ERROR : BITMEX: error handling message {"table":"trade","action":"partial","keys":[],"types":{"timestamp":"timestamp","symbol":"symbol","side":"symbol","size":"long","price":"float","tickDirection":"symbol","trdMatchID":"guid","grossValue":"long","homeNotional":"float","foreignNotional":"float"},"foreignKeys":{"symbol":"instrument","side":"side"},"attributes":{"timestamp":"sorted","symbol":"grouped"},"filter":{"symbol":"ETHM19"},"data":[{"timestamp":"2019-06-06T02:10:19.641Z","symbol":"ETHM19","side":"Buy","size":20,"price":0.03182,"tickDirection":"ZeroMinusTick","trdMatchID":"e148c7b8-2972-81d0-d4f6-247d9a396209","grossValue":63640000,"homeNotional":20,"foreignNotional":0.6364}]}
+2019-06-06 11:24:17,207 : ERROR : BITMEX: encountered an exception, reconnecting
+Traceback (most recent call last):
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 163, in _connect
+    await self._handler(websocket, feed.message_handler, feed.id)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/feedhandler.py", line 181, in _handler
+    await handler(message)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 220, in message_handler
+    await self._trade(msg)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/bitmex/bitmex.py", line 84, in _trade
+    timestamp=data['timestamp'])
+  File "/Users/davidvanisacker/Programming/Trading/backtest/utils/aggregate.py", line 79, in __call__
+    await self.handler(data=self.data, timestamp=self.last_update)
+  File "/Users/davidvanisacker/backtest/lib/python3.7/site-packages/cryptofeed/callback.py", line 24, in __call__
+    await loop.run_in_executor(None, self.callback, **kwargs)
+TypeError: run_in_executor() got an unexpected keyword argument 'data'

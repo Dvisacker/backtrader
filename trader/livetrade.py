@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 # backtest.py
 
 from __future__ import print_function
@@ -58,7 +57,7 @@ class CryptoLiveTrade(object):
         self.heartbeat = configuration.heartbeat
         self.result_dir = configuration.result_dir
         self.exchange_names = configuration.exchange_names
-
+        self.latest_timestamp = None
         self._generate_trading_instances()
 
     def _generate_trading_instances(self):
@@ -90,6 +89,12 @@ class CryptoLiveTrade(object):
                 if event is not None:
                     print('Receiving {} event. Current Queue size: {}'.format(event.type, self.events.qsize()))
                     if event.type == 'MARKET':
+                        # Avoid duplicate ticks
+                        if self.latest_timestamp and event.timestamp <= self.latest_timestamp:
+                          break
+
+                        self.latest_timestamp = event.timestamp
+                        self.data_handler.insert_new_bar_bitmex(event.data, event.timestamp)
                         self.strategy.calculate_signals(event)
                         self.portfolio.update_timeindex(event)
                         # self.portfolio.update_graphs()
@@ -138,5 +143,4 @@ class CryptoLiveTrade(object):
         """
         Simulates the backtest and outputs portfolio performance.
         """
-        # self._run()
         Thread(target = self._run).start()

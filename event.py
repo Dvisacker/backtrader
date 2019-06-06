@@ -21,11 +21,15 @@ class MarketEvent(Event):
     corresponding bars.
     """
 
-    def __init__(self):
+    def __init__(self, data=None, timestamp=None):
         """
         Initialises the MarketEvent.
         """
         self.type = 'MARKET'
+        self.data = data
+        self.timestamp = timestamp
+
+
 
 
 class SignalEvent(Event):

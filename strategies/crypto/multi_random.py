@@ -49,6 +49,7 @@ class MultiRandomStrategy(Strategy):
           dt = self.datetime
           ex = self.exchange
           signals = []
+          print('In strategy')
 
           for s in self.instruments:
             # For each instrument, we have 1/10 chance to take a position. Respectively 1/20 and 1/20 for long/short

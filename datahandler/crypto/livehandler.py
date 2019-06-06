@@ -36,6 +36,7 @@ class LiveDataHandler(DataHandler):
 
         self.symbol_data = {}
         self.latest_symbol_data = {}
+        self.latest_timestamp = None
         self.events = events
         self.exchanges = exchanges
         self.exchange_names = configuration.exchange_names
@@ -92,13 +93,12 @@ class LiveDataHandler(DataHandler):
           self.latest_symbol_data[e][s] = parsed_ohlcv
           self.symbol_data[e][s] = parsed_ohlcv
 
-      self.events.put(MarketEvent())
+      # self.events.put(MarketEvent())
 
 
     def _listen_to_exchange_data(self):
       # Listen to exchange data is executed in a separate thread which requires a new event loop
       asyncio.set_event_loop(asyncio.new_event_loop())
-
       f = FeedHandler()
       symbols = []
       for e in self.instruments:
@@ -108,34 +108,38 @@ class LiveDataHandler(DataHandler):
             s = from_standard_to_exchange_notation(e, i)
             symbols.append(s)
 
-          f.add_feed(Bitmex(pairs=symbols, channels=[TRADES], callbacks={TRADES: OHLCV(Callback(self._insert_new_bar_bitmex), start_time=start_time, exchange='bitmex', instruments=self.instruments, window=self.ohlcv_window)}))
+          f.add_feed(Bitmex(pairs=symbols, channels=[TRADES], callbacks={TRADES: OHLCV(Callback(self._handle_new_bar_bitmex), start_time=start_time, exchange='bitmex', instruments=self.instruments, window=self.ohlcv_window)}))
 
       f.run()
 
 
-    async def _insert_new_bar_bitmex(self, data=None):
+    async def _handle_new_bar_bitmex(self, data, timestamp):
       """
       Insert a new bar into the data feed
       """
-      for instrument in list(data.keys()):
-        tick = data[instrument]
-        symbol = from_exchange_to_standard_notation('bitmex', instrument)
-        if (tick['open'] == 0 or tick['close'] == 0):
-          previous_tick = self.symbol_data['bitmex'][symbol][-1]
-          tick['open'] = previous_tick['open']
-          tick['close'] = previous_tick['close']
-          tick['high'] = previous_tick['high']
-          tick['low'] = previous_tick['low']
-          tick['volume'] = 0
-          tick['vwap'] = 0
-          self.symbol_data['bitmex'][symbol].append(tick)
-          self.latest_symbol_data['bitmex'][symbol].append(tick)
+      print('Handling new bar bitmex')
+      if data and timestamp:
+        self.events.put(MarketEvent(data, timestamp))
 
-        else:
-          self.symbol_data['bitmex'][symbol].append(tick)
-          self.latest_symbol_data['bitmex'][symbol].append(tick)
 
-      self.events.put(MarketEvent())
+    def insert_new_bar_bitmex(self, data, timestamp):
+        for instrument in list(data.keys()):
+          tick = data[instrument]
+          symbol = from_exchange_to_standard_notation('bitmex', instrument)
+          if (tick['open'] == 0 or tick['close'] == 0):
+            previous_tick = self.symbol_data['bitmex'][symbol][-1]
+            tick['open'] = previous_tick['open']
+            tick['close'] = previous_tick['close']
+            tick['high'] = previous_tick['high']
+            tick['low'] = previous_tick['low']
+            tick['volume'] = 0
+            tick['vwap'] = 0
+            self.symbol_data['bitmex'][symbol].append(tick)
+            self.latest_symbol_data['bitmex'][symbol].append(tick)
+          else:
+            self.symbol_data['bitmex'][symbol].append(tick)
+            self.latest_symbol_data['bitmex'][symbol].append(tick)
+
 
     def _get_new_bar(self, exchange, symbol):
         """
