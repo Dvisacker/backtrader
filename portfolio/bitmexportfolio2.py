@@ -71,12 +71,13 @@ class BitmexPortfolio(object):
         to determine when the time index will begin.
         """
 
-        d = dict( (k,v) for k, v in [(s, 0) for s in self.instruments] )
+        d = {}
         d['datetime'] = self.start_date
         d['total'] = 0.0
         d['total-USD'] = 0.0
 
-        positions = self.exchange.private_get_position()
+        position_array = self.exchange.private_get_position()
+        positions = { p['symbol']: p for p in position_array }
 
         for s in self.instruments:
           price = self.data.get_latest_bar_value('bitmex', s, 'close') or 0
@@ -114,6 +115,8 @@ class BitmexPortfolio(object):
         d['bitmex-BTC-fill'] = ''
         d['total-USD'] = balance * price
         d['commission'] = 0
+
+        print(d)
 
         return d
 
@@ -234,7 +237,8 @@ class BitmexPortfolio(object):
         fill - The Fill object to update the positions with.
         """
         # Check whether the fill is a buy or sell
-        positions = self.exchange.private_get_position()
+        position_array = self.exchange.private_get_position()
+        positions = { p['symbol']: p for p in position_array }
 
         for s in self.instruments:
           price = self.data.get_latest_bar_value('bitmex', s, 'close') or 0
@@ -384,6 +388,10 @@ class BitmexPortfolio(object):
 
 
     def update_signals(self, events):
+        """
+        Acts on a SignalEvents to generate new orders
+        based on the portfolio logic.
+        """
         order_events = self.rebalance_portfolio(events)
         for event in order_events:
           self.events.put(event)
@@ -394,9 +402,8 @@ class BitmexPortfolio(object):
 
     def write(self, current_positions, current_holdings):
         """
+        Saves the position and holdings updates to a database or to a file
         """
-        print('Writing positions: {}'.format(current_positions))
-        print('Writing holdings: {}'.format(current_holdings))
         self.db.insert_positions(current_positions)
         self.db.insert_holdings(current_holdings)
 
