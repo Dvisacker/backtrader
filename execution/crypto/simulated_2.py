@@ -17,21 +17,20 @@ try:
 except ImportError:
     import queue
 
-class SimulatedExecutionHandler(ExecutionHandler):
+class SimulatedCryptoExchangeExecutionHandler(ExecutionHandler):
     """
     Handles order execution via the Interactive Brokers
     API, for use against accounts when trading live
     directly.
     """
 
-    def __init__(self, events, configuration, exchanges):
+    def __init__(self, events, configuration):
         """
         Initialises the BitmexExecutionHandler instance.
         Parameters:
         events - The Queue of Event objects.
         """
         self.events = events
-        self.exchanges = exchanges
         self.take_profit_gap = 0.5
         self.stop_loss_gap = 0.5
         self.fill_dict = {}
@@ -64,6 +63,8 @@ class SimulatedExecutionHandler(ExecutionHandler):
       fill = FillEvent(
           datetime.datetime.utcnow(), symbol,
           exchange, quantity, direction,
+          price=None, fee=None, leverage=None,
+          entry_price=None, fill_type='ClosePosition'
       )
 
       self.events.put(fill)

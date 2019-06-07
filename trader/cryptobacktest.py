@@ -76,12 +76,12 @@ class CryptoBacktest(object):
         Executes the backtest.
         """
         i = 0
-        self.portfolio.initialize_graphs()
+        # self.portfolio.initialize_graphs()
 
         while True:
             i += 1
-            if (i % self.graph_refresh_period == 0):
-              self._update_charts()
+            # if (i % self.graph_refresh_period == 0):
+            #   self._update_charts()
 
             # Update the market bars
             if self.data_handler.continue_backtest == True:

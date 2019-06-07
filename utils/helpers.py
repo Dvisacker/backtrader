@@ -200,12 +200,8 @@ def from_file_to_standard_notation(symbol):
     return symbol
 
 def from_standard_to_file_notation(symbol):
-  if symbol == 'BTC/USD':
-    return 'BTCUSD'
-  elif symbol == 'ETH/USD':
-    return 'ETHUSD'
-  else:
-    return symbol
+  symbol = symbol.replace('/', "")
+  return symbol
 
 def from_exchange_to_standard_notation(exchange, symbol):
   if exchange == 'bitmex':

@@ -33,7 +33,7 @@ class BitmexPortfolioBacktest(object):
     the close datapoint
     """
 
-    def __init__(self, data, events, configuration, exchanges):
+    def __init__(self, data, events, configuration):
         """
         Initializes the portfolio with data and an event queue.
         Also includes a starting datetime index and initial capital
@@ -45,12 +45,8 @@ class BitmexPortfolioBacktest(object):
         initial_capital - The starting capital in USD.
         """
 
-        if 'bitmex' not in exchanges:
-          raise AssertionError
-
         self.data = data
         self.events = events
-        self.exchange = exchanges['bitmex']
         self.instruments = configuration.instruments['bitmex']
         self.assets = configuration.assets['bitmex']
         self.start_date = configuration.start_date
@@ -116,7 +112,6 @@ class BitmexPortfolioBacktest(object):
         current market data at this stage is known (OHLCV).
         Makes use of a MarketEvent from the events queue.
         """
-        print('Updating Time Index')
         latest_datetime = self.data.get_latest_bar_datetime('bitmex', self.instruments[0])
 
         # Update positions
@@ -126,10 +121,11 @@ class BitmexPortfolioBacktest(object):
         dp['total'] = 0
         dp['total-USD'] = 0
 
+        btc_price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', "close")
+
         for s in self.instruments:
           quantity = self.current_positions['bitmex-{}'.format(s)]
           price = self.current_positions['bitmex-{}-price'.format(s)]
-          btc_price = self.current_positions['bitmex-BTC/USD-price']
           dp['bitmex-{}'.format(s)] = self.current_positions['bitmex-{}'.format(s)]
           dp['bitmex-{}-price'.format(s)] = self.current_positions['bitmex-{}-price'.format(s)]
           dp['bitmex-{}-in-BTC'.format(s)] = self.current_positions['bitmex-{}-in-BTC'.format(s)]
@@ -173,7 +169,7 @@ class BitmexPortfolioBacktest(object):
         for s in self.assets:
           self.current_holdings['bitmex-{}-fill'.format(s)] = 0
 
-        self.write(dp, dh)
+        # self.write(dp, dh)
 
     # ======================
     # FILL/POSITION HANDLING
@@ -183,9 +179,12 @@ class BitmexPortfolioBacktest(object):
         Updates the portfolio current positions and holdings
         from a FillEvent.
         """
-        if event.type == 'FILL':
+        if event.type == 'FILL' and event.fill_type == 'Market':
           self.update_positions_from_fill(event)
           self.update_holdings_from_fill(event)
+        elif event.type == 'FILL' and event.fill_type == 'ClosePosition':
+          self.update_positions_from_exit(event)
+          self.update_positions_from_fill(event)
 
     def update_holdings_from_fill(self, fill):
         """
@@ -263,8 +262,6 @@ class BitmexPortfolioBacktest(object):
         fill - The Fill object to update the positions with.
         """
         # Check whether the fill is a buy or sell
-        # position_array = self.exchange.private_get_position()
-        # positions = { p['symbol']: p for p in position_array }
         btc_price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', 'close')
         fill_direction = { 'BUY': 1, 'SELL': -1 }[fill.direction]
         fill_symbol = fill.symbol

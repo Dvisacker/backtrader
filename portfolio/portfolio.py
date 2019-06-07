@@ -194,7 +194,6 @@ class Portfolio(object):
 
         symbol = signal.symbol
         direction = signal.signal_type
-        strength = signal.strength
 
         mkt_quantity = 100
         cur_quantity = self.current_positions[symbol]

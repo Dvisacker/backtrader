@@ -73,10 +73,8 @@ class SignalEvents(object):
         """
         Outputs the values of all signals within the SignalEvents object
         """
-        print(
-            "Order: Exchange=%s, Symbol=%s, Type=%s, Strength=%s" %
-            (self.exchange, self.symbol, self.signal_type, self.strength)
-        )
+        for e in self.events:
+          e.print_signal()
 
 
 class OrderEvent(Event):
@@ -137,7 +135,8 @@ class FillEvent(Event):
     """
 
     def __init__(self, timeindex, symbol, exchange, quantity,
-                 direction, price=None, fee=None, leverage=None, entry_price=None):
+                 direction, price=None, fee=None, leverage=None, entry_price=None,
+                 fill_type=None):
         """
         Initialises the FillEvent object. Sets the symbol, exchange,
         quantity, direction, cost of fill and an optional
@@ -173,6 +172,11 @@ class FillEvent(Event):
             self.fee = self.compute_fees()
         else:
             self.fee = fee
+
+        if fill_type is None:
+            self.fill_type = 'Market'
+        else:
+            self.fill_type = fill_type
 
     def print_fill(self):
         """
