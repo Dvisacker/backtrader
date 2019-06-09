@@ -30,6 +30,9 @@ class Configuration(object):
       if 'graph_refresh_period' in configuration:
         self.graph_refresh_period = configuration['graph_refresh_period']
 
+      if 'feeds' in configuration:
+        self.feeds = configuration['feeds']
+
       if 'assets' in configuration:
         self.assets = configuration['assets']
 

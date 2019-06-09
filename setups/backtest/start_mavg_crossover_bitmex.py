@@ -28,7 +28,8 @@ if __name__ == "__main__":
     configuration = Configuration({
       'csv_dir': '../../data',
       'result_dir': '../../results',
-      'instruments' :  { 'bitmex': ['EOS/BTC' ] },
+      'feeds': { 'bitmex': ['EOS/BTC', 'BTC/USD']},
+      'instruments' :  { 'bitmex': ['EOS/BTC'] },
       'assets': { 'bitmex': [ 'BTC' ]},
       'ohlcv_window': 60,
       'initial_capital': 100000.0,

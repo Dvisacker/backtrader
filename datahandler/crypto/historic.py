@@ -30,7 +30,7 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         self.events = events
         self.csv_dir = configuration.csv_dir
         self.period = get_ohlcv_window(configuration.ohlcv_window)
-        self.instruments = configuration.instruments
+        self.feeds = configuration.feeds
         self.start_date = configuration.start_date
 
         self.symbol_data = {}
@@ -53,11 +53,11 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         taken from Yahoo. Thus its format will be respected.
         """
         comb_index = None
-        for e in self.instruments:
+        for e in self.feeds:
           self.symbol_data[e] = {}
           self.latest_symbol_data[e] = {}
 
-          for s in self.instruments[e]:
+          for s in self.feeds[e]:
             csv_file = get_data_file(e, s, self.period)
             # Load the CSV
             df = pd.read_csv(
@@ -90,40 +90,8 @@ class HistoricCSVCryptoDataHandler(DataHandler):
                   self.latest_symbol_data[e][s].append(bar)
 
 
-        e = 'bitmex'
-        s = 'BTC/USD'
-        csv_file = get_data_file(e, s, self.period)
-        # Load the CSV
-        df = pd.read_csv(
-            os.path.join(self.csv_dir, csv_file),
-            parse_dates = True,
-            date_parser=self._date_parse,
-            header=0,
-            sep=',',
-            index_col=0,
-            names=['datetime', 'open', 'high', 'low', 'close', 'volume', 'id', 'date']
-        )
 
-        df.dropna(inplace=True)
-        df['returns'] = df['close'].pct_change()
-
-        # Truncate the data according to start_date
-        self.symbol_data[e][s] = df.sort_index().ix[self.start_date:]
-
-        if comb_index is None:
-            comb_index = self.symbol_data[e][s].index
-        else:
-            comb_index.union(self.symbol_data[e][s].index)
-
-        self.latest_symbol_data[e][s] = []
-        self.symbol_data[e][s] = self.symbol_data[e][s].reindex(index=comb_index, method='pad').iterrows()
-
-        for i in range(300):
-          bar = next(self._get_new_bar(e, s))
-          if bar is not None:
-              self.latest_symbol_data[e][s].append(bar)
-
-
+        # print(self.latest_symbol_data['bitmex']['BTC/USD'])
 
 
     def _get_new_bar(self, exchange, symbol):
@@ -177,7 +145,7 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         values from the pandas Bar series object.
         """
         try:
-            bars_list = self.latest_symbol_data[exchange][symbol]
+            bars_list = self.latest_symbol_data[exchange]
         except KeyError:
             print("That symbol is not available in the historical data set.")
             raise
@@ -216,8 +184,8 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         Pushes the latest bar to the latest_symbol_data structure
         for all symbols in the symbol list.
         """
-        for e in self.instruments:
-          for s in self.instruments[e]:
+        for e in self.feeds:
+          for s in self.feeds[e]:
             try:
                 bar = next(self._get_new_bar(e, s))
             except StopIteration:

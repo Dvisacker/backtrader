@@ -76,7 +76,7 @@ class CryptoBacktest(object):
         Executes the backtest.
         """
         i = 0
-        # self.portfolio.initialize_graphs()
+        self.portfolio.initialize_graphs()
 
         while True:
             i += 1

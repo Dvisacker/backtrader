@@ -454,9 +454,6 @@ class CryptoPortfolio(object):
 
       self.legends_added = True
 
-
-
-
     def output_summary_stats(self, backtest_result_dir):
         """
         Creates a list of summary statistics for the portfolio.

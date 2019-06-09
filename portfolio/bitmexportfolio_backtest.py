@@ -15,6 +15,7 @@ try:
 except ImportError:
     import queue
 
+import webbrowser
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -25,6 +26,7 @@ from db.mongo_handler import MongoHandler
 from event import FillEvent, OrderEvent, BulkOrderEvent
 from performance import create_sharpe_ratio, create_drawdowns
 from utils import ceil_dt, from_exchange_to_standard_notation, from_standard_to_exchange_notation, truncate, get_precision
+from utils.helpers import move_figure, plot
 
 class BitmexPortfolioBacktest(object):
     """
@@ -55,11 +57,13 @@ class BitmexPortfolioBacktest(object):
         self.initial_capital = configuration.initial_capital
 
         self.current_positions = self.construct_current_positions()
-        self.all_positions = [ self.current_positions ]
+        self.all_positions = []
         self.current_holdings = self.construct_current_holdings()
-        self.all_holdings = [ self.current_holdings ]
+        self.all_holdings = []
 
         self.db = MongoHandler()
+
+        self.legends_added = False
 
     def construct_current_positions(self):
         """
@@ -68,7 +72,6 @@ class BitmexPortfolioBacktest(object):
         """
 
         d = {}
-        d['datetime'] = self.start_date
         d['total'] = 0.0
         d['total-USD'] = 0.0
 
@@ -90,8 +93,6 @@ class BitmexPortfolioBacktest(object):
         value of the portfolio across all symbols.
         """
         d = {}
-        d['datetime'] = self.start_date
-
         price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', "close")
         initial_btc = self.initial_capital / price
 
@@ -100,8 +101,11 @@ class BitmexPortfolioBacktest(object):
         d['bitmex-BTC-price'] = price
         d['bitmex-BTC-value'] = self.initial_capital #initial_btc * price
         d['bitmex-BTC-fill'] = ''
+        d['total'] = initial_btc
         d['total-USD'] = self.initial_capital
         d['fee'] = 0
+
+        # print(d)
 
         return d
 
@@ -147,6 +151,7 @@ class BitmexPortfolioBacktest(object):
         dh = {}
         dh['datetime'] = latest_datetime
         dh['fee'] = self.current_holdings['fee']
+        dh['total'] = 0
         dh['total-USD'] = 0
 
         for s in self.assets:
@@ -159,9 +164,12 @@ class BitmexPortfolioBacktest(object):
           dh['bitmex-{}-price'.format(s)] = price
           dh['bitmex-{}-value'.format(s)] = balance * price
           dh['bitmex-{}-fill'.format(s)] = self.current_holdings['bitmex-{}-fill'.format(s)]
+          dh['total'] += balance
           dh['total-USD'] += balance * price
 
         dh['fee'] += 0.0
+
+        # print(dh)
 
         # Append the current holdings
         self.all_holdings.append(dh)
@@ -340,6 +348,76 @@ class BitmexPortfolioBacktest(object):
     # POST-BACKTEST STATISTICS
     # ========================
 
+    def initialize_graphs(self):
+      plt.ion()
+
+      # Plot three charts: Equity curve,
+      # period returns, drawdowns
+      fig = plt.figure(figsize=(10,10))
+      # Set the outer colour to white
+      fig.patch.set_facecolor('white')
+      self.portfolio_value_ax = fig.add_subplot(211, ylabel='Portfolio value, %')
+      self.prices_ax = fig.add_subplot(212, ylabel='Prices')
+
+
+      self.price_axes = {}
+      colors = ['red', 'blue', 'yellow', 'green', 'black']
+      for (i, s) in enumerate(self.instruments):
+          self.price_axes['bitmex-{}'.format(s)] = self.prices_ax.twinx()
+          self.price_axes['bitmex-{}'.format(s)].tick_params(axis='y', labelcolor=colors[i])
+
+      fig.tight_layout()
+
+      fig = plt.figure(figsize=(10,10))
+      move_figure(fig, 1000, 0)
+      self.positions_and_available_balance_ax = fig.add_subplot(211, ylabel='Positions and available balance')
+      self.currency_prices = fig.add_subplot(212, ylabel='Currency prices')
+
+      self.update_graphs()
+
+
+    def update_graphs(self):
+      if not self.all_holdings:
+        return
+
+      holdings = pd.DataFrame(self.all_holdings).copy()
+      positions = pd.DataFrame(self.all_positions).copy()
+      holdings.set_index('datetime', inplace=True)
+      positions.set_index('datetime', inplace=True)
+
+      btc_returns = holdings['bitmex-BTC-balance'].pct_change()
+      returns = holdings['total-USD'].pct_change()
+      equity = (1.0+returns).cumprod()
+      drawdown, max_dd, dd_duration = create_drawdowns(equity)
+
+      equity.plot(ax=self.portfolio_value_ax, color="blue", lw=1., label='Total Portfolio Value')
+
+      # Plot the equity holdings
+      holdings['bitmex-BTC-available-balance'].plot(ax=self.positions_and_available_balance_ax, color="orange", lw=1., label="Available Balance")
+      colors = ['red', 'blue', 'yellow', 'green', 'black']
+
+      for (i, s) in enumerate(self.instruments):
+        col = colors[i]
+        ax = self.price_axes['bitmex-{}'.format(s)]
+        price_label = 'bitmex-{} Price'.format(s).capitalize()
+        position = 'bitmex-{} Position #'.format(s).capitalize()
+        positions["bitmex-{}-price".format(s)].plot(ax=ax, lw=1., color=col, label=price_label)
+        positions["bitmex-{}-in-USD".format(s)][-1000:].plot(ax=self.positions_and_available_balance_ax, lw=1., color=col, label=position)
+
+      pf.plot_drawdown_underwater(returns, ax=self.currency_prices).set_xlabel('Date')
+      plt.pause(0.001)
+      plt.axis('tight')
+
+      if not self.legends_added:
+        self.portfolio_value_ax.legend(loc='upper left', frameon=False, markerscale=12)
+        self.prices_ax.legend(loc='upper left', frameon=False, markerscale=12)
+        self.positions_and_available_balance_ax.legend(loc='upper left', frameon=False, markerscale=12)
+
+        for s in self.instruments:
+            self.price_axes['bitmex-{}'.format(s)].legend(loc='upper left', frameon=False, markerscale=12)
+
+      self.legends_added = True
+
     def write(self, current_positions, current_holdings):
         """
         Saves the position and holdings updates to a database or to a file
@@ -378,6 +456,7 @@ class BitmexPortfolioBacktest(object):
         return stats
 
 
+
     def output_summary_stats(self, backtest_result_dir):
         """
         Creates a list of summary statistics for the portfolio.
@@ -396,58 +475,63 @@ class BitmexPortfolioBacktest(object):
                  ("Drawdown Duration", "%d" % dd_duration)]
 
         # We output both to the most recent backtest folder and to a backtest timestamped folder
-        self.equity_curve.to_csv(os.path.join(self.result_dir, 'equity.csv'))
+        self.equity_curve.to_csv(os.path.join(self.result_dir, 'last/equity.csv'))
         self.equity_curve.to_csv(os.path.join(backtest_result_dir, 'equity.csv'))
         return stats
 
-    def output_summary_stats_and_graphs(self, backtest_result_dir):
+    def output_graphs(self):
+        plt.ioff()
         """
         Creates a list of summary statistics and plots
         performance graphs
         """
-
-        total_return = self.equity_curve['equity_curve'][-1]
-        returns = self.equity_curve['returns']
-        pnl = self.equity_curve['equity_curve']
+        curve = self.equity_curve
+        total_return = curve['equity_curve'][-1]
+        returns = curve['returns']
+        pnl = curve['equity_curve']
 
         sharpe_ratio = create_sharpe_ratio(returns)
         drawdown, max_dd, dd_duration = create_drawdowns(pnl)
-        self.equity_curve['drawdown'] = drawdown
 
-        stats = [("Total Return", "%0.2f%%" % ((total_return - 1.0) * 100.0)),
-                 ("Sharpe Ratio", "%0.2f" % sharpe_ratio),
-                 ("Max Drawdown", "%0.2f%%" % (max_dd * 100.0)),
-                 ("Drawdown Duration", "%d" % dd_duration)]
-
-        self.equity_curve.to_csv(os.path.join(self.result_dir, 'equity.csv'))
-        self.equity_curve.to_csv(os.path.join(backtest_result_dir, 'equity.csv'))
-
-        returns = self.equity_curve['returns']
-        equity_curve = self.equity_curve['equity_curve']
-        drawdown = self.equity_curve['drawdown']
+        returns = curve['returns']
+        equity_curve = curve['equity_curve']
+        drawdown = curve['drawdown']
 
         # Plot three charts: Equity curve,
         # period returns, drawdowns
         fig = plt.figure(figsize=(15,10))
         # Set the outer colour to white
         fig.patch.set_facecolor('white')
+
         # Plot the equity curve
         ax1 = fig.add_subplot(311, ylabel='Portfolio value, %')
-        equity_curve.plot(ax=ax1, color="blue", lw=2.)
+        equity_curve.plot(ax=ax1, color="blue", lw=1.)
         plt.grid(True)
 
         # Plot the returns
-        ax2 = fig.add_subplot(312, ylabel='Period returns, %')
-        returns.plot(ax=ax2, color="black", lw=2.)
+        prices_ax = fig.add_subplot(312, ylabel='Period returns, %')
+        returns.plot(ax=prices_ax, color="black", lw=1.)
         plt.grid(True)
 
         # Plot the returns
-        ax3 = fig.add_subplot(313, ylabel='Drawdowns, %')
-        drawdown.plot(ax=ax3, color="red", lw=2.)
+        positions_and_available_balance_ax = fig.add_subplot(313, ylabel='Drawdowns, %')
+        drawdown.plot(ax=positions_and_available_balance_ax, color="red", lw=1.)
         plt.grid(True)
 
-        # pf.show_perf_stats(returns)
-        # pf.show_worst_drawdown_periods(returns)
+        self.price_figure = {}
+        for s in self.instruments:
+          fig = plt.figure(figsize=(15,10))
+          ax = fig.add_subplot(111, ylabel='bitmex-{} Price'.format(s))
+          fill_id = 'bitmex-{}-fill'.format(s)
+          price_id = 'bitmex-{}-price'.format(s)
+          prices = curve[price_id]
+          fills = curve[fill_id]
+          buys = pd.Series({ x: prices[x] if fills[x] == "BUY" else np.NaN for x in curve.index })
+          sells = pd.Series({ x: prices[x] if fills[x] == "SELL" else np.NaN for x in curve.index })
+          prices.plot(ax=ax, color='blue', lw=1., label='bitmex-{} Price'.format(s))
+          buys.plot(ax=ax, color='green', marker='o', label='Buys')
+          sells.plot(ax=ax, color='red', marker='x', label='Sells')
+          ax.legend(loc='best', frameon=False)
 
         plt.figure(figsize = (15, 10))
         pf.plot_drawdown_underwater(returns).set_xlabel('Date')
@@ -470,7 +554,36 @@ class BitmexPortfolioBacktest(object):
         plt.figure(figsize = (15, 10))
         pf.plot_rolling_sharpe(returns, rolling_window=30).set_xlabel('Date')
 
-        pf.create_returns_tear_sheet(returns)
+        fig = pf.create_returns_tear_sheet(returns, return_fig=True)
+        fig.savefig('../../results/last/returns_tear_sheet.pdf')
+        plt.close(fig)
+
+        webbrowser.open_new(r'file:///Users/davidvanisacker/Programming/Trading/backtest/results/last/returns_tear_sheet.pdf')
+        plot()
+
+    def save_stats(self, backtest_result_dir):
+        """
+        Creates a list of summary statistics and plots
+        performance graphs
+        """
+        total_return = self.equity_curve['equity_curve'][-1]
+        returns = self.equity_curve['returns']
+        pnl = self.equity_curve['equity_curve']
+
+        sharpe_ratio = create_sharpe_ratio(returns)
+        drawdown, max_dd, dd_duration = create_drawdowns(pnl)
+        self.equity_curve['drawdown'] = drawdown
+
+        stats = {
+          "Total Return": "%0.2f%%" % ((total_return - 1.0) * 100.0),
+          "Sharpe Ratio": "%0.2f" % sharpe_ratio,
+          "Max Drawdown": "%0.2f%%" % (max_dd * 100.0),
+          # "Drawdown Duration": "%d" % dd_duration
+        }
+
+        self.equity_curve.to_csv(os.path.join(self.result_dir, 'last/equity.csv'))
+        self.equity_curve.to_csv(os.path.join(backtest_result_dir, 'equity.csv'))
+
         return stats
 
 
