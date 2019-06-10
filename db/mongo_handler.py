@@ -13,6 +13,12 @@ class MongoHandler(object):
     self.db.positions.create_index([('datetime', pymongo.ASCENDING)], unique=True)
     self.db.holdings.create_index([('datetime', pymongo.ASCENDING)], unique=True)
 
+  def insert_portfolio(self, portfolio):
+    try:
+      self.db.portfolios.insert_one(portfolio)
+    except Exception as e:
+      print('Could not save current position: {}'.format(e))
+
   def insert_positions(self, positions):
     try:
       self.db.positions.insert_one(positions)

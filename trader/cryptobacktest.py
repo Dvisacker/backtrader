@@ -103,13 +103,15 @@ class CryptoBacktest(object):
 
                         elif event.type == 'SIGNAL':
                             self.signals += 1
-                            self.portfolio.update_signal(event)
+                            self.portfolio.update_signals(event)
 
                         elif event.type == 'ORDER':
+                            event.print_order()
                             self.orders += 1
                             self.execution_handler.execute_order(event)
 
                         elif event.type == 'FILL':
+                            event.print_fill()
                             self.fills += 1
                             self.portfolio.update_fill(event)
 

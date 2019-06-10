@@ -4,7 +4,7 @@ import pandas as pd
 import statsmodels.api as sm
 
 from .strategy import Strategy
-from event import SignalEvent
+from event import SignalEvent, SignalEvents
 from trader import CryptoBacktest
 from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
@@ -76,12 +76,14 @@ class MovingAverageCrossoverStrategy(Strategy):
                     if short_sma > long_sma and self.bought[e][s] == 'OUT':
                         print("LONG: {}".format(bar_date))
                         sig_dir = 'LONG'
-                        signal = SignalEvent(1, e, s, dt, sig_dir, 1.0)
-                        self.events.put(signal)
+                        signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
+                        signal_events = SignalEvents(signals, 1)
                         self.bought[e][s] = 'LONG'
+                        self.events.put(signal_events)
                     elif short_sma < long_sma and self.bought[e][s] == 'LONG':
-                        print("SHORT: {}".format(bar_date))
+                        print("EXIT: {}".format(bar_date))
                         sig_dir = 'EXIT'
-                        signal = SignalEvent(1, e, s, dt, sig_dir, 1.0)
-                        self.events.put(signal)
+                        signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
+                        signal_events = SignalEvents(signals, 1)
+                        self.events.put(signal_events)
                         self.bought[e][s] = 'OUT'

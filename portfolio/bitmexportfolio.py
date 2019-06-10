@@ -126,7 +126,7 @@ class BitmexPortfolio(object):
         current market data at this stage is known (OHLCV).
         Makes use of a MarketEvent from the events queue.
         """
-        print('Updating Time Index')
+        # print('Updating Time Index')
         latest_datetime = self.data.get_latest_bar_datetime('bitmex', self.instruments[0])
 
         # Update positions
