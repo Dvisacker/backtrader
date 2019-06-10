@@ -76,6 +76,7 @@ class BitmexPortfolioBacktest(object):
         d['total-USD'] = 0.0
 
         for s in self.instruments:
+          print(s)
           price = self.data.get_latest_bar_value('bitmex', s, 'close') or 0
           d['bitmex-{}'.format(s)] = 0
           d['bitmex-{}-price'.format(s)] = price

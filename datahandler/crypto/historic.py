@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import math
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 import os, os.path
@@ -43,7 +44,7 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         """
         Parses timestamps into python datetime objects.
         """
-        return datetime.fromtimestamp(int(timestamp))
+        return datetime.fromtimestamp(float(timestamp))
 
     def _open_convert_csv_files(self):
         """
@@ -62,12 +63,12 @@ class HistoricCSVCryptoDataHandler(DataHandler):
             # Load the CSV
             df = pd.read_csv(
                 os.path.join(self.csv_dir, csv_file),
-                parse_dates = True,
+                parse_dates=True,
                 date_parser=self._date_parse,
                 header=0,
                 sep=',',
-                index_col=0,
-                names=['datetime', 'open', 'high', 'low', 'close', 'volume', 'id', 'date']
+                index_col=1,
+                names=['time', 'timestamp', 'open', 'high', 'low', 'close', 'volume']
             )
 
             df.dropna(inplace=True)
@@ -88,10 +89,6 @@ class HistoricCSVCryptoDataHandler(DataHandler):
               bar = next(self._get_new_bar(e, s))
               if bar is not None:
                   self.latest_symbol_data[e][s].append(bar)
-
-
-
-        # print(self.latest_symbol_data['bitmex']['BTC/USD'])
 
 
     def _get_new_bar(self, exchange, symbol):
@@ -145,7 +142,7 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         values from the pandas Bar series object.
         """
         try:
-            bars_list = self.latest_symbol_data[exchange]
+            bars_list = self.latest_symbol_data[exchange][symbol]
         except KeyError:
             print("That symbol is not available in the historical data set.")
             raise
