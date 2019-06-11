@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 
 if __name__ == "__main__" and __package__ is None:
     from sys import path
@@ -8,17 +9,16 @@ if __name__ == "__main__" and __package__ is None:
     path.append(dir(dir(path[0])))
     __package__ = "setups"
 
-
 import sys
-import datetime
+import math
 import warnings
 
-from strategies.crypto import MovingAverageCrossoverStrategy
-from event import SignalEvent
+from strategies.crypto.mr import OLSMeanReversionStrategy
 from trader import CryptoBacktest
 from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import BitmexPortfolioBacktest
+from datetime import datetime, timedelta
 from configuration import Configuration
 
 if not sys.warnoptions:
@@ -26,25 +26,25 @@ if not sys.warnoptions:
 
 if __name__ == "__main__":
     configuration = Configuration({
-      'csv_dir': '../../data',
-      'result_dir': '../../results',
-      'feeds': { 'bitmex': ['EOS/BTC', 'BTC/USD']},
-      'instruments' :  { 'bitmex': ['EOS/BTC'] },
+      'start_date' : datetime(2019, 3, 26, 0, 0, 0),
+      'csv_dir' : '../../data',
+      'result_dir' : '../../results',
+      'feeds': { 'bitmex': ['XRP/BTC', 'EOS/BTC', 'BTC/USD'] },
+      'instruments': { 'bitmex': ['XRP/BTC', 'EOS/BTC'] },
       'assets': { 'bitmex': [ 'BTC' ]},
+      'initial_capital' : 100000.0,
       'ohlcv_window': 60,
-      'initial_capital': 100000.0,
-      'heartbeat': 0,
-      'start_date': datetime.datetime(2017, 1, 1, 0, 0, 0),
+      'graph_refresh_period': 500,
+      'heartbeat' : 0,
       'graph_refresh_period': 300,
-      'default_position_size': 0.05
+      'default_position_size': 0.05,
+      'update_charts': False,
+      'show_charts': True
     })
 
     backtest = CryptoBacktest(
-        configuration,
-        HistoricCSVCryptoDataHandler,
-        SimulatedCryptoExchangeExecutionHandler,
-        BitmexPortfolioBacktest,
-        MovingAverageCrossoverStrategy
+        configuration, HistoricCSVCryptoDataHandler, SimulatedCryptoExchangeExecutionHandler,
+        BitmexPortfolioBacktest, OLSMeanReversionStrategy
     )
 
     backtest.start_trading()

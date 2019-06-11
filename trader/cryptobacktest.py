@@ -57,6 +57,9 @@ class CryptoBacktest(object):
         self.fills = 0
         self.num_strats = 1
 
+        self.show_charts = configuration.show_charts
+        self.update_charts = configuration.update_charts
+
         self._generate_trading_instances()
 
     def _generate_trading_instances(self):
@@ -76,12 +79,14 @@ class CryptoBacktest(object):
         Executes the backtest.
         """
         i = 0
-        self.portfolio.initialize_graphs()
+        if self.update_charts:
+          self.portfolio.initialize_graphs()
 
         while True:
             i += 1
-            # if (i % self.graph_refresh_period == 0):
-            #   self._update_charts()
+
+            if (self.update_charts and i % self.graph_refresh_period == 0):
+              self._update_charts()
 
             # Update the market bars
             if self.data_handler.continue_backtest == True:
@@ -118,8 +123,7 @@ class CryptoBacktest(object):
             time.sleep(self.heartbeat)
 
     def _update_charts(self):
-        self.portfolio.update_graphs()
-
+        self.portfolio.update_charts()
 
     def _output_performance(self):
         """
@@ -144,8 +148,8 @@ class CryptoBacktest(object):
         print("Creating equity curve...")
         print(self.portfolio.equity_curve.tail(10))
 
-
-        self.portfolio.output_graphs()
+        if self.show_charts:
+          self.portfolio.output_graphs()
 
     def start_trading(self):
         """

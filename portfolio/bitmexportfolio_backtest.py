@@ -210,7 +210,7 @@ class BitmexPortfolioBacktest(object):
         price = self.data.get_latest_bar_value('bitmex', symbol, 'close') or 0
 
         quantity = self.current_portfolio['bitmex-{}-position'.format(symbol)]
-        direction = 1 if quantity > 0 else -1
+        direction = -1 if quantity > 0 else 1
 
         self.current_portfolio['bitmex-{}-position'.format(symbol)] = 0
         self.current_portfolio['bitmex-{}-price'.format(symbol)] = price
@@ -235,7 +235,7 @@ class BitmexPortfolioBacktest(object):
 
         else:
           self.current_portfolio['bitmex-BTC-balance'] += direction * quantity * (price - entry_price)
-          self.current_portfolio['bitmex-BTC-available-balance'] += direction * quantity / price
+          self.current_portfolio['bitmex-BTC-available-balance'] += direction * quantity * price
           self.current_portfolio['bitmex-BTC-price'] = btc_price
           self.current_portfolio['bitmex-BTC-balance-in-USD'] = self.current_portfolio['bitmex-BTC-balance'] * btc_price
           self.current_portfolio['fee'] += fill.fee
@@ -255,6 +255,7 @@ class BitmexPortfolioBacktest(object):
         for sig in signals.events:
           price = self.data.get_latest_bar_value('bitmex', sig.symbol, "close")
           if not price:
+            # Might want to throw an error here
             continue
 
           # We don't take into account take profits and stop losses for now
@@ -270,13 +271,15 @@ class BitmexPortfolioBacktest(object):
             quantity = abs(target_quantity - current_quantity)
 
             if (target_allocation > available_balance):
+                # Might want to throw an error here
                 continue
 
             if (quantity == 0):
+                # Might want to throw an error here
                 continue
 
             order = OrderEvent(exchange, sig.symbol, 'Market', quantity, side, 1)
-            events = [order]
+            events.append(order)
 
         return events
 
@@ -326,10 +329,10 @@ class BitmexPortfolioBacktest(object):
       self.positions_and_available_balance_ax = fig.add_subplot(211, ylabel='Positions and available balance')
       self.currency_prices = fig.add_subplot(212, ylabel='Currency prices')
 
-      self.update_graphs()
+      self.update_charts()
 
 
-    def update_graphs(self):
+    def update_charts(self):
       if not self.all_portfolios:
         return
 
@@ -337,7 +340,7 @@ class BitmexPortfolioBacktest(object):
       portfolios.set_index('datetime', inplace=True)
 
       btc_returns = portfolios['bitmex-BTC-balance'].pct_change()
-      returns = portfolios['total-USD'].pct_change()
+      returns = portfolios['total-in-USD'].pct_change()
       equity = (1.0+returns).cumprod()
       drawdown, max_dd, dd_duration = create_drawdowns(equity)
 
@@ -353,7 +356,7 @@ class BitmexPortfolioBacktest(object):
         price_label = 'bitmex-{} Price'.format(s).capitalize()
         position = 'bitmex-{} Position #'.format(s).capitalize()
         portfolios["bitmex-{}-price".format(s)].plot(ax=ax, lw=1., color=col, label=price_label)
-        portfolios["bitmex-{}-in-USD".format(s)][-1000:].plot(ax=self.positions_and_available_balance_ax, lw=1., color=col, label=position)
+        portfolios["bitmex-{}-position-in-USD".format(s)][-1000:].plot(ax=self.positions_and_available_balance_ax, lw=1., color=col, label=position)
 
       pf.plot_drawdown_underwater(returns, ax=self.currency_prices).set_xlabel('Date')
       plt.pause(0.001)
@@ -449,6 +452,7 @@ class BitmexPortfolioBacktest(object):
         equity_curve = curve['equity_curve']
         drawdown = curve['drawdown']
 
+
         # Plot three charts: Equity curve,
         # period returns, drawdowns
         fig = plt.figure(figsize=(15,10))
@@ -466,8 +470,8 @@ class BitmexPortfolioBacktest(object):
         plt.grid(True)
 
         # Plot the returns
-        positions_and_available_balance_ax = fig.add_subplot(313, ylabel='Drawdowns, %')
-        drawdown.plot(ax=positions_and_available_balance_ax, color="red", lw=1.)
+        drawdown_ax = fig.add_subplot(313, ylabel='Drawdowns, %')
+        drawdown.plot(ax=drawdown_ax, color="red", lw=1.)
         plt.grid(True)
 
         self.price_figure = {}
@@ -478,8 +482,8 @@ class BitmexPortfolioBacktest(object):
           price_id = 'bitmex-{}-price'.format(s)
           prices = curve[price_id]
           fills = curve[fill_id]
-          buys = pd.Series({ x: prices[x] if fills[x] == "BUY" else np.NaN for x in curve.index })
-          sells = pd.Series({ x: prices[x] if fills[x] == "SELL" else np.NaN for x in curve.index })
+          buys = pd.Series({ x: prices[x] if fills[x] == 1 else np.NaN for x in curve.index })
+          sells = pd.Series({ x: prices[x] if fills[x] == -1 else np.NaN for x in curve.index })
           prices.plot(ax=ax, color='blue', lw=1., label='bitmex-{} Price'.format(s))
           buys.plot(ax=ax, color='green', marker='o', label='Buys')
           sells.plot(ax=ax, color='red', marker='x', label='Sells')

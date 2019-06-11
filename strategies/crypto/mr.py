@@ -12,7 +12,7 @@ import pandas as pd
 import statsmodels.api as sm
 
 from .strategy import Strategy
-from event import SignalEvent
+from event import SignalEvent, SignalEvents
 from trader import CryptoBacktest
 from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
@@ -118,6 +118,7 @@ class OLSMeanReversionStrategy(Strategy):
         # component of the pair of tickers
         y = self.data.get_latest_bars_values(self.exchange, self.pair[0],  "close", N=self.ols_window)
         x = self.data.get_latest_bars_values(self.exchange, self.pair[1], "close", N=self.ols_window)
+        signals = []
 
         if y is not None and x is not None:
             # Check that all window periods are available
@@ -133,8 +134,12 @@ class OLSMeanReversionStrategy(Strategy):
                 y_signal, x_signal = self.calculate_xy_signals(zscore_last)
 
                 if y_signal is not None and x_signal is not None:
-                    self.events.put(y_signal)
-                    self.events.put(x_signal)
+                    signals.append(x_signal)
+                    signals.append(y_signal)
+
+                    events = SignalEvents(signals, 1)
+                    self.events.put(events)
+
 
     def calculate_signals(self, event):
         """

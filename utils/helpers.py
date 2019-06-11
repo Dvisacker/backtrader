@@ -249,7 +249,7 @@ def from_standard_to_exchange_notation(exchange, symbol):
     elif symbol == "BTC/USD":
       return "XBTM19"
     elif symbol == "ETH/USD":
-      return "ETHUSD"
+      return "ETH/USD"
 
     symbol = symbol.replace('BTC', 'XBT')
     symbol = symbol.replace('/', "")

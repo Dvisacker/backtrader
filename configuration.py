@@ -39,6 +39,16 @@ class Configuration(object):
       if 'default_position_size' in configuration:
         self.default_position_size = configuration['default_position_size']
 
+      if 'show_charts' in configuration:
+        self.show_charts = configuration['show_charts']
+      else:
+        self.show_charts = True
+
+      if 'update_charts' in configuration:
+        self.update_charts = configuration['update_charts']
+      else:
+        self.update_charts = True
+
 
 class MultiMRConfiguration(Configuration):
 

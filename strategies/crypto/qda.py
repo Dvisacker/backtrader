@@ -11,7 +11,7 @@ import os
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
 from .strategy import Strategy
-from event import SignalEvent
+from event import SignalEvent, SignalEvents
 from trader import CryptoBacktest
 from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
@@ -96,6 +96,7 @@ class QDAStrategy(Strategy):
         sym = self.symbol
         dt = self.datetime_now
         ex = self.exchange
+        signals = []
 
         if event.type == 'MARKET':
             self.bar_index += 1
@@ -117,5 +118,8 @@ class QDAStrategy(Strategy):
                 if pred < 0 and self.long_market:
                     self.long_market = False
                     signal = SignalEvent(1, ex, sym, dt, 'EXIT', 1.0)
-                    self.events.put(signal)
+                    signals.append(signal)
 
+                if signals:
+                  events = SignalEvents(signals, 1)
+                  self.events.put(events)

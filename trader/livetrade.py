@@ -97,7 +97,7 @@ class CryptoLiveTrade(object):
                         self.data_handler.insert_new_bar_bitmex(event.data, event.timestamp)
                         self.strategy.calculate_signals(event)
                         self.portfolio.update_timeindex(event)
-                        # self.portfolio.update_graphs()
+                        # self.portfolio.update_charts()
 
                     elif event.type == 'SIGNAL':
                         self.signals += len(event.events)

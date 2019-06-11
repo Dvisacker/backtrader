@@ -402,10 +402,10 @@ class CryptoPortfolio(object):
       self.ax3 = fig.add_subplot(211, ylabel='Positions')
       self.ax4 = fig.add_subplot(212, ylabel='Currency prices')
 
-      self.update_graphs()
+      self.update_charts()
 
 
-    def update_graphs(self):
+    def update_charts(self):
       if not self.all_holdings:
         return
 

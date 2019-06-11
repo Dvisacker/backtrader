@@ -452,7 +452,7 @@ class CryptoPortfolio(object):
       move_figure(fig, 1000, 0)
       self.ax4 = fig.add_subplot(111, ylabel='Drawdown underwater')
 
-      self.update_graphs()
+      self.update_charts()
       self.ax1.legend(loc='upper left', frameon=False, markerscale=12)
       self.ax2.legend(loc='upper left', frameon=False, markerscale=12)
       self.ax3.legend(loc='upper left', frameon=False, markerscale=12)
@@ -468,7 +468,7 @@ class CryptoPortfolio(object):
       # self.ax7 = fig.add_subplot(111, ylabel='Rolling sharpe')
 
 
-    def update_graphs(self):
+    def update_charts(self):
       curve = pd.DataFrame(self.all_holdings).copy()
 
       for e in self.instruments:
