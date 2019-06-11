@@ -30,6 +30,7 @@ class QDAStrategy(Strategy):
         self.instruments = configuration.instruments
         self.csv_dir = configuration.csv_dir
         self.exchanges = configuration.exchange_names
+        self.initial_bars = configuration.initial_bars
         self.period = get_ohlcv_window(configuration.ohlcv_window)
         self.events = events
         self.datetime_now = datetime.datetime.utcnow()
@@ -38,12 +39,7 @@ class QDAStrategy(Strategy):
         self.exchange = self.exchanges[0]
         self.symbol = self.instruments[self.exchange][0]
 
-
         # NOTE This strategy was made for 1 day windows
-        self.model_start_date = datetime.datetime(2017,1,1)
-        self.model_end_date = datetime.datetime(2017,12,31)
-        self.model_start_test_date = datetime.datetime(2017,10,1)
-
         self.long_market = False
         self.short_market = False
         self.bar_index = 0
@@ -56,9 +52,14 @@ class QDAStrategy(Strategy):
             date_parser=date_parse,
             header=0,
             sep=',',
-            index_col=0,
-            names=['datetime', 'open', 'high', 'low', 'close', 'volume', 'id', 'date']
+            index_col=1,
+            names=['time', 'timestamp', 'open', 'high', 'low', 'close', 'volume']
         )
+
+        self.model_start_date = self.model_data.index[5]
+        self.model_end_date = self.model_data.index[self.initial_bars]
+        # self.model_start_test_date = self.model_start_date + (self.model_end_date - self.model_start_date) * 0.8
+        # print(self.model_start_test_date)
 
         self.model_data.dropna(inplace=True)
         self.model_data['returns'] = self.model_data['close'].pct_change()
@@ -79,12 +80,9 @@ class QDAStrategy(Strategy):
         y = returns["Direction"]
 
         # Create training and test sets
-        start_test = self.model_start_test_date
-        X_train = X[X.index < start_test]
-        X_test = X[X.index >= start_test]
-        y_train = y[y.index < start_test]
-        y_test = y[y.index >= start_test]
-
+        # start_test = self.model_start_test_date
+        X_train = X[X.index < self.model_end_date]
+        y_train = y[y.index < self.model_end_date]
         model = QuadraticDiscriminantAnalysis()
         model.fit(X_train, y_train)
         return model
@@ -113,7 +111,7 @@ class QDAStrategy(Strategy):
                 if pred > 0 and not self.long_market:
                     self.long_market = True
                     signal = SignalEvent(1, ex, sym, dt, 'LONG', 1.0)
-                    self.events.put(signal)
+                    signals.append(signal)
 
                 if pred < 0 and self.long_market:
                     self.long_market = False

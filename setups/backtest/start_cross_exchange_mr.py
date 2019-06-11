@@ -27,7 +27,7 @@ if __name__ == "__main__":
       'csv_dir': '../../data',
       'result_dir': '../../results',
       'instruments': { 'bitmex': ['BTC/USD'], 'binance': ['BTC/USD']},
-      'ohlcv_window': 60,
+      'ohlcv_window': '1m',
       'initial_capital': 100000.0,
       'heartbeat': 0.00,
       'start_date': datetime.datetime(2019, 3, 25, 0, 0, 0),

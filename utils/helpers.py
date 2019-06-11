@@ -35,7 +35,7 @@ def date_parse(timestamp):
     """
     Parses timestamps into python datetime objects.
     """
-    return datetime.fromtimestamp(int(timestamp))
+    return datetime.fromtimestamp(float(timestamp))
 
 def move_figure(f, x, y):
     """Move figure's upper left corner to pixel (x, y)"""
@@ -283,7 +283,7 @@ def from_standard_to_exchange_notation(exchange, symbol, index=False):
     elif symbol == "XRP/BTC":
       return ".BXRPXBT"
     elif symbol == "BTC/USD":
-      return ".BXBTXBT"
+      return "BTC/USD"
     elif symbol == "ETH/USD":
       return "ETH/USD"
 

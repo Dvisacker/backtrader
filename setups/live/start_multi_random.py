@@ -37,7 +37,7 @@ if __name__ == "__main__":
       'exchange_names' : ['bitmex'],
       'assets': { 'bitmex': ['BTC'] },
       'instruments' : { 'bitmex': ['ETH/BTC', 'LTC/BTC', 'TRX/BTC', 'XRP/BTC', 'BTC/USD'] },
-      'ohlcv_window': 60, #receive the one minute candles
+      'ohlcv_window': '1m', #receive the one minute candles
       'heartbeat' : 1.00,
       'start_date' : start_date,
       'default_position_size': 0.05

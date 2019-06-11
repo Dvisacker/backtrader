@@ -31,7 +31,7 @@ if __name__ == "__main__":
       'feeds': { 'bitmex': ['EOS/BTC', 'BTC/USD']},
       'instruments' :  { 'bitmex': ['EOS/BTC'] },
       'assets': { 'bitmex': [ 'BTC' ]},
-      'ohlcv_window': 60,
+      'ohlcv_window': '1m',
       'initial_capital': 100000.0,
       'heartbeat': 0,
       'start_date': datetime.datetime(2017, 1, 1, 0, 0, 0),

@@ -16,10 +16,17 @@ class Configuration(object):
     def __init__(self, configuration):
       self.result_dir = configuration['result_dir']
       self.instruments = configuration['instruments']
-      self.ohlcv_window = configuration['ohlcv_window']
       self.heartbeat = configuration['heartbeat']
       self.start_date = configuration['start_date']
       self.exchange_names = list(self.instruments.keys())
+
+      self.ohlcv_window = {
+        '1m': 60,
+        '5m': 300,
+        '15m': 900,
+        '1h': 3600,
+        '1d': 86400
+      }[configuration['ohlcv_window']]
 
       if 'csv_dir' in configuration:
         self.csv_dir = configuration['csv_dir']
@@ -48,6 +55,17 @@ class Configuration(object):
         self.update_charts = configuration['update_charts']
       else:
         self.update_charts = True
+
+      # Initial bars represents the number of bars that are considered already
+      # past when the backtest is started and will thus not be fed into the event loop
+      if 'initial_bars' in configuration:
+        self.initial_bars = configuration['initial_bars']
+      else:
+        self.initial_bars = {
+          60: 300,
+          3600: 300,
+          86400: 10
+        }[self.ohlcv_window]
 
 
 class MultiMRConfiguration(Configuration):

@@ -33,14 +33,16 @@ if __name__ == "__main__":
       'file_list' :  ['bitmex-BTCUSD-1d'],
       'feeds': { 'bitmex': ['XRP/BTC', 'BTC/USD']},
       'instruments': { 'bitmex': ['XRP/BTC']},
+      'assets': { 'bitmex': ['BTC']},
       'exchange_names' :  ['bitmex'],
-      'ohlcv_window': 86400,
+      'ohlcv_window': '1d',
       'initial_capital' :  100000.0,
       'graph_refresh_period': 50,
       'heartbeat' :  0.0,
       'default_position_size': 0.05,
       'update_charts': False,
-      'show_charts': True
+      'show_charts': True,
+      'initial_bars': 30
     })
 
     backtest = CryptoBacktest(

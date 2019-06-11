@@ -33,7 +33,7 @@ if __name__ == "__main__":
       'instruments': { 'bitmex': ['XRP/BTC', 'EOS/BTC'] },
       'assets': { 'bitmex': [ 'BTC' ]},
       'initial_capital' : 100000.0,
-      'ohlcv_window': 60,
+      'ohlcv_window': '1m',
       'graph_refresh_period': 500,
       'heartbeat' : 0,
       'graph_refresh_period': 300,

@@ -31,7 +31,7 @@ if __name__ == "__main__":
       'result_dir' : '../../results',
       'instruments': { 'bitmex': ['BTC/USD', 'ETH/USD'] },
       'initial_capital' : 100000.0,
-      'ohlcv_window': 60,
+      'ohlcv_window': '1m',
       'graph_refresh_period': 500,
       'heartbeat' : 0,
       'start_date' : datetime(2019, 3, 26, 0, 0, 0),

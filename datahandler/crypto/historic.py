@@ -33,6 +33,7 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         self.period = get_ohlcv_window(configuration.ohlcv_window)
         self.feeds = configuration.feeds
         self.start_date = configuration.start_date
+        self.initial_bars = configuration.initial_bars
 
         self.symbol_data = {}
         self.latest_symbol_data = {}
@@ -60,7 +61,6 @@ class HistoricCSVCryptoDataHandler(DataHandler):
 
           for s in self.feeds[e]:
             csv_file = get_data_file(e, s, self.period)
-            # Load the CSV
             df = pd.read_csv(
                 os.path.join(self.csv_dir, csv_file),
                 parse_dates=True,
@@ -74,8 +74,8 @@ class HistoricCSVCryptoDataHandler(DataHandler):
             df.dropna(inplace=True)
             df['returns'] = df['close'].pct_change()
 
-            # Truncate the data according to start_date
-            self.symbol_data[e][s] = df.sort_index().ix[self.start_date:]
+            if self.start_date:
+              self.symbol_data[e][s] = df.sort_index().ix[self.start_date:]
 
             if comb_index is None:
                 comb_index = self.symbol_data[e][s].index
@@ -85,7 +85,7 @@ class HistoricCSVCryptoDataHandler(DataHandler):
             self.latest_symbol_data[e][s] = []
             self.symbol_data[e][s] = self.symbol_data[e][s].reindex(index=comb_index, method='pad').iterrows()
 
-            for i in range(300):
+            for i in range(self.initial_bars):
               bar = next(self._get_new_bar(e, s))
               if bar is not None:
                   self.latest_symbol_data[e][s].append(bar)
