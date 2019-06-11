@@ -56,7 +56,7 @@ def parse_args():
     return parser.parse_args()
 
 args = parse_args()
-symbol = from_standard_to_exchange_notation(args.exchange, args.symbol)
+symbol = from_standard_to_exchange_notation(args.exchange, args.symbol, index=True)
 
 # Get our Exchange
 try:
@@ -97,17 +97,30 @@ if symbol not in exchange.symbols:
 
 
 ohlcv = []
-# Get data
+# Get OHLCV from now - days to now
 if not args.from_date and not args.to_date:
   days = timedelta(days=args.days)
   now = datetime.now()
   current_time = now - days
 
+  timedelta = {
+    '1m': timedelta(hours=12),
+    '1h': timedelta(days=30),
+    '1d': timedelta(days=365)
+  }[args.timeframe]
+
+  limit = {
+    '1m': 720,
+    '1h': 720,
+    '1d': 365
+  }[args.timeframe]
+
   while current_time < now:
     since = time.mktime(current_time.timetuple()) * 1000
-    data = exchange.fetch_ohlcv(symbol, args.timeframe, since=since, limit=720)
+    data = exchange.fetch_ohlcv(symbol, args.timeframe, since=since, limit=limit)
+
     header = ['Time', 'Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume']
-    current_time += timedelta(hours=12)
+    current_time += timedelta
     parser = lambda x : { 'timestamp': x[0] / 1000, 'open': x[1], 'high': x[2], 'low': x[3], 'close': x[4], 'volume': x[5], 'time': datetime.fromtimestamp(x[0] / 1000) }
     parsed_ohlcv = list(map(parser, data))
     ohlcv += parsed_ohlcv
@@ -120,18 +133,30 @@ if not args.from_date and not args.to_date:
   df.to_csv(filename)
 
 
-
+# Get OHLCV from from_date to from_date + days
 if args.from_date and args.days:
   days = timedelta(days=args.days)
   now = datetime.now()
   current_time = datetime.strptime(args.from_date, '%d/%m/%Y')
   to_date = current_time + days
 
+  timedelta = {
+    '1m': timedelta(hours=12),
+    '1h': timedelta(days=30),
+    '1d': timedelta(days=365)
+  }[args.timeframe]
+
+  limit = {
+    '1m': 720,
+    '1h': 720,
+    '1d': 365
+  }[args.timeframe]
+
   while current_time < to_date:
     since = time.mktime(current_time.timetuple()) * 1000
-    data = exchange.fetch_ohlcv(symbol, args.timeframe, since=since, limit=720)
+    data = exchange.fetch_ohlcv(symbol, args.timeframe, since=since, limit=limit)
     header = ['Time', 'Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume']
-    current_time += timedelta(hours=12)
+    current_time += timedelta
     parser = lambda x : { 'timestamp': x[0] / 1000, 'open': x[1], 'high': x[2], 'low': x[3], 'close': x[4], 'volume': x[5], 'time': datetime.fromtimestamp(x[0] / 1000) }
     parsed_ohlcv = list(map(parser, data))
     ohlcv += parsed_ohlcv

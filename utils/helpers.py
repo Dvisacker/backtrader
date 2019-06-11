@@ -225,13 +225,29 @@ def from_exchange_to_standard_notation(exchange, symbol):
       return 'XRP/BTC'
     elif symbol == "XBTM19":
       return 'BTC/USD'
+    elif symbol == '.BADAXBT':
+      return 'ADA/BTC'
+    elif symbol == ".BBCHXBT":
+      return 'BCH/BTC'
+    elif symbol == ".BEOSXBT":
+      return 'EOS/BTC'
+    elif symbol == ".BETHXBT":
+      return 'ETH/BTC'
+    elif symbol == ".BLTCXBT":
+      return 'LTC/BTC'
+    elif symbol == ".BTRXXBT":
+      return 'TRX/BTC'
+    elif symbol == ".BXRPXBT":
+      return 'XRP/BTC'
+    elif symbol == ".BXBTXBT":
+      return 'BTC/USD'
     else:
       return symbol
   else:
     return symbol
 
-def from_standard_to_exchange_notation(exchange, symbol):
-  if exchange == 'bitmex':
+def from_standard_to_exchange_notation(exchange, symbol, index=False):
+  if exchange == 'bitmex' and index == False:
     if symbol == "ADA/BTC":
       return "ADAM19"
     elif symbol == "BCH/BTC":
@@ -248,6 +264,26 @@ def from_standard_to_exchange_notation(exchange, symbol):
       return "XRPM19"
     elif symbol == "BTC/USD":
       return "XBTM19"
+    elif symbol == "ETH/USD":
+      return "ETH/USD"
+
+  if exchange == 'bitmex' and index == True:
+    if symbol == "ADA/BTC":
+      return ".BADAXBT"
+    elif symbol == "BCH/BTC":
+      return ".BBCHXBT"
+    elif symbol == "EOS/BTC":
+      return ".BEOSXBT"
+    elif symbol == "ETH/BTC":
+      return ".BETHXBT"
+    elif symbol == "LTC/BTC":
+      return ".BLTCXBT"
+    elif symbol == "TRX/BTC":
+      return ".BTRXXBT"
+    elif symbol == "XRP/BTC":
+      return ".BXRPXBT"
+    elif symbol == "BTC/USD":
+      return ".BXBTXBT"
     elif symbol == "ETH/USD":
       return "ETH/USD"
 
