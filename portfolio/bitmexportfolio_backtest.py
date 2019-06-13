@@ -110,12 +110,10 @@ class BitmexPortfolioBacktest(object):
 
       for s in self.instruments:
         quantity = self.current_portfolio['bitmex-{}-position'.format(s)]
-        price = self.current_portfolio['bitmex-{}-price'.format(s)]
-        df['bitmex-{}-position'.format(s)] = self.current_portfolio['bitmex-{}-position'.format(s)]
-        df['bitmex-{}-price'.format(s)] = self.current_portfolio['bitmex-{}-price'.format(s)]
-        # This needs to be updated i believe.
-        df['bitmex-{}-position-in-BTC'.format(s)] = self.current_portfolio['bitmex-{}-position-in-BTC'.format(s)]
-        df['bitmex-{}-position-in-USD'.format(s)] = self.current_portfolio['bitmex-{}-position-in-USD'.format(s)]
+        price = self.data.get_latest_bar_value('bitmex', s, 'close')
+        df['bitmex-{}-price'.format(s)] = price
+        df['bitmex-{}-position-in-BTC'.format(s)] = quantity * price
+        df['bitmex-{}-position-in-USD'.format(s)] = quantity * price  * btc_price
         df['bitmex-{}-fill'.format(s)] = self.current_portfolio['bitmex-{}-fill'.format(s)]
 
         if 'bitmex-{}-leverage'.format(s) in self.current_portfolio:
@@ -196,7 +194,7 @@ class BitmexPortfolioBacktest(object):
 
         # Update holdings list with new quantities
         self.current_portfolio['bitmex-{}-entry-price'.format(symbol)] = entry_price
-        self.current_portfolio['bitmex-BTC-available-balance'] -= direction * quantity * entry_price
+        self.current_portfolio['bitmex-BTC-available-balance'] -= abs(quantity * entry_price)
         self.current_portfolio['bitmex-BTC-price'] = btc_price
         self.current_portfolio['bitmex-BTC-balance-in-USD'] = balance * btc_price
         self.current_portfolio['total'] = balance
@@ -218,13 +216,13 @@ class BitmexPortfolioBacktest(object):
         self.current_portfolio['bitmex-{}-position-in-USD'.format(symbol)] = 0
         self.current_portfolio['bitmex-{}-leverage'.format(symbol)] = 1
         self.current_portfolio['bitmex-{}-fill'.format(symbol)] = direction
-        self.current_portfolio['bitmex-total-position-in-BTC'] += (-1) * quantity * price * btc_price
-        self.current_portfolio['bitmex-total-position-in-USD'] += (-1) * quantity * price
+        self.current_portfolio['bitmex-total-position-in-BTC'] -= quantity * price * btc_price
+        self.current_portfolio['bitmex-total-position-in-USD'] -= quantity * price
 
         # We distinguish between the different contracts
         if (symbol == 'BTC/USD'):
-          self.current_portfolio['bitmex-BTC-balance'] += direction * quantity * (1 / entry_price - 1 / price)
-          self.current_portfolio['bitmex-BTC-available-balance'] += direction * quantity / price
+          self.current_portfolio['bitmex-BTC-balance'] += quantity * (1 / entry_price - 1 / price)
+          self.current_portfolio['bitmex-BTC-available-balance'] += abs(quantity / price)
           self.current_portfolio['bitmex-BTC-price'] = btc_price
           self.current_portfolio['bitmex-BTC-balance-in-USD'] = self.current_portfolio['bitmex-BTC-balance'] * btc_price
 
@@ -234,8 +232,8 @@ class BitmexPortfolioBacktest(object):
           self.current_portfolio['fee'] += fill.fee
 
         else:
-          self.current_portfolio['bitmex-BTC-balance'] += direction * quantity * (price - entry_price)
-          self.current_portfolio['bitmex-BTC-available-balance'] += direction * quantity * price
+          self.current_portfolio['bitmex-BTC-balance'] += quantity * (price - entry_price)
+          self.current_portfolio['bitmex-BTC-available-balance'] += abs(quantity * price)
           self.current_portfolio['bitmex-BTC-price'] = btc_price
           self.current_portfolio['bitmex-BTC-balance-in-USD'] = self.current_portfolio['bitmex-BTC-balance'] * btc_price
           self.current_portfolio['fee'] += fill.fee
@@ -378,61 +376,22 @@ class BitmexPortfolioBacktest(object):
         """
         self.db.insert_portfolio(current_portfolio)
 
-    def create_equity_curve_dataframe(self):
+    def create_backtest_result_dataframe(self):
         """
         Creates a pandas DataFrame from the all_holdings
         list of dictionaries.
         """
-
         portfolios = pd.DataFrame(self.all_portfolios)
-        print(portfolios.head())
         portfolios.set_index('datetime', inplace=True)
-        portfolios['returns'] = portfolios['total'].pct_change()
+        portfolios['returns'] = portfolios['total-in-USD'].pct_change()
+        portfolios['btc_returns'] = portfolios['total'].pct_change()
         portfolios['equity_curve'] = (1.0+portfolios['returns']).cumprod()
-        self.equity_curve = portfolios
+        portfolios['btc_equity_curve'] = (1.0+portfolios['btc_returns']).cumprod()
+        self.portfolio_dataframe = portfolios
 
-    def print_summary_stats(self):
-        """
-        Print a list of summary statistics for the portfolio.
-        """
-        total_return = self.equity_curve['equity_curve'][-1]
-        returns = self.equity_curve['returns']
-        pnl = self.equity_curve['equity_curve']
-
-        sharpe_ratio = create_sharpe_ratio(returns)
-        drawdown, max_dd, dd_duration = create_drawdowns(pnl)
-        self.equity_curve['drawdown'] = drawdown
-
-        stats = [("Total Return", "%0.2f%%" % ((total_return - 1.0) * 100.0)),
-                 ("Sharpe Ratio", "%0.2f" % sharpe_ratio),
-                 ("Max Drawdown", "%0.2f%%" % (max_dd * 100.0)),
-                 ("Drawdown Duration", "%d" % dd_duration)]
-
-        return stats
-
-
-
-    def output_summary_stats(self, backtest_result_dir):
-        """
-        Creates a list of summary statistics for the portfolio.
-        """
-        total_return = self.equity_curve['equity_curve'][-1]
-        returns = self.equity_curve['returns']
-        pnl = self.equity_curve['equity_curve']
-
-        sharpe_ratio = create_sharpe_ratio(returns)
-        drawdown, max_dd, dd_duration = create_drawdowns(pnl)
-        self.equity_curve['drawdown'] = drawdown
-
-        stats = [("Total Return", "%0.2f%%" % ((total_return - 1.0) * 100.0)),
-                 ("Sharpe Ratio", "%0.2f" % sharpe_ratio),
-                 ("Max Drawdown", "%0.2f%%" % (max_dd * 100.0)),
-                 ("Drawdown Duration", "%d" % dd_duration)]
-
-        # We output both to the most recent backtest folder and to a backtest timestamped folder
-        self.equity_curve.to_csv(os.path.join(self.result_dir, 'last/equity.csv'))
-        self.equity_curve.to_csv(os.path.join(backtest_result_dir, 'equity.csv'))
-        return stats
+    def open_results_in_excel(self):
+        file_path = os.path.join(self.result_dir, 'last/results.csv')
+        os.system("open -a 'Microsoft Excel.app' '%s'" % file_path)
 
     def output_graphs(self):
         plt.ioff()
@@ -440,7 +399,7 @@ class BitmexPortfolioBacktest(object):
         Creates a list of summary statistics and plots
         performance graphs
         """
-        curve = self.equity_curve
+        curve = self.portfolio_dataframe
         total_return = curve['equity_curve'][-1]
         returns = curve['returns']
         pnl = curve['equity_curve']
@@ -450,6 +409,7 @@ class BitmexPortfolioBacktest(object):
 
         returns = curve['returns']
         equity_curve = curve['equity_curve']
+        btc_equity_curve = curve['btc_equity_curve']
         drawdown = curve['drawdown']
 
 
@@ -460,13 +420,13 @@ class BitmexPortfolioBacktest(object):
         fig.patch.set_facecolor('white')
 
         # Plot the equity curve
-        ax1 = fig.add_subplot(311, ylabel='Portfolio value, %')
-        equity_curve.plot(ax=ax1, color="blue", lw=1.)
+        usd_equity_ax = fig.add_subplot(311, ylabel='USD Portfolio Value, %')
+        equity_curve.plot(ax=usd_equity_ax, color="blue", lw=1.)
         plt.grid(True)
 
         # Plot the returns
-        prices_ax = fig.add_subplot(312, ylabel='Period returns, %')
-        returns.plot(ax=prices_ax, color="black", lw=1.)
+        btc_equity_ax = fig.add_subplot(312, ylabel='BTC Portfolio Value, %')
+        btc_equity_curve.plot(ax=btc_equity_ax, color="black", lw=1.)
         plt.grid(True)
 
         # Plot the returns
@@ -522,23 +482,34 @@ class BitmexPortfolioBacktest(object):
         Creates a list of summary statistics and plots
         performance graphs
         """
-        total_return = self.equity_curve['equity_curve'][-1]
-        returns = self.equity_curve['returns']
-        pnl = self.equity_curve['equity_curve']
+        total_return = self.portfolio_dataframe['equity_curve'][-1]
+        total_btc_return = self.portfolio_dataframe['btc_equity_curve'][-1]
+        returns = self.portfolio_dataframe['returns']
+        btc_returns = self.portfolio_dataframe['btc_returns']
+        pnl = self.portfolio_dataframe['equity_curve']
+        btc_pnl = self.portfolio_dataframe['btc_equity_curve']
 
         sharpe_ratio = create_sharpe_ratio(returns)
         drawdown, max_dd, dd_duration = create_drawdowns(pnl)
-        self.equity_curve['drawdown'] = drawdown
+        self.portfolio_dataframe['drawdown'] = drawdown
+
+        btc_sharpe_ratio = create_sharpe_ratio(btc_returns)
+        btc_drawdown, btc_max_dd, btc_dd_duration = create_drawdowns(btc_pnl)
+        self.portfolio_dataframe['btc_drawdown'] = btc_drawdown
 
         stats = {
-          "Total Return": "%0.2f%%" % ((total_return - 1.0) * 100.0),
+          "Total USD Return": "%0.2f%%" % ((total_return - 1.0) * 100.0),
+          "Total BTC Return": "%0.2f%%" % ((total_btc_return - 1.0) * 100.0),
           "Sharpe Ratio": "%0.2f" % sharpe_ratio,
+          "BTC Sharpe Ratio": "%0.2f" % btc_sharpe_ratio,
           "Max Drawdown": "%0.2f%%" % (max_dd * 100.0),
-          "Drawdown Duration": "%d" % dd_duration
+          "BTC Max Drawdown": "%0.2f%%" % (btc_max_dd * 100.0),
+          "Drawdown Duration": "%d" % dd_duration,
+          "BTC Drawdown Duration": "%d" % btc_dd_duration
         }
 
-        self.equity_curve.to_csv(os.path.join(self.result_dir, 'last/equity.csv'))
-        self.equity_curve.to_csv(os.path.join(backtest_result_dir, 'equity.csv'))
+        self.portfolio_dataframe.to_csv(os.path.join(self.result_dir, 'last/results.csv'))
+        self.portfolio_dataframe.to_csv(os.path.join(backtest_result_dir, 'results.csv'))
 
         return stats
 

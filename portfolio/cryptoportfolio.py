@@ -336,7 +336,7 @@ class CryptoPortfolio(object):
     # POST-BACKTEST STATISTICS
     # ========================
 
-    def create_equity_curve_dataframe(self):
+    def create_backtest_result_dataframe(self):
         """
         Creates a pandas DataFrame from the all_holdings
         list of dictionaries.
@@ -354,19 +354,19 @@ class CryptoPortfolio(object):
         curve.set_index('datetime', inplace=True)
         curve['returns'] = curve['total'].pct_change()
         curve['equity_curve'] = (1.0+curve['returns']).cumprod()
-        self.equity_curve = curve
+        self.portfolio_dataframe = curve
 
     def print_summary_stats(self):
         """
         Print a list of summary statistics for the portfolio.
         """
-        total_return = self.equity_curve['equity_curve'][-1]
-        returns = self.equity_curve['returns']
-        equity_curve = self.equity_curve['equity_curve']
+        total_return = self.portfolio_dataframe['equity_curve'][-1]
+        returns = self.portfolio_dataframe['returns']
+        equity_curve = self.portfolio_dataframe['equity_curve']
 
         sharpe_ratio = create_sharpe_ratio(returns)
         drawdown, max_dd, dd_duration = create_drawdowns(equity_curve)
-        self.equity_curve['drawdown'] = drawdown
+        self.portfolio_dataframe['drawdown'] = drawdown
 
         stats = [("Total Return", "%0.2f%%" % ((total_return - 1.0) * 100.0)),
                  ("Sharpe Ratio", "%0.2f" % sharpe_ratio),
@@ -458,13 +458,13 @@ class CryptoPortfolio(object):
         """
         Creates a list of summary statistics for the portfolio.
         """
-        total_return = self.equity_curve['equity_curve'][-1]
-        returns = self.equity_curve['returns']
-        pnl = self.equity_curve['equity_curve']
+        total_return = self.portfolio_dataframe['equity_curve'][-1]
+        returns = self.portfolio_dataframe['returns']
+        pnl = self.portfolio_dataframe['equity_curve']
 
         sharpe_ratio = create_sharpe_ratio(returns)
         drawdown, max_dd, dd_duration = create_drawdowns(pnl)
-        self.equity_curve['drawdown'] = drawdown
+        self.portfolio_dataframe['drawdown'] = drawdown
 
         stats = [("Total Return", "%0.2f%%" % ((total_return - 1.0) * 100.0)),
                  ("Sharpe Ratio", "%0.2f" % sharpe_ratio),
@@ -472,8 +472,8 @@ class CryptoPortfolio(object):
                  ("Drawdown Duration", "%d" % dd_duration)]
 
         # We output both to the most recent backtest folder and to a backtest timestamped folder
-        self.equity_curve.to_csv(os.path.join(self.result_dir, 'last/equity.csv'))
-        self.equity_curve.to_csv(os.path.join(backtest_result_dir, 'equity.csv'))
+        self.portfolio_dataframe.to_csv(os.path.join(self.result_dir, 'last/results.csv'))
+        self.portfolio_dataframe.to_csv(os.path.join(backtest_result_dir, 'results.csv'))
         return stats
 
     def output_graphs(self):
@@ -482,7 +482,7 @@ class CryptoPortfolio(object):
         Creates a list of summary statistics and plots
         performance graphs
         """
-        curve = self.equity_curve
+        curve = self.portfolio_dataframe
         total_return = curve['equity_curve'][-1]
         returns = curve['returns']
         pnl = curve['equity_curve']
@@ -568,13 +568,13 @@ class CryptoPortfolio(object):
             Creates a list of summary statistics and plots
             performance graphs
             """
-            total_return = self.equity_curve['equity_curve'][-1]
-            returns = self.equity_curve['returns']
-            pnl = self.equity_curve['equity_curve']
+            total_return = self.portfolio_dataframe['equity_curve'][-1]
+            returns = self.portfolio_dataframe['returns']
+            pnl = self.portfolio_dataframe['equity_curve']
 
             sharpe_ratio = create_sharpe_ratio(returns)
             drawdown, max_dd, dd_duration = create_drawdowns(pnl)
-            self.equity_curve['drawdown'] = drawdown
+            self.portfolio_dataframe['drawdown'] = drawdown
 
             stats = {
               "Total Return": "%0.2f%%" % ((total_return - 1.0) * 100.0),
@@ -583,7 +583,7 @@ class CryptoPortfolio(object):
               "Drawdown Duration": "%d" % dd_duration
             }
 
-            self.equity_curve.to_csv(os.path.join(self.result_dir, 'last/equity.csv'))
-            self.equity_curve.to_csv(os.path.join(backtest_result_dir, 'equity.csv'))
+            self.portfolio_dataframe.to_csv(os.path.join(self.result_dir, 'last/results.csv'))
+            self.portfolio_dataframe.to_csv(os.path.join(backtest_result_dir, 'results.csv'))
 
             return stats

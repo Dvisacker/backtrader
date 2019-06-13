@@ -13,12 +13,12 @@ import pyfolio as pf
 
 if __name__ == "__main__":
     data = pd.io.parsers.read_csv(
-        "equity.csv", header=0, 
-        parse_dates=True, 
+        "results.csv", header=0,
+        parse_dates=True,
         index_col=0
     )
 
-    # Plot three charts: Equity curve, 
+    # Plot three charts: Equity curve,
     # period returns, drawdowns
     fig = plt.figure(figsize = (15, 10))
     # Set the outer colour to white
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     equity_curve = data['equity_curve']
     returns = data['returns']
     drawdown = data['drawdown']
-    
+
     # Plot the equity curve
     ax1 = fig.add_subplot(311, ylabel='Portfolio value, %')
     equity_curve.plot(ax=ax1, color="blue", lw=2.)
@@ -44,13 +44,13 @@ if __name__ == "__main__":
     plt.grid(True)
 
     pf.show_worst_drawdown_periods(returns)
-    
+
     plt.figure(figsize = (15, 10))
     pf.plot_drawdown_underwater(returns).set_xlabel('Date')
 
     plt.figure(figsize = (15, 10))
     pf.plot_drawdown_periods(returns, top=5).set_xlabel('Date')
-    
+
     plt.figure(figsize = (15, 10))
     pf.plot_returns(returns).set_xlabel('Date')
 

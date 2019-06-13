@@ -54,7 +54,7 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         for e in self.feeds:
           for s in self.feeds[e]:
             csv_filename = get_ohlcv_file(e, s, self.timeframe, self.start_date, self.end_date)
-            csv_filepath = os.path.join('./data', csv_filename)
+            csv_filepath = os.path.join(self.csv_dir, csv_filename)
             if not os.path.isfile(csv_filepath):
               print('Downloading {}'.format(csv_filename))
               scrape_ohlcv(e,s,self.timeframe, self.start_date, self.end_date)
@@ -74,9 +74,10 @@ class HistoricCSVCryptoDataHandler(DataHandler):
           self.latest_symbol_data[e] = {}
 
           for s in self.feeds[e]:
-            csv_file = get_ohlcv_file(e, s, self.timeframe, self.start_date, self.end_date)
+            csv_filename = get_ohlcv_file(e, s, self.timeframe, self.start_date, self.end_date)
+            csv_filepath = os.path.join(self.csv_dir, csv_filename)
             df = pd.read_csv(
-                os.path.join(self.csv_dir, csv_file),
+                csv_filepath,
                 parse_dates=True,
                 date_parser=self._date_parse,
                 header=0,

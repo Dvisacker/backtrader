@@ -12,16 +12,16 @@ import pandas as pd
 
 if __name__ == "__main__":
     data = pd.io.parsers.read_csv(
-        "equity.csv", header=0, 
+        "results.csv", header=0,
         parse_dates=True, index_col=0
     ).sort()
 
-    # Plot three charts: Equity curve, 
+    # Plot three charts: Equity curve,
     # period returns, drawdowns
     fig = plt.figure()
     # Set the outer colour to white
     fig.patch.set_facecolor('white')
-    
+
     # Plot the equity curve
     ax1 = fig.add_subplot(311, ylabel='Portfolio value, %')
     data['equity_curve'].plot(ax=ax1, color="blue", lw=2.)

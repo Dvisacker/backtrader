@@ -175,9 +175,9 @@ create_contract	../ib_execution.py	/^    def create_contract(self, symbol, sec_t
 create_drawdowns	../hft_portfolio.py	/^from performance import create_sharpe_ratio, create_drawdowns$/;"	kind:namespace	line:19
 create_drawdowns	../performance.py	/^def create_drawdowns(pnl):$/;"	kind:function	line:23
 create_drawdowns	../portfolio.py	/^from performance import create_sharpe_ratio, create_drawdowns$/;"	kind:namespace	line:21
-create_equity_curve_dataframe	../hft_portfolio.py	/^    def create_equity_curve_dataframe(self):$/;"	kind:member	line:228
-create_equity_curve_dataframe	../portfolio.py	/^    def create_equity_curve_dataframe(self):$/;"	kind:member	line:226
-create_equity_curve_dataframe	../portfolio.py	/^    def create_equity_curve_dataframe(self):$/;"	kind:member	line:455
+create_backtest_result_dataframe	../hft_portfolio.py	/^    def create_backtest_result_dataframe(self):$/;"	kind:member	line:228
+create_backtest_result_dataframe	../portfolio.py	/^    def create_backtest_result_dataframe(self):$/;"	kind:member	line:226
+create_backtest_result_dataframe	../portfolio.py	/^    def create_backtest_result_dataframe(self):$/;"	kind:member	line:455
 create_fill	../ib_execution.py	/^    def create_fill(self, msg):$/;"	kind:member	line:137
 create_fill_dict_entry	../ib_execution.py	/^    def create_fill_dict_entry(self, msg):$/;"	kind:member	line:123
 create_initial_order_id	../ib_execution.py	/^    def create_initial_order_id(self):$/;"	kind:member	line:74

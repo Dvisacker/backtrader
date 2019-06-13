@@ -126,7 +126,7 @@ class CryptoLiveTrade(object):
         # Create a timestamped directory for backtest results
         backtest_result_dir = os.path.join(self.result_dir, str(self.backtest_start_time))
         os.mkdir(backtest_result_dir)
-        self.portfolio.create_equity_curve_dataframe()
+        self.portfolio.create_backtest_result_dataframe()
 
         print("Creating summary stats...")
         stats = self.portfolio.output_summary_stats_and_graphs(backtest_result_dir)

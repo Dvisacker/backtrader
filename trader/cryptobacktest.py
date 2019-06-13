@@ -42,6 +42,8 @@ class CryptoBacktest(object):
         """
         self.configuration = configuration
         self.result_dir = configuration.result_dir
+        self.result_filepath = os.path.join(self.result_dir, 'last/results.csv')
+
         self.heartbeat = configuration.heartbeat
         self.graph_refresh_period = configuration.graph_refresh_period
         self.backtest_start_time = datetime.utcnow()
@@ -132,28 +134,44 @@ class CryptoBacktest(object):
         # Create a timestamped directory for backtest results
         backtest_result_dir = os.path.join(self.result_dir, str(self.backtest_start_time))
         os.mkdir(backtest_result_dir)
-        self.portfolio.create_equity_curve_dataframe()
+        self.portfolio.create_backtest_result_dataframe()
 
+        self._open_results_in_excel()
+        self._show_stats()
+        self._show_charts()
+
+    def _show_charts(self):
+        if self.show_charts:
+          self.portfolio.output_graphs()
+
+    def _show_stats(self):
         print("Creating summary stats...")
+        backtest_result_dir = os.path.join(self.result_dir, str(self.backtest_start_time))
         stats = self.portfolio.save_stats(backtest_result_dir)
 
-        print("Total return: %s" % stats['Total Return'])
+        print("Total USD return: %s" % stats['Total USD Return'])
+        print("Total BTC return: %s" % stats['Total BTC Return'])
         print("Sharpe Ratio: %s" % stats['Sharpe Ratio'])
         print("Max drawdown: %s" % stats['Max Drawdown'])
+        print("BTC Max drawdown: %s" % stats['BTC Max Drawdown'])
         print("Drawdown Duration: %s" % stats['Drawdown Duration'])
+        print("BTC Drawdown Duration: %s" % stats['BTC Drawdown Duration'])
         print("Signals: %s" % self.signals)
         print("Orders: %s" % self.orders)
         print("Fills: %s" % self.fills)
 
-        print("Creating equity curve...")
-        print(self.portfolio.equity_curve.tail(10))
+        print("Results: ")
+        print(self.portfolio.portfolio_dataframe.tail(10))
 
-        if self.show_charts:
-          self.portfolio.output_graphs()
+    def _open_results_in_excel(self):
+        print("Opening results in excel")
+
+        os.system("open -a 'Microsoft Excel.app' '%s'" % self.result_filepath)
 
     def start_trading(self):
         """
         Simulates the backtest and outputs portfolio performance.
         """
         self._run()
+        self._open_results_in_excel()
         self._output_performance()
