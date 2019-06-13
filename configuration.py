@@ -4,7 +4,7 @@
 # event.py
 
 from __future__ import print_function
-
+from itertools import product
 
 class Configuration(object):
     """
@@ -56,6 +56,16 @@ class Configuration(object):
       else:
         self.update_charts = True
 
+      if 'start_date' in configuration:
+        self.start_date = configuration['start_date']
+      else:
+        self.start_date = None
+
+      if 'end_date' in configuration:
+        self.end_date = configuration['end_date']
+      else:
+        self.start_date = None
+
       # Initial bars represents the number of bars that are considered already
       # past when the backtest is started and will thus not be fed into the event loop
       if 'initial_bars' in configuration:
@@ -73,8 +83,21 @@ class MultiMRConfiguration(Configuration):
     def __init__(self, configuration):
       super().__init__(configuration)
 
-      self.strat_lookback = configuration['strat_lookback']
-      self.strat_z_entry = configuration['strat_z_entry']
-      self.strat_z_exit = configuration['strat_z_exit']
-      self.strat_params = configuration['strat_params']
-      self.params_names = configuration['params_names']
+      params = configuration['multi_backtest_params']
+      params_names_list = list(params.keys())
+      params_product_list = list(product(*params.values()))
+
+      for key in params_names_list:
+        self.__dict__[key] = params[key]
+
+      self.params_names = params_names_list
+
+      self.strat_params = []
+      for p in params_product_list:
+        dic = {}
+        for (i,pn) in enumerate(params_names_list):
+          dic[pn] = p[i]
+
+        self.strat_params.append(dic)
+
+      print(self.strat_params)

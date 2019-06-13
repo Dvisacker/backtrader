@@ -32,7 +32,7 @@ class OLSMeanReversionStrategy(Strategy):
 
     def __init__(
         self, data, events, configuration, ols_window=100,
-        zscore_exit=0.5, zscore_entry=1
+        zscore_exit=1.5, zscore_entry=3
     ):
         """
         Initialises the stat arb strategy.

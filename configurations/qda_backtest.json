@@ -1,0 +1,24 @@
+{
+  "start_date": "2018/1/1",
+  "csv_dir": "data",
+  "result_dir": "results",
+  "feeds": {
+    "bitmex": ["BTC/USD"]
+  },
+  "instruments": {
+    "bitmex": ["BTC/USD"]
+  },
+  "assets": {
+    "bitmex": [ "BTC" ]
+  },
+  "initial_capital" : 100000.0,
+  "ohlcv_window": "1d",
+  "heartbeat" : 0,
+  "graph_refresh_period": 500,
+  "default_position_size": 0.05,
+  "update_charts": false,
+  "show_charts": true,
+  "strategy": "qda",
+  "backtester_type": "crypto_backtest",
+  "portfolio_type": "crypto_portfolio"
+}

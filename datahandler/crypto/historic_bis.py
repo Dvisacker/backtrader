@@ -29,7 +29,7 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         """
         self.events = events
         self.csv_dir = configuration.csv_dir
-        self.period = get_ohlcv_window(configuration.ohlcv_window)
+        self.timeframe = get_ohlcv_window(configuration.ohlcv_window)
         self.instruments = configuration.instruments
         self.start_date = configuration.start_date
 
@@ -58,7 +58,7 @@ class HistoricCSVCryptoDataHandler(DataHandler):
           self.latest_symbol_data[e] = {}
 
           for s in self.instruments[e]:
-            csv_file = get_data_file(e, s, self.period)
+            csv_file = get_data_file(e, s, self.timeframe)
             # Load the CSV
             df = pd.read_csv(
                 os.path.join(self.csv_dir, csv_file),

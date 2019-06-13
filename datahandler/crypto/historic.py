@@ -8,7 +8,8 @@ import numpy as np
 import pandas as pd
 
 from event import MarketEvent
-from utils.helpers import get_data_file, get_ohlcv_window
+from utils.helpers import get_data_file, get_ohlcv_file, get_ohlcv_window
+from utils.scrape import scrape_ohlcv
 from .datahandler import DataHandler
 
 
@@ -30,15 +31,17 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         """
         self.events = events
         self.csv_dir = configuration.csv_dir
-        self.period = get_ohlcv_window(configuration.ohlcv_window)
+        self.timeframe = get_ohlcv_window(configuration.ohlcv_window)
         self.feeds = configuration.feeds
         self.start_date = configuration.start_date
+        self.end_date = configuration.end_date
         self.initial_bars = configuration.initial_bars
 
         self.symbol_data = {}
         self.latest_symbol_data = {}
         self.continue_backtest = True
 
+        self._create_csv_files()
         self._open_convert_csv_files()
 
     def _date_parse(self, timestamp):
@@ -46,6 +49,17 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         Parses timestamps into python datetime objects.
         """
         return datetime.fromtimestamp(float(timestamp))
+
+    def _create_csv_files(self):
+        for e in self.feeds:
+          for s in self.feeds[e]:
+            csv_filename = get_ohlcv_file(e, s, self.timeframe, self.start_date, self.end_date)
+            csv_filepath = os.path.join('./data', csv_filename)
+            if not os.path.isfile(csv_filepath):
+              print('Downloading {}'.format(csv_filename))
+              scrape_ohlcv(e,s,self.timeframe, self.start_date, self.end_date)
+              print('Downloaded {}'.format(csv_filename))
+
 
     def _open_convert_csv_files(self):
         """
@@ -60,7 +74,7 @@ class HistoricCSVCryptoDataHandler(DataHandler):
           self.latest_symbol_data[e] = {}
 
           for s in self.feeds[e]:
-            csv_file = get_data_file(e, s, self.period)
+            csv_file = get_ohlcv_file(e, s, self.timeframe, self.start_date, self.end_date)
             df = pd.read_csv(
                 os.path.join(self.csv_dir, csv_file),
                 parse_dates=True,
@@ -194,7 +208,3 @@ class HistoricCSVCryptoDataHandler(DataHandler):
             self.events.put(MarketEvent())  # Bug! When except occur, it means
             # the backtest should be terminated. So in this time, we should not
             # generate a MarketEvent again.
-
-        # self.events.put(MarketEvent())  Bug! When except occur, it means
-        # the backtest should be terminated. So in this time, we should not
-        # generate a MarketEvent again.

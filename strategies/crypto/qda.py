@@ -31,7 +31,7 @@ class QDAStrategy(Strategy):
         self.csv_dir = configuration.csv_dir
         self.exchanges = configuration.exchange_names
         self.initial_bars = configuration.initial_bars
-        self.period = get_ohlcv_window(configuration.ohlcv_window)
+        self.timeframe = get_ohlcv_window(configuration.ohlcv_window)
         self.events = events
         self.datetime_now = datetime.datetime.utcnow()
 
@@ -44,7 +44,7 @@ class QDAStrategy(Strategy):
         self.short_market = False
         self.bar_index = 0
 
-        csv_file = get_data_file(self.exchange, self.symbol, self.period)
+        csv_file = get_data_file(self.exchange, self.symbol, self.timeframe)
 
         self.model_data = pd.read_csv(
             os.path.join(self.csv_dir, csv_file),

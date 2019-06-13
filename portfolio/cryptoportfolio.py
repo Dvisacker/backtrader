@@ -553,7 +553,7 @@ class CryptoPortfolio(object):
         pf.plot_rolling_sharpe(returns, rolling_window=30).set_xlabel('Date')
 
         fig = pf.create_returns_tear_sheet(returns, return_fig=True)
-        fig.savefig('../../results/last/returns_tear_sheet.pdf')
+        fig.savefig('results/last/returns_tear_sheet.pdf')
         plt.close(fig)
 
         # root = 'file:///Users/davidvanisacker/Programming/Trading/backtest/'

@@ -1,0 +1,19 @@
+{
+  "csv_dir": "data",
+  "result_dir": "results",
+  "strategy": "moving_average_crossover",
+  "feeds": { "bitmex": ["EOS/BTC", "BTC/USD"] },
+  "instruments": { "bitmex": ["EOS/BTC"] },
+  "assets": { "bitmex": [ "BTC" ]},
+  "ohlcv_window": "1m",
+  "initial_capital" : 100000.0,
+  "default_position_size": 0.05,
+  "start_date": "01/01/2019",
+  "end_date": "01/02/2019",
+  "portfolio_type": "bitmex_portfolio",
+  "backtester_type": "crypto_backtest",
+  "show_charts": true,
+  "update_charts": false,
+  "graph_refresh_period": 300,
+  "heartbeat" : 0
+}
