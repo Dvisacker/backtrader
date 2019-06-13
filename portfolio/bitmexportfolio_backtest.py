@@ -55,7 +55,9 @@ class BitmexPortfolioBacktest(object):
         self.result_dir = configuration.result_dir
         self.default_position_size = configuration.default_position_size
         self.default_leverage = configuration.leverage
+        self.save_to_db = configuration.save_to_db
         self.initial_capital = configuration.initial_capital
+
 
         self.current_portfolio = self.construct_current_portfolios()
         self.all_portfolios = []
@@ -152,7 +154,8 @@ class BitmexPortfolioBacktest(object):
       for s in self.instruments:
         self.current_portfolio['bitmex-{}-fill'.format(s)] = ''
 
-      # self.write(dp, dh)
+      if self.save_to_db:
+        self.write_to_db(df)
 
     # ======================
     # FILL/POSITION HANDLING
@@ -393,7 +396,7 @@ class BitmexPortfolioBacktest(object):
 
       self.legends_added = True
 
-    def write(self, current_portfolio):
+    def write_to_db(self, current_portfolio):
         """
         Saves the position and holdings updates to a database or to a file
         """

@@ -71,6 +71,11 @@ class Configuration(object):
       else:
         self.default_leverage = 1
 
+      if 'save_to_db' in configuration:
+        self.save_to_db = configuration['save_to_db']
+      else:
+        self.save_to_db = False
+
       # Initial bars represents the number of bars that are considered already
       # past when the backtest is started and will thus not be fed into the event loop
       if 'initial_bars' in configuration:
