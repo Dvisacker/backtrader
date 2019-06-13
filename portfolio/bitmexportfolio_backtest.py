@@ -177,65 +177,85 @@ class BitmexPortfolioBacktest(object):
         direction = { 'buy': 1, 'sell': -1 }[fill.direction]
         symbol = fill.symbol
         quantity = fill.quantity
+        fee_rate = fill.fee
+
         btc_price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', 'close')
         entry_price = self.data.get_latest_bar_value('bitmex', symbol, 'close')
+        value = entry_price * quantity
+        fee = value * fee_rate
+        balance = self.current_portfolio['bitmex-BTC-balance']
 
         self.current_portfolio['bitmex-{}-position'.format(symbol)] += direction * quantity
         self.current_portfolio['bitmex-{}-price'.format(symbol)] = entry_price
-        self.current_portfolio['bitmex-{}-position-in-BTC'.format(symbol)] = direction * quantity * entry_price
-        self.current_portfolio['bitmex-{}-position-in-USD'.format(symbol)] = direction * quantity * entry_price * btc_price
+        self.current_portfolio['bitmex-{}-position-in-BTC'.format(symbol)] = direction * value
+        self.current_portfolio['bitmex-{}-position-in-USD'.format(symbol)] = direction * value * btc_price
         self.current_portfolio['bitmex-{}-leverage'.format(symbol)] = 1
         self.current_portfolio['bitmex-{}-fill'.format(symbol)] = direction
-        self.current_portfolio['bitmex-total-position-in-BTC'] += direction * quantity * entry_price * btc_price
-        self.current_portfolio['bitmex-total-position-in-USD'] += direction * quantity * entry_price
-
-        # Check whether the fill is a buy or sell
-        balance = self.current_portfolio['bitmex-BTC-balance']
+        self.current_portfolio['bitmex-total-position-in-BTC'] += direction * value * btc_price
+        self.current_portfolio['bitmex-total-position-in-USD'] += direction * value
 
         # Update holdings list with new quantities
+        self.current_portfolio['bitmex-BTC-balance'] -= fee
         self.current_portfolio['bitmex-{}-entry-price'.format(symbol)] = entry_price
-        self.current_portfolio['bitmex-BTC-available-balance'] -= abs(quantity * entry_price)
+        self.current_portfolio['bitmex-BTC-available-balance'] -= (abs(value) + fee)
         self.current_portfolio['bitmex-BTC-price'] = btc_price
-        self.current_portfolio['bitmex-BTC-balance-in-USD'] = balance * btc_price
-        self.current_portfolio['total'] = balance
-        self.current_portfolio['total-in-USD'] = balance * btc_price
-        self.current_portfolio['fee'] += fill.fee
+        self.current_portfolio['bitmex-BTC-balance-in-USD'] = (balance - fee) * btc_price
+        self.current_portfolio['total'] = (balance - fee)
+        self.current_portfolio['total-in-USD'] = (balance - fee) * btc_price
+        self.current_portfolio['fee'] += fee
 
     def update_portfolio_from_exit(self, fill):
         symbol = fill.symbol
+        fee_rate = fill.fee
+
         btc_price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', 'close')
         entry_price = self.current_portfolio['bitmex-{}-entry-price'.format(symbol)]
         price = self.data.get_latest_bar_value('bitmex', symbol, 'close') or 0
-
         quantity = self.current_portfolio['bitmex-{}-position'.format(symbol)]
         direction = -1 if quantity > 0 else 1
 
-        self.current_portfolio['bitmex-{}-position'.format(symbol)] = 0
-        self.current_portfolio['bitmex-{}-price'.format(symbol)] = price
-        self.current_portfolio['bitmex-{}-position-in-BTC'.format(symbol)] = 0
-        self.current_portfolio['bitmex-{}-position-in-USD'.format(symbol)] = 0
-        self.current_portfolio['bitmex-{}-leverage'.format(symbol)] = 1
-        self.current_portfolio['bitmex-{}-fill'.format(symbol)] = direction
-        self.current_portfolio['bitmex-total-position-in-BTC'] -= quantity * price * btc_price
-        self.current_portfolio['bitmex-total-position-in-USD'] -= quantity * price
-
         # We distinguish between the different contracts
         if (symbol == 'BTC/USD'):
-          self.current_portfolio['bitmex-BTC-balance'] += quantity * (1 / entry_price - 1 / price)
-          self.current_portfolio['bitmex-BTC-available-balance'] += abs(quantity / price)
+          btc_value = quantity / price
+          btc_fee = btc_value * fee_rate
+          self.current_portfolio['bitmex-{}-position'.format(symbol)] = 0
+          self.current_portfolio['bitmex-{}-price'.format(symbol)] = price
+          self.current_portfolio['bitmex-{}-position-in-BTC'.format(symbol)] = 0
+          self.current_portfolio['bitmex-{}-position-in-USD'.format(symbol)] = 0
+          self.current_portfolio['bitmex-{}-leverage'.format(symbol)] = 1
+          self.current_portfolio['bitmex-{}-fill'.format(symbol)] = direction
+          self.current_portfolio['bitmex-total-position-in-BTC'] -= btc_value
+          self.current_portfolio['bitmex-total-position-in-USD'] -= btc_value * btc_price
+          self.current_portfolio['bitmex-BTC-balance'] += quantity * (1 / entry_price - 1 / price) - btc_fee
+          self.current_portfolio['bitmex-BTC-available-balance'] += abs(btc_value) - btc_fee
           self.current_portfolio['bitmex-BTC-price'] = btc_price
           self.current_portfolio['bitmex-BTC-balance-in-USD'] = self.current_portfolio['bitmex-BTC-balance'] * btc_price
 
           # here, total, totalUSD are equal to the bitmex-BTC-Balance and bitmex-BTC-balance-in-USD fields
-          self.current_portfolio['total'] += direction * quantity * (1 / entry_price - 1 / price)
+          self.current_portfolio['total'] += direction * quantity * (1 / entry_price - 1 / price) - btc_fee
           self.current_portfolio['total-in-USD'] = self.current_portfolio['bitmex-BTC-balance'] * btc_price
           self.current_portfolio['fee'] += fill.fee
 
         else:
-          self.current_portfolio['bitmex-BTC-balance'] += quantity * (price - entry_price)
-          self.current_portfolio['bitmex-BTC-available-balance'] += abs(quantity * price)
+          btc_value = quantity * price
+          btc_fee = btc_value * fee_rate
+          self.current_portfolio['bitmex-{}-position'.format(symbol)] = 0
+          self.current_portfolio['bitmex-{}-price'.format(symbol)] = price
+          self.current_portfolio['bitmex-{}-position-in-BTC'.format(symbol)] = 0
+          self.current_portfolio['bitmex-{}-position-in-USD'.format(symbol)] = 0
+          self.current_portfolio['bitmex-{}-leverage'.format(symbol)] = 1
+          self.current_portfolio['bitmex-{}-fill'.format(symbol)] = direction
+          self.current_portfolio['bitmex-total-position-in-BTC'] -= btc_value
+          self.current_portfolio['bitmex-total-position-in-USD'] -= btc_value * btc_price
+
+          self.current_portfolio['bitmex-BTC-balance'] += quantity * (price - entry_price) - btc_fee
+          self.current_portfolio['bitmex-BTC-available-balance'] += abs(btc_value) - btc_fee
           self.current_portfolio['bitmex-BTC-price'] = btc_price
           self.current_portfolio['bitmex-BTC-balance-in-USD'] = self.current_portfolio['bitmex-BTC-balance'] * btc_price
+
+          # here, total, totalUSD are equal to the bitmex-BTC-Balance and bitmex-BTC-balance-in-USD fields
+          self.current_portfolio['total'] += direction * quantity * (price - entry_price) - btc_fee
+          self.current_portfolio['total-in-USD'] = self.current_portfolio['bitmex-BTC-balance'] * btc_price
           self.current_portfolio['fee'] += fill.fee
 
     def rebalance_portfolio(self, signals):
