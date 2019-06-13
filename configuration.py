@@ -66,6 +66,11 @@ class Configuration(object):
       else:
         self.start_date = None
 
+      if 'default_leverage' in configuration:
+        self.default_leverage = configuration['default_leverage']
+      else:
+        self.default_leverage = 1
+
       # Initial bars represents the number of bars that are considered already
       # past when the backtest is started and will thus not be fed into the event loop
       if 'initial_bars' in configuration:
