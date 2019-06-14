@@ -219,8 +219,6 @@ class BitmexPortfolioBacktest(object):
         txn['txn_dollars'] = direction * entry_price * btc_price * quantity
         txn['symbol'] = symbol
 
-        print(txn)
-
         self.all_transactions.append(txn)
 
     def update_portfolio_from_exit(self, fill):
@@ -285,8 +283,6 @@ class BitmexPortfolioBacktest(object):
         txn['price'] = price * btc_price
         txn['txn_dollars'] = direction * entry_price * btc_price * quantity
         txn['symbol'] = symbol
-
-        print(txn)
 
         self.all_transactions.append(txn)
 
@@ -437,7 +433,7 @@ class BitmexPortfolioBacktest(object):
 
         portfolios = pd.DataFrame(self.all_portfolios)
         transactions = pd.DataFrame(self.all_transactions)
-        positions = portfolios[['datetime', 'bitmex-EOS/BTC-position-in-USD']]
+        positions = portfolios[['datetime', 'bitmex-EOS/BTC-position-in-USD', 'bitmex-XRP/BTC-position-in-USD']]
 
         positions['cash'] = portfolios['bitmex-BTC-available-balance']
         portfolios.set_index('datetime', inplace=True)
@@ -475,7 +471,6 @@ class BitmexPortfolioBacktest(object):
         positions = self.positions_dataframe
         txns = self.transactions_dataframe
 
-        total_return = curve['equity_curve'][-1]
         returns = curve['returns']
         equity_curve = curve['equity_curve']
         btc_equity_curve = curve['btc_equity_curve']
@@ -562,7 +557,7 @@ class BitmexPortfolioBacktest(object):
           returns_fig.savefig('results/last/returns_tear_sheet.pdf')
           plt.close(returns_fig)
 
-          # live_start_date = returns.index[-1000]
+          # live_start_date = returns.index[-40]
           # bayesian_fig = pf.create_bayesian_tear_sheet(returns, live_start_date=live_start_date, return_fig=True)
           # bayesian_fig.savefig('results/last/bayesian_tear_sheet.pdf')
           # plt.close(bayesian_fig)
@@ -570,22 +565,6 @@ class BitmexPortfolioBacktest(object):
           round_trip_fig = pf.create_round_trip_tear_sheet(returns, positions, txns, return_fig=True)
           round_trip_fig.savefig('results/last/round_trip_tear_sheet.pdf')
           plt.close(round_trip_fig)
-
-          # fig = pf.create_position_tear_sheet(returns, self.positions_dataframe, return_fig=True)
-          # fig.savefig('results/last/positions_tear_sheet.pdf')
-          # plt.close(fig)
-          # pf.create_full_tear_sheet(returns, positions=self.positions_dataframe, transactions=self.transactions_dataframe, set_context=False)
-          # fig.savefig('results/last/returns_tear_sheet.pdf')
-          # plt.close(fig)
-
-
-        # fig = pf.create_returns_tear_sheet(returns, return_fig=True)
-        # live_start_date = returns.index[-100]
-        # fig = pf.create_bayesian_tear_sheet(returns, live_start_date=live_start_date, return_fig=True)
-        # fig = pf.create_position_tear_sheet(returns, self.positions_dataframe)
-        # fig.savefig('results/last/returns_tear_sheet.pdf')
-        # plt.close(fig)
-
 
         webbrowser.open_new(r'file:///Users/davidvanisacker/Programming/Trading/backtest/results/last/returns_tear_sheet.pdf')
         webbrowser.open_new(r'file:///Users/davidvanisacker/Programming/Trading/backtest/results/last/position_tear_sheet.pdf')

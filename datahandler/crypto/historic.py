@@ -90,8 +90,6 @@ class HistoricCSVCryptoDataHandler(DataHandler):
             df['returns'] = df['close'].pct_change()
             df.index = df.index.tz_localize('UTC').tz_convert('US/Eastern')
 
-            print(df.index)
-
             if self.start_date:
               self.symbol_data[e][s] = df.sort_index().ix[self.start_date:]
 
