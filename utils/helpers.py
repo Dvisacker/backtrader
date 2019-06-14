@@ -1,4 +1,4 @@
-import time, urllib, hmac, hashlib
+import time, urllib, hmac, hashlib, math
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -247,6 +247,8 @@ def get_ohlcv_window(period):
     return '1m'
   elif period == 300:
     return '5m'
+  elif period == 900:
+    return '15m'
   elif period == 3600:
     return '1h'
   elif period == 86400:

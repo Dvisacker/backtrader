@@ -189,9 +189,9 @@ class FillEvent(Event):
 
     def compute_fees(self):
         """
+        The default bitmex fee is 0.0750% which I left as default for now
         """
-        fee = (0.0750 / 100)
-        # fee = 0
+        fee = 0.0750 / 100
         return fee
 
 

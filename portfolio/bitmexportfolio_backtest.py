@@ -54,13 +54,15 @@ class BitmexPortfolioBacktest(object):
         self.start_date = configuration.start_date
         self.result_dir = configuration.result_dir
         self.default_position_size = configuration.default_position_size
-        self.default_leverage = configuration.leverage
+        self.default_leverage = configuration.default_leverage
         self.save_to_db = configuration.save_to_db
         self.initial_capital = configuration.initial_capital
 
 
         self.current_portfolio = self.construct_current_portfolios()
         self.all_portfolios = []
+
+        self.all_transactions = []
 
         self.db = MongoHandler()
         self.legends_added = False
@@ -178,6 +180,7 @@ class BitmexPortfolioBacktest(object):
         fill - The Fill object to update the positions with.
         """
         # Check whether the fill is a buy or sell
+        latest_datetime = self.data.get_latest_bar_datetime('bitmex', self.instruments[0])
         direction = { 'buy': 1, 'sell': -1 }[fill.direction]
         symbol = fill.symbol
         quantity = fill.quantity
@@ -209,10 +212,22 @@ class BitmexPortfolioBacktest(object):
         self.current_portfolio['total-in-USD'] = (balance - btc_fee) * btc_price
         self.current_portfolio['fee'] += btc_fee
 
+        txn = {}
+        txn['datetime'] = latest_datetime
+        txn['amount'] = direction * quantity
+        txn['price'] = entry_price * btc_price
+        txn['txn_dollars'] = direction * entry_price * btc_price * quantity
+        txn['symbol'] = symbol
+
+        print(txn)
+
+        self.all_transactions.append(txn)
+
     def update_portfolio_from_exit(self, fill):
         symbol = fill.symbol
         fee_rate = fill.fee
 
+        latest_datetime = self.data.get_latest_bar_datetime('bitmex', self.instruments[0])
         btc_price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', 'close')
         entry_price = self.current_portfolio['bitmex-{}-entry-price'.format(symbol)]
         price = self.data.get_latest_bar_value('bitmex', symbol, 'close') or 0
@@ -263,6 +278,17 @@ class BitmexPortfolioBacktest(object):
           self.current_portfolio['total'] += direction * quantity * (price - entry_price) - btc_fee
           self.current_portfolio['total-in-USD'] = self.current_portfolio['bitmex-BTC-balance'] * btc_price
           self.current_portfolio['fee'] += btc_fee
+
+        txn = {}
+        txn['datetime'] = latest_datetime
+        txn['amount'] = direction * quantity
+        txn['price'] = price * btc_price
+        txn['txn_dollars'] = direction * entry_price * btc_price * quantity
+        txn['symbol'] = symbol
+
+        print(txn)
+
+        self.all_transactions.append(txn)
 
     def rebalance_portfolio(self, signals):
         """
@@ -407,13 +433,33 @@ class BitmexPortfolioBacktest(object):
         Creates a pandas DataFrame from the all_holdings
         list of dictionaries.
         """
+        # portfolios.index.tz_localize('UTC').tz_convert('US/Eastern')
+
         portfolios = pd.DataFrame(self.all_portfolios)
+        transactions = pd.DataFrame(self.all_transactions)
+        positions = portfolios[['datetime', 'bitmex-EOS/BTC-position-in-USD']]
+
+        positions['cash'] = portfolios['bitmex-BTC-available-balance']
         portfolios.set_index('datetime', inplace=True)
+        positions.set_index('datetime', inplace=True)
+        transactions.set_index('datetime', inplace=True)
+
+        portfolios['benchmark_equity'] = self.initial_capital * (portfolios['bitmex-BTC-price'] / portfolios['bitmex-BTC-price'].ix[0])
+        portfolios['btc_benchmark_equity'] = self.initial_capital / portfolios['bitmex-BTC-price']
+
         portfolios['returns'] = portfolios['total-in-USD'].pct_change()
         portfolios['btc_returns'] = portfolios['total'].pct_change()
+        portfolios['benchmark_returns'] = portfolios['benchmark_equity'].pct_change()
+        portfolios['btc_benchmark_returns'] = portfolios['btc_benchmark_equity'].pct_change()
+
         portfolios['equity_curve'] = (1.0+portfolios['returns']).cumprod()
         portfolios['btc_equity_curve'] = (1.0+portfolios['btc_returns']).cumprod()
+        portfolios['benchmark_equity_curve'] = (1.0 + portfolios['benchmark_returns']).cumprod()
+        portfolios['btc_benchmark_equity_curve'] = (1.0 + portfolios['btc_benchmark_returns']).cumprod()
+
         self.portfolio_dataframe = portfolios
+        self.positions_dataframe = positions
+        self.transactions_dataframe = transactions
 
     def open_results_in_excel(self):
         file_path = os.path.join(self.result_dir, 'last/results.csv')
@@ -426,17 +472,19 @@ class BitmexPortfolioBacktest(object):
         performance graphs
         """
         curve = self.portfolio_dataframe
+        positions = self.positions_dataframe
+        txns = self.transactions_dataframe
+
         total_return = curve['equity_curve'][-1]
-        returns = curve['returns']
-        pnl = curve['equity_curve']
-
-        sharpe_ratio = create_sharpe_ratio(returns)
-        drawdown, max_dd, dd_duration = create_drawdowns(pnl)
-
         returns = curve['returns']
         equity_curve = curve['equity_curve']
         btc_equity_curve = curve['btc_equity_curve']
         drawdown = curve['drawdown']
+        benchmark_equity_curve = curve['benchmark_equity_curve']
+
+        sharpe_ratio = create_sharpe_ratio(returns)
+        drawdown, max_dd, dd_duration = create_drawdowns(equity_curve)
+        benchmark_drawdown, _, _ = create_drawdowns(benchmark_equity_curve)
 
 
         # Plot three charts: Equity curve,
@@ -447,17 +495,21 @@ class BitmexPortfolioBacktest(object):
 
         # Plot the equity curve
         usd_equity_ax = fig.add_subplot(311, ylabel='USD Portfolio Value, %')
-        equity_curve.plot(ax=usd_equity_ax, color="blue", lw=1.)
+        equity_curve.plot(ax=usd_equity_ax, color="blue", lw=1., label='Backtest')
+        benchmark_equity_curve.plot(ax=usd_equity_ax, color="gray", lw=1., label='Benchmark (Hold USD)')
+        usd_equity_ax.legend(loc='best', frameon=False)
         plt.grid(True)
 
         # Plot the returns
         btc_equity_ax = fig.add_subplot(312, ylabel='BTC Portfolio Value, %')
-        btc_equity_curve.plot(ax=btc_equity_ax, color="black", lw=1.)
+        btc_equity_curve.plot(ax=btc_equity_ax, color="orange", lw=1.)
         plt.grid(True)
 
         # Plot the returns
         drawdown_ax = fig.add_subplot(313, ylabel='Drawdowns, %')
-        drawdown.plot(ax=drawdown_ax, color="red", lw=1.)
+        drawdown.plot(ax=drawdown_ax, color="red", lw=1., label='Backtest')
+        benchmark_drawdown.plot(ax=drawdown_ax, color="gray", lw=1., label='Benchmark (Hold USD)')
+        drawdown_ax.legend(loc='best', frameon=False)
         plt.grid(True)
 
         self.price_figure = {}
@@ -496,11 +548,50 @@ class BitmexPortfolioBacktest(object):
         plt.figure(figsize = (15, 10))
         pf.plot_rolling_sharpe(returns, rolling_window=30).set_xlabel('Date')
 
-        fig = pf.create_returns_tear_sheet(returns, return_fig=True)
-        fig.savefig('results/last/returns_tear_sheet.pdf')
-        plt.close(fig)
+
+        with pf.plotting.plotting_context(rc={'lines.linewidth': 1}):
+          position_fig = pf.create_position_tear_sheet(returns, positions=positions, return_fig=True)
+          position_fig.savefig('results/last/position_tear_sheet.pdf')
+          plt.close(position_fig)
+
+          transaction_fig = pf.create_txn_tear_sheet(returns, positions, txns, return_fig=True)
+          transaction_fig.savefig('results/last/transaction_tear_sheet.pdf')
+          plt.close(transaction_fig)
+
+          returns_fig = pf.create_returns_tear_sheet(returns, positions=positions, transactions=txns, return_fig=True)
+          returns_fig.savefig('results/last/returns_tear_sheet.pdf')
+          plt.close(returns_fig)
+
+          # live_start_date = returns.index[-1000]
+          # bayesian_fig = pf.create_bayesian_tear_sheet(returns, live_start_date=live_start_date, return_fig=True)
+          # bayesian_fig.savefig('results/last/bayesian_tear_sheet.pdf')
+          # plt.close(bayesian_fig)
+
+          round_trip_fig = pf.create_round_trip_tear_sheet(returns, positions, txns, return_fig=True)
+          round_trip_fig.savefig('results/last/round_trip_tear_sheet.pdf')
+          plt.close(round_trip_fig)
+
+          # fig = pf.create_position_tear_sheet(returns, self.positions_dataframe, return_fig=True)
+          # fig.savefig('results/last/positions_tear_sheet.pdf')
+          # plt.close(fig)
+          # pf.create_full_tear_sheet(returns, positions=self.positions_dataframe, transactions=self.transactions_dataframe, set_context=False)
+          # fig.savefig('results/last/returns_tear_sheet.pdf')
+          # plt.close(fig)
+
+
+        # fig = pf.create_returns_tear_sheet(returns, return_fig=True)
+        # live_start_date = returns.index[-100]
+        # fig = pf.create_bayesian_tear_sheet(returns, live_start_date=live_start_date, return_fig=True)
+        # fig = pf.create_position_tear_sheet(returns, self.positions_dataframe)
+        # fig.savefig('results/last/returns_tear_sheet.pdf')
+        # plt.close(fig)
+
 
         webbrowser.open_new(r'file:///Users/davidvanisacker/Programming/Trading/backtest/results/last/returns_tear_sheet.pdf')
+        webbrowser.open_new(r'file:///Users/davidvanisacker/Programming/Trading/backtest/results/last/position_tear_sheet.pdf')
+        webbrowser.open_new(r'file:///Users/davidvanisacker/Programming/Trading/backtest/results/last/transaction_tear_sheet.pdf')
+        webbrowser.open_new(r'file:///Users/davidvanisacker/Programming/Trading/backtest/results/last/round_trip_tear_sheet.pdf')
+        # webbrowser.open_new(r'file:///Users/davidvanisacker/Programming/Trading/backtest/results/last/bayesian_tear_sheet.pdf')
         plot()
 
     def save_stats(self, backtest_result_dir):
