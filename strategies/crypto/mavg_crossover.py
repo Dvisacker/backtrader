@@ -33,6 +33,9 @@ class MovingAverageCrossoverStrategy(Strategy):
         self.short_window = short_window
         self.long_window = long_window
 
+        print(short_window)
+        print(long_window)
+
         # Set to True if a symbol is in the market
         self.bought = self._calculate_initial_bought()
 

@@ -61,6 +61,7 @@ class CryptoBacktest(object):
 
         self.show_charts = configuration.show_charts
         self.update_charts = configuration.update_charts
+        self.strategy_params = configuration.strategy_params
 
         self._generate_trading_instances()
 
@@ -72,7 +73,7 @@ class CryptoBacktest(object):
         print("Creating DataHandler, Strategy, Portfolio and ExecutionHandler")
 
         self.data_handler = self.data_handler_cls(self.events, self.configuration)
-        self.strategy = self.strategy_cls(self.data_handler, self.events, self.configuration)
+        self.strategy = self.strategy_cls(self.data_handler, self.events, self.configuration, **self.strategy_params)
         self.portfolio = self.portfolio_cls(self.data_handler, self.events, self.configuration)
         self.execution_handler = self.execution_handler_cls(self.events, self.configuration)
 
@@ -173,5 +174,4 @@ class CryptoBacktest(object):
         Simulates the backtest and outputs portfolio performance.
         """
         self._run()
-        self._open_results_in_excel()
         self._output_performance()

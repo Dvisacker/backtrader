@@ -19,6 +19,11 @@
   "update_charts": false,
   "show_charts": true,
   "strategy": "mean_reversion",
+  "strategy_params": {
+    "ols_window": 100,
+    "zscore_exit": 1.5,
+    "zscore_entry": 3
+  },
   "backtester_type": "crypto_backtest",
   "portfolio_type": "crypto_portfolio"
 }

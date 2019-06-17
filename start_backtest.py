@@ -31,9 +31,11 @@ with open(args.file) as f:
 
   strategies = {
     "qda": QDAStrategy,
+    "rsi": RSIStrategy,
     "random": MultiRandomStrategy,
     "mean_reversion": OLSMeanReversionStrategy,
-    "moving_average_crossover": MovingAverageCrossoverStrategy
+    "moving_average_crossover": MovingAverageCrossoverStrategy,
+    "macd_crossover": MACDCrossover
   }
 
   backtesters = {

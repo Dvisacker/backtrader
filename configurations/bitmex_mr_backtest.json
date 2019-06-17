@@ -14,6 +14,11 @@
   "portfolio_type": "bitmex_portfolio",
   "backtester_type": "crypto_backtest",
   "strategy": "mean_reversion",
+  "strategy_params": {
+    "ols_window": 100,
+    "zscore_exit": 1.5,
+    "zscore_entry": 3
+  },
   "start_date": "01/06/2019",
   "end_date": "05/06/2019",
   "default_leverage": 1,

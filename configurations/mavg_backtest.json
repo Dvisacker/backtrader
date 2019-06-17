@@ -13,6 +13,10 @@
   "update_charts": false,
   "show_charts": false,
   "strategy": "moving_average_crossover",
+  "strategy_params": {
+    "short_window": 20,
+    "long_window": 60
+  },
   "backtester_type": "crypto_backtest",
   "portfolio_type": "crypto_portfolio"
 }

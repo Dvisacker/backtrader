@@ -2,6 +2,10 @@
   "csv_dir": "data",
   "result_dir": "results",
   "strategy": "moving_average_crossover",
+  "strategy_params": {
+    "short_window": 20,
+    "long_window": 60
+  },
   "feeds": { "bitmex": ["EOS/BTC", "BTC/USD"] },
   "instruments": { "bitmex": ["EOS/BTC"] },
   "assets": { "bitmex": [ "BTC" ]},
