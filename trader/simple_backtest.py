@@ -154,18 +154,37 @@ class SimpleBacktest(object):
         print("Creating summary stats...")
         stats = self.portfolio.compute_stats()
 
-        print("Total USD return: %s" % stats['Total USD Return'])
-        print("Total BTC return: %s" % stats['Total BTC Return'])
-        print("Sharpe Ratio: %s" % stats['Sharpe Ratio'])
-        print("Max drawdown: %s" % stats['Max Drawdown'])
-        print("BTC Max drawdown: %s" % stats['BTC Max Drawdown'])
-        print("Drawdown Duration: %s" % stats['Drawdown Duration'])
-        print("BTC Drawdown Duration: %s" % stats['BTC Drawdown Duration'])
+        global_stats = stats['general']
+        pnl_stats = stats['pnl']
+        trade_summary_stats = stats['summary']
+        trade_duration_stats = stats['duration']
+        trade_returns_stats = stats['returns']
+
+        print('\nGLOBAL STATS\n')
+        print("Total USD return: %s" % global_stats['Total USD Return'])
+        print("Total BTC return: %s" % global_stats['Total BTC Return'])
+        print("Sharpe Ratio: %s" % global_stats['Sharpe Ratio'])
+        print("Max drawdown: %s" % global_stats['Max Drawdown'])
+        print("BTC Max drawdown: %s" % global_stats['BTC Max Drawdown'])
+        print("Drawdown Duration: %s" % global_stats['Drawdown Duration'])
+        print("BTC Drawdown Duration: %s" % global_stats['BTC Drawdown Duration'])
         print("Signals: %s" % self.signals)
         print("Orders: %s" % self.orders)
         print("Fills: %s" % self.fills)
 
-        print("Results: ")
+        print('\nPNL STATS\n')
+        print(pnl_stats)
+
+        print('\nTRADE SUMMARY STATS\n')
+        print(trade_summary_stats)
+
+        print('\nTRADE DURATION STATS\n')
+        print(trade_duration_stats)
+
+        print('\nTRADE RETURNS STATS\n')
+        print(trade_returns_stats)
+
+        print("\nResults: \n")
         print(self.portfolio.portfolio_dataframe.tail(10))
 
         return stats

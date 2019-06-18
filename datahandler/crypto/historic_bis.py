@@ -138,7 +138,6 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         Returns one of the Open, High, Low, Close, Volume or OI
         values from the pandas Bar series object.
         """
-        print('LATEST_SYMBOL_DATA', self.latest_symbol_data[exchange][symbol])
         try:
             bars_list = self.latest_symbol_data[exchange][symbol]
         except KeyError:

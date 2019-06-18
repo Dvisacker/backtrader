@@ -29,6 +29,8 @@ from performance import create_sharpe_ratio, create_drawdowns
 from utils import ceil_dt, from_exchange_to_standard_notation, from_standard_to_exchange_notation, truncate, get_precision
 from utils.helpers import move_figure, plot, compute_all_indicators
 
+from stats.trades import generate_trade_stats
+
 class BitmexPortfolioBacktest(object):
     """
     The CryptoPortfolio is similar to the previous portfolio
@@ -440,7 +442,6 @@ class BitmexPortfolioBacktest(object):
         portfolios = pd.DataFrame(self.all_portfolios)
         transactions = pd.DataFrame(self.all_transactions)
         indicators = compute_all_indicators(self.instruments, self.data, self.indicators)
-
         columns = ['datetime'] + [ 'bitmex-{}-position-in-USD'.format(s) for s in self.instruments ]
         positions = portfolios[columns]
         positions['cash'] = portfolios['bitmex-BTC-available-balance']
@@ -449,6 +450,9 @@ class BitmexPortfolioBacktest(object):
 
         if not transactions.empty:
           transactions.set_index('datetime', inplace=True)
+
+
+        trades = pf.round_trips.extract_round_trips(transactions)
 
         portfolios['benchmark_equity'] = self.initial_capital * (portfolios['bitmex-BTC-price'] / portfolios['bitmex-BTC-price'].ix[0])
         portfolios['btc_benchmark_equity'] = self.initial_capital / portfolios['bitmex-BTC-price']
@@ -467,6 +471,7 @@ class BitmexPortfolioBacktest(object):
         self.positions_dataframe = positions
         self.transactions_dataframe = transactions
         self.indicators_dataframe = indicators
+        self.trades_dataframe = trades
 
     def open_results_in_excel(self):
         file_path = os.path.join(self.result_dir, 'last/results.csv')
@@ -611,10 +616,12 @@ class BitmexPortfolioBacktest(object):
         self.positions_dataframe.to_csv(os.path.join(self.result_dir, 'last/positions.csv'))
         self.transactions_dataframe.to_csv(os.path.join(self.result_dir, 'last/transactions.csv'))
         self.indicators_dataframe.to_csv(os.path.join(self.result_dir, 'last/indicators.csv'))
+        self.trades_dataframe.to_csv(os.path.join(self.result_dir, 'last/trades.csv'))
         self.portfolio_dataframe.to_csv(os.path.join(backtest_result_dir, 'results.csv'))
         self.positions_dataframe.to_csv(os.path.join(backtest_result_dir, 'positions.csv'))
         self.transactions_dataframe.to_csv(os.path.join(backtest_result_dir, 'transactions.csv'))
         self.indicators_dataframe.to_csv(os.path.join(backtest_result_dir, 'indicators.csv'))
+        self.trades_dataframe.to_csv(os.path.join(backtest_result_dir, 'trades.csv'))
 
     def compute_stats(self):
         """
@@ -636,7 +643,8 @@ class BitmexPortfolioBacktest(object):
         btc_drawdown, btc_max_dd, btc_dd_duration = create_drawdowns(btc_pnl)
         self.portfolio_dataframe['btc_drawdown'] = btc_drawdown
 
-        stats = {
+        stats = generate_trade_stats(self.trades_dataframe)
+        stats['general'] = {
           "Total USD Return": "%0.2f%%" % ((total_return - 1.0) * 100.0),
           "Total BTC Return": "%0.2f%%" % ((total_btc_return - 1.0) * 100.0),
           "Sharpe Ratio": "%0.2f" % sharpe_ratio,
@@ -648,3 +656,4 @@ class BitmexPortfolioBacktest(object):
         }
 
         return stats
+

@@ -115,8 +115,6 @@ class BitmexPortfolio(object):
         d['total-USD'] = balance * price
         d['fee'] = 0
 
-        print(d)
-
         return d
 
     def update_timeindex(self, event):

@@ -138,7 +138,6 @@ class HistoricCSVDataHandler(DataHandler):
             print("That symbol is not available in the historical data set.")
             raise
         else:
-            # print(bar_list)
             return np.array([getattr(b[1], val_type) for b in bars_list])
 
     def update_bars(self):
