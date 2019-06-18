@@ -27,7 +27,7 @@ from db.mongo_handler import MongoHandler
 from event import FillEvent, OrderEvent, BulkOrderEvent
 from performance import create_sharpe_ratio, create_drawdowns
 from utils import ceil_dt, from_exchange_to_standard_notation, from_standard_to_exchange_notation, truncate, get_precision
-from utils.helpers import move_figure, plot
+from utils.helpers import move_figure, plot, compute_all_indicators
 
 class BitmexPortfolioBacktest(object):
     """
@@ -58,6 +58,7 @@ class BitmexPortfolioBacktest(object):
         self.default_leverage = configuration.default_leverage
         self.save_to_db = configuration.save_to_db
         self.initial_capital = configuration.initial_capital
+        self.indicators = configuration.indicators
 
 
         self.current_portfolio = self.construct_current_portfolios()
@@ -67,6 +68,7 @@ class BitmexPortfolioBacktest(object):
 
         self.db = MongoHandler()
         self.legends_added = False
+
 
     def construct_current_portfolios(self):
       print('Building current portfolios')
@@ -438,11 +440,11 @@ class BitmexPortfolioBacktest(object):
         Creates a pandas DataFrame from the all_holdings
         list of dictionaries.
         """
-        # portfolios.index.tz_localize('UTC').tz_convert('US/Eastern')
-
         portfolios = pd.DataFrame(self.all_portfolios)
         transactions = pd.DataFrame(self.all_transactions)
+        indicators = pd.DataFrame()
 
+        indicators = compute_all_indicators(self.instruments, self.data, self.indicators)
         columns = ['datetime'] + [ 'bitmex-{}-position-in-USD'.format(s) for s in self.instruments ]
         positions = portfolios[columns]
         positions['cash'] = portfolios['bitmex-BTC-available-balance']
@@ -460,14 +462,15 @@ class BitmexPortfolioBacktest(object):
         portfolios['benchmark_returns'] = portfolios['benchmark_equity'].pct_change()
         portfolios['btc_benchmark_returns'] = portfolios['btc_benchmark_equity'].pct_change()
 
-        portfolios['equity_curve'] = (1.0+portfolios['returns']).cumprod()
-        portfolios['btc_equity_curve'] = (1.0+portfolios['btc_returns']).cumprod()
+        portfolios['equity_curve'] = (1.0 + portfolios['returns']).cumprod()
+        portfolios['btc_equity_curve'] = (1.0 + portfolios['btc_returns']).cumprod()
         portfolios['benchmark_equity_curve'] = (1.0 + portfolios['benchmark_returns']).cumprod()
         portfolios['btc_benchmark_equity_curve'] = (1.0 + portfolios['btc_benchmark_returns']).cumprod()
 
         self.portfolio_dataframe = portfolios
         self.positions_dataframe = positions
         self.transactions_dataframe = transactions
+        self.indicators_dataframe = indicators
 
     def open_results_in_excel(self):
         file_path = os.path.join(self.result_dir, 'last/results.csv')
@@ -639,21 +642,12 @@ class BitmexPortfolioBacktest(object):
         }
 
         self.portfolio_dataframe.to_csv(os.path.join(self.result_dir, 'last/results.csv'))
+        self.positions_dataframe.to_csv(os.path.join(self.result_dir, 'last/positions.csv'))
+        self.transactions_dataframe.to_csv(os.path.join(self.result_dir, 'last/transactions.csv'))
+        self.indicators_dataframe.to_csv(os.path.join(self.result_dir, 'last/indicators.csv'))
         self.portfolio_dataframe.to_csv(os.path.join(backtest_result_dir, 'results.csv'))
+        self.positions_dataframe.to_csv(os.path.join(backtest_result_dir, 'positions.csv'))
+        self.transactions_dataframe.to_csv(os.path.join(backtest_result_dir, 'transactions.csv'))
+        self.indicators_dataframe.to_csv(os.path.join(backtest_result_dir, 'indicators.csv'))
 
         return stats
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

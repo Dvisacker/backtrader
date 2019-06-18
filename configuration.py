@@ -46,6 +46,9 @@ class Configuration(object):
       if 'strategy_params' in configuration:
         self.strategy_params = configuration['strategy_params']
 
+      if 'indicators' in configuration:
+        self.indicators = configuration['indicators']
+
       if 'default_position_size' in configuration:
         self.default_position_size = configuration['default_position_size']
 

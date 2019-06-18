@@ -20,5 +20,11 @@
   "start_date": "01/06/2019",
   "end_date": "05/06/2019",
   "default_leverage": 1,
-  "save_to_db": false
+  "save_to_db": false,
+  "indicators": [
+    {
+      "name": "rsi",
+      "params": { "rsi_period": 14 }
+    }
+  ]
 }

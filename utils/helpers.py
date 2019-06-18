@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 
 from datetime import datetime
 
+from indicators import *
+
+
 def truncate(n, decimals=0):
   multiplier = 10 ** decimals
   return int(n * multiplier) / multiplier
@@ -272,3 +275,54 @@ def get_ohlcv_file(exchange, symbol, period, start_date, end_date):
 
 def to_ccxt_notation(symbol):
   symbol = symbol.replace("")
+
+def compute_indicators(prices, indicators):
+  df = pd.DataFrame()
+  df['prices'] = prices
+  for indicator in indicators:
+    name = indicator['name']
+    params = indicator['params']
+
+    function_map = {
+      "rsi": rsi,
+      "mavg": mavg,
+      "macd": macd_trigger_line,
+    }
+
+    function = function_map[name]
+    df[name] = function(prices, **params)
+
+  return df
+
+
+def compute_indicator(prices, indicator):
+  df = pd.DataFrame()
+  df['prices'] = prices
+
+  name = indicator['name']
+  params = indicator['params']
+
+  function_map = {
+    "rsi": rsi,
+    "mavg": mavg,
+    "macd": macd_trigger_line,
+  }
+
+  function = function_map[name]
+  return function(prices, **params)
+
+def compute_all_indicators(instruments, data, indicators):
+  df = pd.DataFrame()
+
+  for s in instruments:
+    for i in indicators:
+      p = data.get_all_bars_values('bitmex', s, 'close')
+      indicator_values = compute_indicator(p, i)
+      df['bitmex-{}-{}'.format(s,i)] = indicator_values
+
+  return df
+
+
+
+
+

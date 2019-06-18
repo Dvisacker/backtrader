@@ -140,6 +140,15 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         else:
             return bars_list[-N:]
 
+    def get_all_bars(self, exchange, symbol):
+        try:
+            bars_list = self.latest_symbol_data[exchange][symbol]
+        except KeyError:
+            print("That symbol is not available in the historical data set.")
+            raise
+        else:
+            return bars_list
+
     def get_latest_bar_datetime(self, exchange, symbol):
         """
         Returns a Python datetime object for the last bar.
@@ -177,6 +186,16 @@ class HistoricCSVCryptoDataHandler(DataHandler):
             raise
         else:
             return np.array([getattr(b[1], val_type) for b in bars_list])
+
+    def get_all_bars_values(self, exchange, symbol, val_type):
+        try:
+            bars_list = self.get_all_bars(exchange, symbol)
+        except KeyError:
+            print("That symbol is not available in the historical data set.")
+            raise
+        else:
+            return np.array([getattr(b[1], val_type) for b in bars_list])
+
 
     def get_asset_value(self, exchange, asset_symbol):
         """
