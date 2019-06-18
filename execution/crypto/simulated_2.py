@@ -49,11 +49,9 @@ class SimulatedCryptoExchangeExecutionHandler(ExecutionHandler):
       )
 
       # Place the fill event onto the event queue
-      print("ORDER FILLED")
       self.events.put(fill)
 
     def execute_close_position(self, event):
-      print('Executing close {} position'.format(event.symbol))
       exchange = event.exchange
       symbol = event.symbol
       quantity = event.quantity
@@ -68,7 +66,6 @@ class SimulatedCryptoExchangeExecutionHandler(ExecutionHandler):
       )
 
       self.events.put(fill)
-      print('CLOSE POSITION DONE')
 
 
     def execute_order(self, event):

@@ -13,7 +13,7 @@
   "update_charts": false,
   "show_charts": true,
   "strategy": "moving_average_crossover",
-  "backtester_type": "multi_backtest",
+  "backtester_type": "multi_conditions_backtest",
   "portfolio_type": "crypto_portfolio",
   "multi_backtest_params": {
     "short_window": [50, 100, 200],

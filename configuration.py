@@ -17,8 +17,12 @@ class Configuration(object):
       self.result_dir = configuration['result_dir']
       self.instruments = configuration['instruments']
       self.heartbeat = configuration['heartbeat']
-      self.start_date = configuration['start_date']
-      self.exchange_names = list(self.instruments.keys())
+
+      # In the case of a multi instrument backtest, the instruments keys is an array
+      if isinstance(self.instruments, list):
+        self.exchange_names = list(self.instruments[0].keys())
+      else:
+        self.exchange_names = list(self.instruments.keys())
 
       self.ohlcv_window = {
         '1m': 60,
@@ -48,6 +52,8 @@ class Configuration(object):
 
       if 'indicators' in configuration:
         self.indicators = configuration['indicators']
+      else:
+        self.indicators = []
 
       if 'default_position_size' in configuration:
         self.default_position_size = configuration['default_position_size']
@@ -70,7 +76,19 @@ class Configuration(object):
       if 'end_date' in configuration:
         self.end_date = configuration['end_date']
       else:
-        self.start_date = None
+        self.end_date = None
+
+      if 'start_dates' in configuration:
+        self.start_dates = configuration['start_dates']
+      else:
+        self.start_dates = None
+
+      if 'end_dates' in configuration:
+        self.end_dates = configuration['end_dates']
+      else:
+        self.end_dates = None
+
+
 
       if 'default_leverage' in configuration:
         self.default_leverage = configuration['default_leverage']
@@ -116,4 +134,25 @@ class MultiMRConfiguration(Configuration):
 
         self.strat_params.append(dic)
 
-      print(self.strat_params)
+
+class MultiConditionConfiguration(Configuration):
+
+    def __init__(self, configuration):
+      super().__init__(configuration)
+
+      conditions = configuration['conditions']
+      conditions_names_list = list(conditions.keys())
+      conditions_product_list = list(product(*conditions.values()))
+
+      for key in conditions_names_list:
+        self.__dict__[key] = conditions[key]
+
+      self.conditions_names = conditions_names_list
+
+      self.strat_conditions = []
+      for p in conditions_product_list:
+        dic = {}
+        for (i,pn) in enumerate(conditions_names_list):
+          dic[pn] = p[i]
+
+        self.strat_conditions.append(dic)

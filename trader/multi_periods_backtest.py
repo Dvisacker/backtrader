@@ -11,7 +11,6 @@ import pprint
 import os
 
 from datetime import datetime
-from threading import Thread
 from distutils.dir_util import copy_tree
 
 try:
@@ -20,7 +19,7 @@ except ImportError:
     import queue
 
 
-class CryptoBacktest(object):
+class MultiPeriodsBacktest(object):
     """
     Enscapsulates the settings and components for carrying out
     an event-driven backtest.
@@ -45,8 +44,10 @@ class CryptoBacktest(object):
         self.result_filepath = os.path.join(self.result_dir, 'last/results.csv')
 
         self.heartbeat = configuration.heartbeat
-        self.graph_refresh_period = configuration.graph_refresh_period
         self.backtest_start_time = datetime.utcnow()
+
+        self.start_dates = configuration.start_dates
+        self.end_dates = configuration.end_dates
 
         self.data_handler_cls = data_handler
         self.execution_handler_cls = execution_handler
@@ -57,40 +58,35 @@ class CryptoBacktest(object):
         self.signals = 0
         self.orders = 0
         self.fills = 0
-        self.num_strats = 1
 
         self.show_charts = configuration.show_charts
         self.update_charts = configuration.update_charts
         self.strategy_params = configuration.strategy_params
 
-        self._generate_trading_instances()
 
-    def _generate_trading_instances(self):
+    def _generate_trading_instances(self, start_date, end_date):
         """
         Generates the trading instance objects from
         their class types.
         """
         print("Creating DataHandler, Strategy, Portfolio and ExecutionHandler")
+        configuration = self.configuration
+        configuration.start_date = start_date
+        configuration.end_date = end_date
 
-        self.data_handler = self.data_handler_cls(self.events, self.configuration)
-        self.strategy = self.strategy_cls(self.data_handler, self.events, self.configuration, **self.strategy_params)
-        self.portfolio = self.portfolio_cls(self.data_handler, self.events, self.configuration)
-        self.execution_handler = self.execution_handler_cls(self.events, self.configuration)
+
+        self.data_handler = self.data_handler_cls(self.events, configuration)
+        self.strategy = self.strategy_cls(self.data_handler, self.events, configuration, **self.strategy_params)
+        self.portfolio = self.portfolio_cls(self.data_handler, self.events, configuration)
+        self.execution_handler = self.execution_handler_cls(self.events, configuration)
 
     def _run(self):
         """
         Executes the backtest.
         """
         i = 0
-        if self.update_charts:
-          self.portfolio.initialize_graphs()
-
         while True:
             i += 1
-
-            if (self.update_charts and i % self.graph_refresh_period == 0):
-              self._update_charts()
-
             # Update the market bars
             if self.data_handler.continue_backtest == True:
                 self.data_handler.update_bars()
@@ -110,6 +106,7 @@ class CryptoBacktest(object):
                             self.portfolio.update_timeindex(event)
 
                         elif event.type == 'SIGNAL':
+                            event.print_signals()
                             self.signals += 1
                             self.portfolio.update_signals(event)
 
@@ -125,31 +122,19 @@ class CryptoBacktest(object):
 
             time.sleep(self.heartbeat)
 
-    def _update_charts(self):
-        self.portfolio.update_charts()
-
     def _output_performance(self):
         """
         Outputs the strategy performance from the backtest.
         """
-        # Create a timestamped directory for backtest results
-        backtest_result_dir = os.path.join(self.result_dir, str(self.backtest_start_time))
-        os.mkdir(backtest_result_dir)
         self.portfolio.create_backtest_result_dataframe()
-
-        self._open_results_in_excel()
-        self._show_stats()
-        self._show_charts()
-
-    def _show_charts(self):
-        if self.show_charts:
-          self.portfolio.output_graphs()
+        stats = self._show_stats()
+        return stats
 
     def _show_stats(self):
-        print("Creating summary stats...")
         backtest_result_dir = os.path.join(self.result_dir, str(self.backtest_start_time))
-        stats = self.portfolio.save_stats(backtest_result_dir)
+        stats = self.portfolio.compute_stats(backtest_result_dir)
 
+        print("Results: ")
         print("Total USD return: %s" % stats['Total USD Return'])
         print("Total BTC return: %s" % stats['Total BTC Return'])
         print("Sharpe Ratio: %s" % stats['Sharpe Ratio'])
@@ -161,17 +146,38 @@ class CryptoBacktest(object):
         print("Orders: %s" % self.orders)
         print("Fills: %s" % self.fills)
 
-        print("Results: ")
+        print("Final Portfolios: ")
         print(self.portfolio.portfolio_dataframe.tail(10))
 
-    def _open_results_in_excel(self):
-        print("Opening results in excel")
+        return stats
 
-        os.system("open -a 'Microsoft Excel.app' '%s'" % self.result_filepath)
 
     def start_trading(self):
         """
         Simulates the backtest and outputs portfolio performance.
         """
-        self._run()
-        self._output_performance()
+        out = open(os.path.join(self.result_dir, 'scores.csv'), "w")
+        out.write("%s,%s,%s,%s,%s,%s\n" % ("Start Date", "End Date", "Total Returns", "Sharpe Ratio", "Max Drawdown", "Drawdown Duration"))
+
+        num_backtest = len(self.start_dates)
+        for i, (start, end) in enumerate(zip(self.start_dates, self.end_dates)):
+          print("Strategy %s out of %s..." % (i+1, num_backtest))
+          print("Start Date: %s, End Date: %s..." % (start, end))
+          self._generate_trading_instances(start, end)
+          self._run()
+          stats = self._output_performance()
+
+          total_USD_return = stats['Total USD Return']
+          total_BTC_return = stats['Total BTC Return']
+          sharpe_ratio = stats['Sharpe Ratio']
+          max_drawdown = stats['Max Drawdown']
+          btc_max_drawdown = stats['BTC Max Drawdown']
+          drawdown_duration = stats['Drawdown Duration']
+          btc_drawdown_duration = stats['BTC Drawdown Duration']
+
+          out.write(
+            "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n" % (start, end, total_USD_return, total_BTC_return, sharpe_ratio, max_drawdown, btc_max_drawdown, drawdown_duration, btc_drawdown_duration, self.signals, self.orders, self.fills)
+          )
+
+          out.close
+

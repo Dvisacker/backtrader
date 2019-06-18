@@ -14,9 +14,9 @@ Backtest	../mac.py	/^from backtest import Backtest$/;"	kind:namespace	line:9
 Backtest	../snp_forecast.py	/^from backtest import Backtest$/;"	kind:namespace	line:15
 Contract	../ib_execution.py	/^from ib.ext.Contract import Contract$/;"	kind:namespace	line:11
 CryptoBacktest	../backtest.py	/^class CryptoBacktest(object):$/;"	kind:class	line:144
-CryptoBacktest	../mean_reversion.py	/^from trader import CryptoBacktest$/;"	kind:namespace	line:16
-CryptoBacktest	../moving_avg_crossover.py	/^from trader import CryptoBacktest$/;"	kind:namespace	line:8
-CryptoBacktest	../qda_crypto.py	/^from trader import CryptoBacktest$/;"	kind:namespace	line:16
+CryptoBacktest	../mean_reversion.py	/^from trader import SimpleBacktest$/;"	kind:namespace	line:16
+CryptoBacktest	../moving_avg_crossover.py	/^from trader import SimpleBacktest$/;"	kind:namespace	line:8
+CryptoBacktest	../qda_crypto.py	/^from trader import SimpleBacktest$/;"	kind:namespace	line:16
 CryptoPortfolio	../mean_reversion.py	/^from portfolio import CryptoPortfolio$/;"	kind:namespace	line:19
 CryptoPortfolio	../moving_avg_crossover.py	/^from portfolio import CryptoPortfolio$/;"	kind:namespace	line:11
 CryptoPortfolio	../portfolio.py	/^class CryptoPortfolio(object):$/;"	kind:class	line:259

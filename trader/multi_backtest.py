@@ -19,7 +19,7 @@ except ImportError:
     import queue
 
 
-class MultiCryptoBacktest(object):
+class MultiBacktest(object):
     """
     Enscapsulates the settings and components for carrying out
     an event-driven backtest.

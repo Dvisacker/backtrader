@@ -3,7 +3,7 @@ import json
 import warnings
 import argparse
 
-from trader import CryptoBacktest, MultiCryptoBacktest
+from trader import *
 from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import BitmexPortfolioBacktest, CryptoPortfolio
@@ -39,8 +39,11 @@ with open(args.file) as f:
   }
 
   backtesters = {
-    "crypto_backtest": CryptoBacktest,
-    "crypto_multi_backtest": MultiCryptoBacktest
+    "crypto_backtest": SimpleBacktest,
+    "multi_backtest": MultiBacktest,
+    "multi_instrument_backtest": MultiInstrumentsBacktest,
+    "multi_conditions_backtest": MultiConditionsBacktest,
+    "multi_periods_backtest": MultiPeriodsBacktest
   }
 
   portfolios = {

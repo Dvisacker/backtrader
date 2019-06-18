@@ -13,7 +13,7 @@ import statsmodels.api as sm
 
 from .strategy import Strategy
 from event import SignalEvent, SignalEvents
-from trader import CryptoBacktest
+from trader import SimpleBacktest
 from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import CryptoPortfolio

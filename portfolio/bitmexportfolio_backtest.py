@@ -47,7 +47,6 @@ class BitmexPortfolioBacktest(object):
         start_date - The start date (bar) of the portfolio.
         initial_capital - The starting capital in USD.
         """
-
         self.data = data
         self.events = events
         self.instruments = configuration.instruments['bitmex']
@@ -213,9 +212,7 @@ class BitmexPortfolioBacktest(object):
         # Update holdings list with new quantities
         self.current_portfolio['bitmex-BTC-balance'] -= btc_fee
         self.current_portfolio['bitmex-{}-entry-price'.format(symbol)] = entry_price
-        print('Previous available balance', self.current_portfolio['bitmex-BTC-available-balance'])
         self.current_portfolio['bitmex-BTC-available-balance'] = self.current_portfolio['bitmex-BTC-available-balance'] - (abs(new_position) - abs(previous_position)) * (entry_price / leverage) - btc_fee
-        print('New available balance', self.current_portfolio['bitmex-BTC-available-balance'])
         self.current_portfolio['bitmex-BTC-price'] = btc_price
         self.current_portfolio['bitmex-BTC-balance-in-USD'] = (balance - btc_fee) * btc_price
         self.current_portfolio['total'] = (balance - btc_fee)
@@ -442,9 +439,8 @@ class BitmexPortfolioBacktest(object):
         """
         portfolios = pd.DataFrame(self.all_portfolios)
         transactions = pd.DataFrame(self.all_transactions)
-        indicators = pd.DataFrame()
-
         indicators = compute_all_indicators(self.instruments, self.data, self.indicators)
+
         columns = ['datetime'] + [ 'bitmex-{}-position-in-USD'.format(s) for s in self.instruments ]
         positions = portfolios[columns]
         positions['cash'] = portfolios['bitmex-BTC-available-balance']
@@ -610,7 +606,17 @@ class BitmexPortfolioBacktest(object):
         # webbrowser.open_new(r'file:///Users/davidvanisacker/Programming/Trading/backtest/results/last/bayesian_tear_sheet.pdf')
         plot()
 
-    def save_stats(self, backtest_result_dir):
+    def save_results(self, backtest_result_dir):
+        self.portfolio_dataframe.to_csv(os.path.join(self.result_dir, 'last/results.csv'))
+        self.positions_dataframe.to_csv(os.path.join(self.result_dir, 'last/positions.csv'))
+        self.transactions_dataframe.to_csv(os.path.join(self.result_dir, 'last/transactions.csv'))
+        self.indicators_dataframe.to_csv(os.path.join(self.result_dir, 'last/indicators.csv'))
+        self.portfolio_dataframe.to_csv(os.path.join(backtest_result_dir, 'results.csv'))
+        self.positions_dataframe.to_csv(os.path.join(backtest_result_dir, 'positions.csv'))
+        self.transactions_dataframe.to_csv(os.path.join(backtest_result_dir, 'transactions.csv'))
+        self.indicators_dataframe.to_csv(os.path.join(backtest_result_dir, 'indicators.csv'))
+
+    def compute_stats(self):
         """
         Creates a list of summary statistics and plots
         performance graphs
@@ -640,14 +646,5 @@ class BitmexPortfolioBacktest(object):
           "Drawdown Duration": "%d" % dd_duration,
           "BTC Drawdown Duration": "%d" % btc_dd_duration
         }
-
-        self.portfolio_dataframe.to_csv(os.path.join(self.result_dir, 'last/results.csv'))
-        self.positions_dataframe.to_csv(os.path.join(self.result_dir, 'last/positions.csv'))
-        self.transactions_dataframe.to_csv(os.path.join(self.result_dir, 'last/transactions.csv'))
-        self.indicators_dataframe.to_csv(os.path.join(self.result_dir, 'last/indicators.csv'))
-        self.portfolio_dataframe.to_csv(os.path.join(backtest_result_dir, 'results.csv'))
-        self.positions_dataframe.to_csv(os.path.join(backtest_result_dir, 'positions.csv'))
-        self.transactions_dataframe.to_csv(os.path.join(backtest_result_dir, 'transactions.csv'))
-        self.indicators_dataframe.to_csv(os.path.join(backtest_result_dir, 'indicators.csv'))
 
         return stats

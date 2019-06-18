@@ -59,7 +59,7 @@ class SignalEvent(Event):
         Outputs the values within the Order.
         """
         print(
-            "Signal: Exchange=%s, Symbol=%s, Type=%s, Strength=%s" %
+            "SIGNAL: Exchange=%s, Symbol=%s, Type=%s, Strength=%s" %
             (self.exchange, self.symbol, self.signal_type, self.strength)
         )
 
@@ -112,7 +112,7 @@ class OrderEvent(Event):
         Outputs the values within the order
         """
         print(
-            "Order: Exchange=%s, Symbol=%s, Type=%s, Quantity=%s, Direction=%s" %
+            "ORDER: Exchange=%s, Symbol=%s, Type=%s, Quantity=%s, Direction=%s" %
             (self.exchange, self.symbol, self.order_type, self.quantity, self.direction)
         )
 
@@ -183,7 +183,7 @@ class FillEvent(Event):
         Outputs the values within the Order.
         """
         print(
-            "Fill: Exchange=%s, Symbol=%s, Quantity=%s, Direction=%s, Price=%s" %
+            "FILL: Exchange=%s, Symbol=%s, Quantity=%s, Direction=%s, Price=%s" %
             (self.exchange, self.symbol, self.quantity, self.direction, self.price)
         )
 
