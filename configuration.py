@@ -17,6 +17,7 @@ class Configuration(object):
       self.result_dir = configuration['result_dir']
       self.instruments = configuration['instruments']
       self.heartbeat = configuration['heartbeat']
+      self.conditions = None
 
       # In the case of a multi instrument backtest, the instruments keys is an array
       if isinstance(self.instruments, list):
@@ -117,7 +118,7 @@ class MultiMRConfiguration(Configuration):
     def __init__(self, configuration):
       super().__init__(configuration)
 
-      params = configuration['multi_backtest_params']
+      params = configuration['strategy_params']
       params_names_list = list(params.keys())
       params_product_list = list(product(*params.values()))
 

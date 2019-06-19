@@ -1,5 +1,6 @@
 {
-  "start_date": "2019/3/26",
+  "start_date": "01/06/2019",
+  "end_date": "05/06/2019",
   "csv_dir": "data",
   "result_dir": "results",
   "feeds": { "bitmex": ["XRP/BTC", "EOS/BTC", "BTC/USD"] },
@@ -13,9 +14,9 @@
   "update_charts": false,
   "show_charts": true,
   "strategy": "mean_reversion",
-  "backtester_type": "multi_backtest",
-  "portfolio_type": "crypto_portfolio",
-  "multi_backtest_params": {
+  "backtester_type": "multi_params_backtest",
+  "portfolio_type": "bitmex_portfolio",
+  "strategy_params": {
     "ols_window": [50, 100, 200],
     "zscore_exit": [0.5, 1.0, 1.5],
     "zscore_entry": [2.0, 3.0, 4.0]

@@ -14,7 +14,7 @@
   "show_charts": true,
   "strategy": "mean_reversion",
   "backtester_type": "multi_backtest",
-  "portfolio_type": "crypto_portfolio",
+  "portfolio_type": "bitmex_portfolio",
   "multi_backtest_params": {
     "ols_window": [50],
     "zscore_entry": [2.0, 3.0, 4.0],

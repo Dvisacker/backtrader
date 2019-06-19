@@ -323,6 +323,9 @@ def compute_all_indicators(instruments, data, indicators):
   return df
 
 
+def merge(dict1, dict2):
+  res = {**dict1, **dict2}
+  return res
 
 
 

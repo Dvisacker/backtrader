@@ -2,13 +2,14 @@ import sys
 import json
 import warnings
 import argparse
+import importlib
 
 from trader import *
 from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import BitmexPortfolioBacktest, CryptoPortfolio
 from strategies.crypto.multi_random import MultiRandomStrategy
-from configuration import Configuration
+from configuration import Configuration, MultiMRConfiguration
 
 from strategies.crypto import *
 
@@ -22,25 +23,33 @@ def parse_args():
                       required=True,
                       help='The name of the configuration JSON file')
 
+  parser.add_argument('-c', '--conditions',
+                      type=str,
+                      required=False,
+                      help='The name of the python module containing list of conditions to be tested')
+
   return parser.parse_args()
 
 args = parse_args()
 
+if args.conditions:
+  condition_file = importlib.import_module(args.conditions)
+
 with open(args.file) as f:
   data = json.load(f)
-
   strategies = {
     "qda": QDAStrategy,
     "rsi": RSIStrategy,
     "random": MultiRandomStrategy,
     "mean_reversion": OLSMeanReversionStrategy,
     "moving_average_crossover": MovingAverageCrossoverStrategy,
-    "macd_crossover": MACDCrossover
+    "macd_crossover": MACDCrossover,
+    "condition": ConditionBasedStrategy
   }
 
   backtesters = {
     "crypto_backtest": SimpleBacktest,
-    "multi_backtest": MultiBacktest,
+    "multi_params_backtest": MultiBacktest,
     "multi_instrument_backtest": MultiInstrumentsBacktest,
     "multi_conditions_backtest": MultiConditionsBacktest,
     "multi_periods_backtest": MultiPeriodsBacktest
@@ -51,7 +60,14 @@ with open(args.file) as f:
     "bitmex_portfolio": BitmexPortfolioBacktest
   }
 
-  configuration = Configuration(data)
+  if (data['backtester_type'] == "multi_params_backtest"):
+    configuration = MultiMRConfiguration(data)
+  else:
+    configuration = Configuration(data)
+
+  if args.conditions:
+    configuration.conditions = condition_file.conditions
+
   backtester_class = backtesters[data['backtester_type']]
   portfolio_class = portfolios[data['portfolio_type']]
   strategy_class = strategies[data['strategy']]

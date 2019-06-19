@@ -5,10 +5,11 @@
 
 from __future__ import print_function
 
-import datetime
+import os
+import csv
 import time
 import pprint
-import os
+import datetime
 
 from datetime import datetime
 from distutils.dir_util import copy_tree
@@ -42,14 +43,15 @@ class MultiInstrumentsBacktest(object):
         self.result_dir = configuration.result_dir
         self.heartbeat = configuration.heartbeat
         self.configuration = configuration
-        self.backtest_start_time = datetime.utcnow()
         self.instruments_list = configuration.instruments
+        self.backtest_start_time = datetime.utcnow()
 
         self.data_handler_cls = data_handler
         self.execution_handler_cls = execution_handler
         self.portfolio_cls = portfolio
         self.strategy_cls = strategy
         self.last_result_dir = os.path.join(self.result_dir, 'last')
+
         self.events = queue.Queue()
 
         self.signals = 0
@@ -103,20 +105,23 @@ class MultiInstrumentsBacktest(object):
                             self.portfolio.update_timeindex(event)
 
                         elif event.type == 'SIGNAL':
+                            event.print_signals()
                             self.signals += 1
-                            self.portfolio.update_signal(event)
+                            self.portfolio.update_signals(event)
 
                         elif event.type == 'ORDER':
+                            event.print_order()
                             self.orders += 1
                             self.execution_handler.execute_order(event)
 
                         elif event.type == 'FILL':
+                            event.print_fill()
                             self.fills += 1
                             self.portfolio.update_fill(event)
 
             time.sleep(self.heartbeat)
 
-    def _output_performance(self):
+    def _process_results(self):
         """
         Outputs the strategy performance from the backtest.
         """
@@ -125,8 +130,7 @@ class MultiInstrumentsBacktest(object):
         return stats
 
     def _show_stats(self):
-        backtest_result_dir = os.path.join(self.result_dir, str(self.backtest_start_time))
-        stats = self.portfolio.compute_stats(backtest_result_dir)
+        stats = self.portfolio.compute_stats()
 
         print("Results: ")
         print("Total USD return: %s" % stats['Total USD Return'])
@@ -150,27 +154,36 @@ class MultiInstrumentsBacktest(object):
         """
         Simulates the backtest and outputs portfolio performance.
         """
-        out = open(os.path.join(self.last_result_dir, 'scores.csv'), "w")
-        out.write("%s,%s,%s,%s,%s\n" % ("Instrument(s)", "Total Returns", "Sharpe Ratio", "Max Drawdown", "Drawdown Duration"))
-
         num_backtest = len(self.instruments_list)
-        for i, instruments in enumerate(self.instruments_list):
-          print("Strategy %s out of %s..." % (i+1, num_backtest))
-          self._generate_trading_instances(instruments)
-          self._run()
-          stats = self._output_performance()
+        out = open(os.path.join(self.last_result_dir, 'scores.csv'), "w")
 
-          total_USD_return = stats['Total USD Return']
-          total_BTC_return = stats['Total BTC Return']
-          sharpe_ratio = stats['Sharpe Ratio']
-          max_drawdown = stats['Max Drawdown']
-          btc_max_drawdown = stats['BTC Max Drawdown']
-          drawdown_duration = stats['Drawdown Duration']
-          btc_drawdown_duration = stats['BTC Drawdown Duration']
+        fieldnames = [ 'Start Date', 'End Date', 'Total USD Return', 'Total BTC Return', 'Sharpe Ratio', 'BTC Sharpe Ratio',
+        'Max Drawdown', 'BTC Max Drawdown', 'Drawdown Duration', 'BTC Drawdown Duration',
+        'Avg. winning trade', 'Median duration', 'Avg. losing trade', 'Median returns winning', 'Largest losing trade',
+        'Gross loss', 'Largest winning trade', 'Avg duration', 'Avg returns losing', 'Median returns losing', 'Profit factor',
+        'Winning round trips', 'Percent profitable', 'Total profit', 'Shortest duration', 'Median returns all round trips',
+        'Losing round trips', 'Longest duration', 'Avg returns all round trips', 'Gross profit', 'Avg returns winning',
+        'Total number of round trips', 'Ratio Avg. Win:Avg. Loss', 'Avg. trade net profit', 'Even round trips']
 
-          out.write(
-            "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n" % (i, total_USD_return, total_BTC_return, sharpe_ratio, max_drawdown, btc_max_drawdown, drawdown_duration, btc_drawdown_duration, self.signals, self.orders, self.fills)
-          )
+        try:
+          with out as csv_file:
+            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+            writer.writeheader()
+            for i, instrument in enumerate(self.instruments_list):
+              print("Strategy %s out of %s..." % (i+1, num_backtest))
+              print("Instrument %s" % instrument)
+              self._generate_trading_instances(instrument)
+              self._run()
+              stats = self._process_results()
 
-          out.close
+              general_stats = stats['general']
+              pnl_stats = stats['pnl']['All trades'].to_dict()
+              summary_stats = stats['summary']['All trades'].to_dict()
+              duration_stats = stats['duration']['All trades'].to_dict()
+              return_stats = stats['returns']['All trades'].to_dict()
 
+              row = { 'Instrument': instrument, **general_stats, **pnl_stats, **summary_stats, **duration_stats, **return_stats }
+              writer.writerow(row)
+
+        except IOError:
+          print('I/O Error')

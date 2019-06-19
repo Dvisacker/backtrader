@@ -1,4 +1,5 @@
 from collections import deque, OrderedDict
+import numpy as np
 
 PNL_STATS = OrderedDict(
     [('Total profit', lambda x: x.sum()),

@@ -5,10 +5,11 @@
 
 from __future__ import print_function
 
-import datetime
+import os
+import csv
 import time
 import pprint
-import os
+import datetime
 
 from datetime import datetime
 from distutils.dir_util import copy_tree
@@ -60,6 +61,10 @@ class MultiBacktest(object):
         self.fills = 0
         self.num_strats = len(self.strat_params)
 
+        self.show_charts = configuration.show_charts
+        self.update_charts = configuration.update_charts
+        self.strategy_params = configuration.strategy_params
+
 
     def _generate_trading_instances(self, strategy_params_dict):
         """
@@ -100,35 +105,66 @@ class MultiBacktest(object):
                             self.portfolio.update_timeindex(event)
 
                         elif event.type == 'SIGNAL':
+                            event.print_signals()
                             self.signals += 1
-                            self.portfolio.update_signal(event)
+                            self.portfolio.update_signals(event)
 
                         elif event.type == 'ORDER':
+                            event.print_order()
                             self.orders += 1
                             self.execution_handler.execute_order(event)
 
                         elif event.type == 'FILL':
+                            event.print_fill()
                             self.fills += 1
                             self.portfolio.update_fill(event)
 
             time.sleep(self.heartbeat)
 
-    def _output_performance(self):
+    def _process_results(self):
         """
         Outputs the strategy performance from the backtest.
         """
         self.portfolio.create_backtest_result_dataframe()
+        stats = self._show_stats()
+        return stats
 
-        print("Creating summary stats...")
-        stats = self.portfolio.print_summary_stats()
+    def _show_stats(self):
+        stats = self.portfolio.compute_stats()
 
-        print("Creating equity curve...")
-        print(self.portfolio.equity_curve.tail(10))
-        pprint.pprint(stats)
+        general_stats = stats['general']
+        pnl_stats = stats['pnl']
+        trade_summary_stats = stats['summary']
+        trade_duration_stats = stats['duration']
+        trade_returns_stats = stats['returns']
 
+        print("Results: ")
+        print("Total USD return: %s" % general_stats['Total USD Return'])
+        print("Total BTC return: %s" % general_stats['Total BTC Return'])
+        print("Sharpe Ratio: %s" % general_stats['Sharpe Ratio'])
+        print("Max drawdown: %s" % general_stats['Max Drawdown'])
+        print("BTC Max drawdown: %s" % general_stats['BTC Max Drawdown'])
+        print("Drawdown Duration: %s" % general_stats['Drawdown Duration'])
+        print("BTC Drawdown Duration: %s" % general_stats['BTC Drawdown Duration'])
         print("Signals: %s" % self.signals)
         print("Orders: %s" % self.orders)
         print("Fills: %s" % self.fills)
+
+        print('\nPNL STATS\n')
+        print(pnl_stats)
+
+        print('\nTRADE SUMMARY STATS\n')
+        print(trade_summary_stats)
+
+        print('\nTRADE DURATION STATS\n')
+        print(trade_duration_stats)
+
+        print('\nTRADE RETURNS STATS\n')
+        print(trade_returns_stats)
+
+        print("\nBEFORE AND AFTER: \n")
+        print(self.portfolio.portfolio_dataframe.head(1))
+        print(self.portfolio.portfolio_dataframe.tail(1))
 
         return stats
 
@@ -137,101 +173,36 @@ class MultiBacktest(object):
         Simulates the backtest and outputs portfolio performance.
         """
 
-        if self.num_params == 0:
-          self._generate_trading_instances(None)
-          self._run()
-          stats = self._output_performance()
-          pprint.pprint(stats)
+        num_backtest = len(self.strat_params)
+        out = open(os.path.join(self.last_result_dir, 'scores.csv'), "w")
 
-        if self.num_params == 1:
-          out = open(os.path.join(self.last_result_dir, 'opt.csv'), "w")
+        fieldnames = self.configuration.params_names + [ 'Total USD Return', 'Total BTC Return', 'Sharpe Ratio', 'BTC Sharpe Ratio',
+        'Max Drawdown', 'BTC Max Drawdown', 'Drawdown Duration', 'BTC Drawdown Duration',
+        'Avg. winning trade', 'Median duration', 'Avg. losing trade', 'Median returns winning', 'Largest losing trade',
+        'Gross loss', 'Largest winning trade', 'Avg duration', 'Avg returns losing', 'Median returns losing', 'Profit factor',
+        'Winning round trips', 'Percent profitable', 'Total profit', 'Shortest duration', 'Median returns all round trips',
+        'Losing round trips', 'Longest duration', 'Avg returns all round trips', 'Gross profit', 'Avg returns winning',
+        'Total number of round trips', 'Ratio Avg. Win:Avg. Loss', 'Avg. trade net profit', 'Even round trips']
 
-          out.write(
-              "%s,%s,%s,%s,%s\n" % (
-              self.params_names[0], "Total Returns", "Sharpe Ratio", "Max Drawdown", "Drawdown Duration")
-          )
+        try:
+          print(self.strat_params)
+          with out as csv_file:
+            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+            writer.writeheader()
+            for i, sp in enumerate(self.strat_params):
+              print("Strategy %s out of %s..." % (i+1, num_backtest))
+              self._generate_trading_instances(sp)
+              self._run()
+              stats = self._process_results()
 
-          spl = len(self.strat_params)
-          for i, sp in enumerate(self.strat_params):
-            print("Strategy %s out of %s..." % (i+1, spl))
-            self._generate_trading_instances(sp)
-            self._run()
-            stats = self._output_performance()
-            pprint.pprint(stats)
+              general_stats = stats['general']
+              pnl_stats = stats['pnl']['All trades'].to_dict()
+              summary_stats = stats['summary']['All trades'].to_dict()
+              duration_stats = stats['duration']['All trades'].to_dict()
+              return_stats = stats['returns']['All trades'].to_dict()
 
-            tot_ret = float(stats[0][1].replace("%", ""))
-            sharpe = float(stats[1][1])
-            max_dd = float(stats[2][1].replace("%", ""))
-            dd_dur = int(stats[3][1])
+              row = { **sp, **general_stats, **pnl_stats, **summary_stats, **duration_stats, **return_stats }
+              writer.writerow(row)
 
-            out.write(
-              "%s,%s,%s,%s,%s\n" % (
-                sp[self.params_names[0]], tot_ret, sharpe, max_dd, dd_dur)
-            )
-
-            out.close
-
-        if self.num_params == 2:
-          out = open(os.path.join(self.last_result_dir, 'opt.csv'), "w")
-
-          out.write(
-              "%s,%s,%s,%s,%s,%s\n" % (
-              self.params_names[0], self.params_names[1], "Total Returns", "Sharpe Ratio", "Max Drawdown", "Drawdown Duration")
-          )
-
-          spl = len(self.strat_params)
-          for i, sp in enumerate(self.strat_params):
-            print("Strategy %s out of %s..." % (i+1, spl))
-            self._generate_trading_instances(sp)
-            self._run()
-            stats = self._output_performance()
-            pprint.pprint(stats)
-
-            tot_ret = float(stats[0][1].replace("%", ""))
-            sharpe = float(stats[1][1])
-            max_dd = float(stats[2][1].replace("%", ""))
-            dd_dur = int(stats[3][1])
-
-            # Write data matrix
-            out.write(
-              "%s,%s,%s,%s,%s,%s\n" % (
-                sp[self.params_names[0]], sp[self.params_names[1]],
-                tot_ret, sharpe, max_dd, dd_dur)
-            )
-
-            out.close
-
-
-        if self.num_params == 3:
-          out = open(os.path.join(self.last_result_dir, 'opt.csv'), "w")
-
-          out.write(
-              "%s,%s,%s,%s,%s,%s,%s\n" % (
-              self.params_names[0], self.params_names[1], self.params_names[2], "Total Returns", "Sharpe Ratio", "Max Drawdown", "Drawdown Duration")
-          )
-
-          spl = len(self.strat_params)
-          for i, sp in enumerate(self.strat_params):
-            print("Strategy %s out of %s..." % (i+1, spl))
-            self._generate_trading_instances(sp)
-            self._run()
-            stats = self._output_performance()
-            pprint.pprint(stats)
-
-            tot_ret = float(stats[0][1].replace("%", ""))
-            sharpe = float(stats[1][1])
-            max_dd = float(stats[2][1].replace("%", ""))
-            dd_dur = int(stats[3][1])
-
-            out.write(
-              "%s,%s,%s,%s,%s,%s,%s\n" % (
-                sp[self.params_names[0]], sp[self.params_names[1]], sp[self.params_names[2]],
-                tot_ret, sharpe, max_dd, dd_dur)
-            )
-
-            out.close
-
-        backtest_result_dir = os.path.join(self.result_dir, str(self.backtest_start_time))
-        os.mkdir(backtest_result_dir)
-        copy_tree(self.last_result_dir, backtest_result_dir)
-
+        except IOError:
+          print('I/O Error')

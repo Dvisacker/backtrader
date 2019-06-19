@@ -18,20 +18,20 @@ class ConditionBasedStrategy(Strategy):
 
     def __init__(self, data, events, configuration, conditions):
         """
-        Initialises the Moving Average Cross Strategy.
+        Initialises the Condition Based Strategy.
         :param data: The DataHandler object that provides bar information.
         :param events: The Event Queue object.
-        :param short_window: The short moving average lookback.
-        :param long_window: The long moving average lookback.
+        :param configuration: The Backtester/Trader configuration instance
+        :param conditions: Dictionary containing "long", "short" or "exit" conditions
         """
         self.data = data
         self.instruments = configuration.instruments
         self.exchanges = configuration.exchange_names
         self.exchange = self.exchanges[0]
         self.events = events
-        self.long_condition = conditions['long']
-        self.exit_condition = conditions['exit']
-        self.short_condition = conditions['short']
+        self.long_condition = conditions["long"] if "long" in conditions else lambda x: False
+        self.exit_condition = conditions["exit"] if "exit" in conditions else lambda x: False
+        self.short_condition = conditions["short"] if "short" in conditions else lambda x: False
 
         # Set to True if a symbol is in the market
         self.bought = self._calculate_initial_bought()

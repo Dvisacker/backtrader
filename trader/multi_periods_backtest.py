@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import datetime
 import time
+import csv
 import pprint
 import os
 
@@ -122,7 +123,7 @@ class MultiPeriodsBacktest(object):
 
             time.sleep(self.heartbeat)
 
-    def _output_performance(self):
+    def _process_results(self):
         """
         Outputs the strategy performance from the backtest.
         """
@@ -131,23 +132,41 @@ class MultiPeriodsBacktest(object):
         return stats
 
     def _show_stats(self):
-        backtest_result_dir = os.path.join(self.result_dir, str(self.backtest_start_time))
-        stats = self.portfolio.compute_stats(backtest_result_dir)
+        stats = self.portfolio.compute_stats()
+
+        general_stats = stats['general']
+        pnl_stats = stats['pnl']
+        trade_summary_stats = stats['summary']
+        trade_duration_stats = stats['duration']
+        trade_returns_stats = stats['returns']
 
         print("Results: ")
-        print("Total USD return: %s" % stats['Total USD Return'])
-        print("Total BTC return: %s" % stats['Total BTC Return'])
-        print("Sharpe Ratio: %s" % stats['Sharpe Ratio'])
-        print("Max drawdown: %s" % stats['Max Drawdown'])
-        print("BTC Max drawdown: %s" % stats['BTC Max Drawdown'])
-        print("Drawdown Duration: %s" % stats['Drawdown Duration'])
-        print("BTC Drawdown Duration: %s" % stats['BTC Drawdown Duration'])
+        print("Total USD return: %s" % general_stats['Total USD Return'])
+        print("Total BTC return: %s" % general_stats['Total BTC Return'])
+        print("Sharpe Ratio: %s" % general_stats['Sharpe Ratio'])
+        print("Max drawdown: %s" % general_stats['Max Drawdown'])
+        print("BTC Max drawdown: %s" % general_stats['BTC Max Drawdown'])
+        print("Drawdown Duration: %s" % general_stats['Drawdown Duration'])
+        print("BTC Drawdown Duration: %s" % general_stats['BTC Drawdown Duration'])
         print("Signals: %s" % self.signals)
         print("Orders: %s" % self.orders)
         print("Fills: %s" % self.fills)
 
-        print("Final Portfolios: ")
-        print(self.portfolio.portfolio_dataframe.tail(10))
+        print('\nPNL STATS\n')
+        print(pnl_stats)
+
+        print('\nTRADE SUMMARY STATS\n')
+        print(trade_summary_stats)
+
+        print('\nTRADE DURATION STATS\n')
+        print(trade_duration_stats)
+
+        print('\nTRADE RETURNS STATS\n')
+        print(trade_returns_stats)
+
+        print("\nBEFORE AND AFTER: \n")
+        print(self.portfolio.portfolio_dataframe.head(1))
+        print(self.portfolio.portfolio_dataframe.tail(1))
 
         return stats
 
@@ -156,28 +175,40 @@ class MultiPeriodsBacktest(object):
         """
         Simulates the backtest and outputs portfolio performance.
         """
-        out = open(os.path.join(self.result_dir, 'scores.csv'), "w")
-        out.write("%s,%s,%s,%s,%s,%s\n" % ("Start Date", "End Date", "Total Returns", "Sharpe Ratio", "Max Drawdown", "Drawdown Duration"))
 
         num_backtest = len(self.start_dates)
-        for i, (start, end) in enumerate(zip(self.start_dates, self.end_dates)):
-          print("Strategy %s out of %s..." % (i+1, num_backtest))
-          print("Start Date: %s, End Date: %s..." % (start, end))
-          self._generate_trading_instances(start, end)
-          self._run()
-          stats = self._output_performance()
+        out = open(os.path.join(self.result_dir, 'scores.csv'), "w")
 
-          total_USD_return = stats['Total USD Return']
-          total_BTC_return = stats['Total BTC Return']
-          sharpe_ratio = stats['Sharpe Ratio']
-          max_drawdown = stats['Max Drawdown']
-          btc_max_drawdown = stats['BTC Max Drawdown']
-          drawdown_duration = stats['Drawdown Duration']
-          btc_drawdown_duration = stats['BTC Drawdown Duration']
+        fieldnames = [ 'Start Date', 'End Date', 'Total USD Return', 'Total BTC Return', 'Sharpe Ratio', 'BTC Sharpe Ratio',
+        'Max Drawdown', 'BTC Max Drawdown', 'Drawdown Duration', 'BTC Drawdown Duration',
+        'Avg. winning trade', 'Median duration', 'Avg. losing trade', 'Median returns winning', 'Largest losing trade',
+        'Gross loss', 'Largest winning trade', 'Avg duration', 'Avg returns losing', 'Median returns losing', 'Profit factor',
+        'Winning round trips', 'Percent profitable', 'Total profit', 'Shortest duration', 'Median returns all round trips',
+        'Losing round trips', 'Longest duration', 'Avg returns all round trips', 'Gross profit', 'Avg returns winning',
+        'Total number of round trips', 'Ratio Avg. Win:Avg. Loss', 'Avg. trade net profit', 'Even round trips']
 
-          out.write(
-            "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n" % (start, end, total_USD_return, total_BTC_return, sharpe_ratio, max_drawdown, btc_max_drawdown, drawdown_duration, btc_drawdown_duration, self.signals, self.orders, self.fills)
-          )
+        try:
+          with out as csv_file:
+            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+            writer.writeheader()
+            for i, (start, end) in enumerate(zip(self.start_dates, self.end_dates)):
+              print("Strategy %s out of %s..." % (i+1, num_backtest))
+              print("Start Date: %s, End Date: %s..." % (start, end))
+              self._generate_trading_instances(start, end)
+              self._run()
+              stats = self._process_results()
 
-          out.close
+              general_stats = stats['general']
+              pnl_stats = stats['pnl']['All trades'].to_dict()
+              summary_stats = stats['summary']['All trades'].to_dict()
+              duration_stats = stats['duration']['All trades'].to_dict()
+              return_stats = stats['returns']['All trades'].to_dict()
+
+              row = { 'Start Date': start, 'End Date': end, **general_stats, **pnl_stats, **summary_stats, **duration_stats, **return_stats }
+              writer.writerow(row)
+
+        except IOError:
+          print('I/O Error')
+
+
 
