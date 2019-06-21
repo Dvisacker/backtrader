@@ -172,13 +172,9 @@ class BitmexPortfolioBacktest(object):
         Updates the portfolio current positions and holdings
         from a FillEvent.
         """
-        if event.type == 'FILL' and (event.fill_type == 'MarketBuy' or event.fill_type == 'MarketSell'):
+        if event.type == 'FILL' and event.fill_type == 'Market':
           self.update_portfolio_from_fill(event)
         elif event.type == 'FILL' and event.fill_type == 'ClosePosition':
-          self.update_portfolio_from_exit(event)
-        elif event.type == 'FILL' and event.fill_type == 'StopLoss':
-          self.update_portfolio_from_exit(event)
-        elif event.type == 'FILL' and event.fill_type == 'TakeProfit':
           self.update_portfolio_from_exit(event)
 
     def update_portfolio_from_fill(self, fill):
@@ -194,7 +190,6 @@ class BitmexPortfolioBacktest(object):
         symbol = fill.symbol
         quantity = fill.quantity
         fee_rate = fill.fee
-        fill_type = fill.fill_type
 
         btc_price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', 'close')
         previous_position = self.current_portfolio['bitmex-{}-position'.format(symbol)]
@@ -212,7 +207,7 @@ class BitmexPortfolioBacktest(object):
         self.current_portfolio['bitmex-{}-position-in-BTC'.format(symbol)] = direction * btc_value
         self.current_portfolio['bitmex-{}-position-in-USD'.format(symbol)] = direction * btc_value * btc_price
         self.current_portfolio['bitmex-{}-leverage'.format(symbol)] = leverage
-        self.current_portfolio['bitmex-{}-fill'.format(symbol)] = fill_type
+        self.current_portfolio['bitmex-{}-fill'.format(symbol)] = direction
         self.current_portfolio['bitmex-total-position-in-BTC'] += direction * btc_value * btc_price
         self.current_portfolio['bitmex-total-position-in-USD'] += direction * btc_value
 
@@ -238,7 +233,6 @@ class BitmexPortfolioBacktest(object):
     def update_portfolio_from_exit(self, fill):
         symbol = fill.symbol
         fee_rate = fill.fee
-        fill_type = fill.fill_type
 
         latest_datetime = self.data.get_latest_bar_datetime('bitmex', self.instruments[0])
         btc_price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', 'close')
@@ -257,7 +251,7 @@ class BitmexPortfolioBacktest(object):
           self.current_portfolio['bitmex-{}-position-in-BTC'.format(symbol)] = 0
           self.current_portfolio['bitmex-{}-position-in-USD'.format(symbol)] = 0
           self.current_portfolio['bitmex-{}-leverage'.format(symbol)] = leverage
-          self.current_portfolio['bitmex-{}-fill'.format(symbol)] = fill_type
+          self.current_portfolio['bitmex-{}-fill'.format(symbol)] = direction
           self.current_portfolio['bitmex-total-position-in-BTC'] -= btc_value
           self.current_portfolio['bitmex-total-position-in-USD'] -= btc_value * btc_price
           self.current_portfolio['bitmex-BTC-balance'] += quantity * (1 / entry_price - 1 / price) - btc_fee
@@ -278,7 +272,7 @@ class BitmexPortfolioBacktest(object):
           self.current_portfolio['bitmex-{}-position-in-BTC'.format(symbol)] = 0
           self.current_portfolio['bitmex-{}-position-in-USD'.format(symbol)] = 0
           self.current_portfolio['bitmex-{}-leverage'.format(symbol)] = leverage
-          self.current_portfolio['bitmex-{}-fill'.format(symbol)] = fill_type
+          self.current_portfolio['bitmex-{}-fill'.format(symbol)] = direction
           self.current_portfolio['bitmex-total-position-in-BTC'] -= btc_value
           self.current_portfolio['bitmex-total-position-in-USD'] -= btc_value * btc_price
 
@@ -310,8 +304,6 @@ class BitmexPortfolioBacktest(object):
         """
         available_balance = self.current_portfolio['bitmex-BTC-available-balance']
         exchange = 'bitmex'
-        new_order_events = []
-        cancel_orders_events = []
         events = []
         default_position_size = self.default_position_size
 
@@ -323,10 +315,8 @@ class BitmexPortfolioBacktest(object):
 
           # We don't take into account take profits and stop losses for now
           if sig.signal_type == "EXIT":
-            cancel_open_orders = OrderEvent(exchange, sig.symbol, 'CancellAll')
             close_position_order = OrderEvent(exchange, sig.symbol, 'ClosePosition')
-            cancel_orders_events.append(cancel_open_orders)
-            new_order_events.append(close_position_order)
+            events.append(close_position_order)
           else:
             direction = { 'LONG': 1, 'SHORT': -1 }[sig.signal_type]
             target_allocation = direction * default_position_size * sig.strength
@@ -344,27 +334,9 @@ class BitmexPortfolioBacktest(object):
                 # Might want to throw an error here
                 continue
 
-
             order = OrderEvent(exchange, sig.symbol, 'Market', quantity, side, 1)
-            precision = get_precision(sig.symbol)
+            events.append(order)
 
-            if side == "buy":
-              other_side = 'sell'
-              stop_loss_px = truncate(0.95 * price, precision)
-              take_profit_px = truncate(1.05 * price, precision)
-            elif side == "sell":
-              other_side = 'buy'
-              stop_loss_px = truncate(1.05 * price, precision)
-              take_profit_px = truncate(0.95 * price, precision)
-
-            stop_loss = OrderEvent(exchange, sig.symbol, 'StopLoss', quantity, other_side, 1, stop_loss_px)
-            take_profit = OrderEvent(exchange, sig.symbol, 'TakeProfit', quantity, other_side, 1, take_profit_px)
-            cancel_other_orders = OrderEvent(exchange, sig.symbol, 'CancelAll')
-
-            new_order_events += [order, stop_loss, take_profit]
-            cancel_orders_events.append(cancel_other_orders)
-
-        events = cancel_orders_events + new_order_events
         return events
 
     def update_signal(self, event):
@@ -556,17 +528,11 @@ class BitmexPortfolioBacktest(object):
           price_id = 'bitmex-{}-price'.format(s)
           prices = curve[price_id]
           fills = curve[fill_id]
-          buys = pd.Series({ x: prices[x] if fills[x] == 'MarketBuy' else np.NaN for x in curve.index })
-          sells = pd.Series({ x: prices[x] if fills[x] == 'MarketSell' else np.NaN for x in curve.index })
-          closepositions = pd.Series({ x: prices[x] if fills[x] == 'ClosePosition' else np.NaN for x in curve.index })
-          stops = pd.Series({ x: prices[x] if fills[x] == 'StopLoss' else np.NaN for x in curve.index })
-          takeprofits = pd.Series({ x: prices[x] if fills[x] == 'TakeProfit' else np.NaN for x in curve.index })
+          buys = pd.Series({ x: prices[x] if fills[x] == 1 else np.NaN for x in curve.index })
+          sells = pd.Series({ x: prices[x] if fills[x] == -1 else np.NaN for x in curve.index })
           prices.plot(ax=ax, color='blue', lw=1., label='bitmex-{} Price'.format(s))
           buys.plot(ax=ax, color='green', marker='o', label='Buys')
           sells.plot(ax=ax, color='red', marker='x', label='Sells')
-          closepositions.plot(ax=ax, color='black', marker='x', label='Close Position')
-          takeprofits.plot(ax=ax, color='yellow', marker='o', label='Take Profits')
-          stops.plot(ax=ax, color='purple', marker='x', label='Stops')
           ax.legend(loc='best', frameon=False)
 
         plt.figure(figsize = (15, 10))

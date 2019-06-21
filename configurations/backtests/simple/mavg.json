@@ -20,6 +20,6 @@
   "show_charts": true,
   "update_charts": false,
   "graph_refresh_period": 300,
-  "heartbeat" : 0,
+  "heartbeat" : 0.0,
   "save_to_db": false
 }

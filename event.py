@@ -29,6 +29,15 @@ class MarketEvent(Event):
         self.data = data
         self.timestamp = timestamp
 
+    def print_market_event(self):
+      """
+      Outputs tick data
+      """
+      print(
+          "MARKET: Data=%s, Timestamp=%s" %
+          (self.data, self.timestamp)
+      )
+
 
 class SignalEvent(Event):
     """
@@ -84,7 +93,7 @@ class OrderEvent(Event):
     quantity and a direction.
     """
 
-    def __init__(self, exchange, symbol, order_type, quantity=0, direction='', leverage=1, params={}):
+    def __init__(self, exchange, symbol, order_type, quantity=0, direction='', leverage=1, price=None, params={}):
         """
         Initialises the order type, setting whether it is
         a Market order ('MKT') or Limit order ('LMT'), has
@@ -105,6 +114,7 @@ class OrderEvent(Event):
         self.quantity = quantity
         self.direction = direction
         self.leverage = leverage
+        self.price = price
         self.params = params
 
     def print_order(self):
@@ -112,8 +122,8 @@ class OrderEvent(Event):
         Outputs the values within the order
         """
         print(
-            "ORDER: Exchange=%s, Symbol=%s, Type=%s, Quantity=%s, Direction=%s" %
-            (self.exchange, self.symbol, self.order_type, self.quantity, self.direction)
+            "ORDER: Exchange=%s, Symbol=%s, Type=%s, Quantity=%s, Direction=%s, Price=%s" %
+            (self.exchange, self.symbol, self.order_type, self.quantity, self.direction, self.price)
         )
 
 class BulkOrderEvent(object):
@@ -183,8 +193,8 @@ class FillEvent(Event):
         Outputs the values within the Order.
         """
         print(
-            "FILL: Exchange=%s, Symbol=%s, Quantity=%s, Direction=%s, Price=%s" %
-            (self.exchange, self.symbol, self.quantity, self.direction, self.price)
+            "FILL: Exchange=%s, Symbol=%s, Quantity=%s, Direction=%s, Price=%s, Type=%s" %
+            (self.exchange, self.symbol, self.quantity, self.direction, self.price, self.fill_type)
         )
 
     def compute_fees(self):
