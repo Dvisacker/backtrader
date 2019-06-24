@@ -26,6 +26,8 @@ def get_precision(symbol):
       "LTCM19": 5,
      "TRX/BTC": 7,
       "TRXM19": 7,
+     "ADA/BTC": 7,
+      "ADAM19": 7,
      "XRP/BTC": 7,
       "XRPM19": 7,
      "BTC/USD": 0,

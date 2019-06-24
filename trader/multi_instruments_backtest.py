@@ -133,20 +133,39 @@ class MultiInstrumentsBacktest(object):
     def _show_stats(self):
         stats = self.portfolio.compute_stats()
 
+        general_stats = stats['general']
+        pnl_stats = stats['pnl']
+        trade_summary_stats = stats['summary']
+        trade_duration_stats = stats['duration']
+        trade_returns_stats = stats['returns']
+
         print("Results: ")
-        print("Total USD return: %s" % stats['Total USD Return'])
-        print("Total BTC return: %s" % stats['Total BTC Return'])
-        print("Sharpe Ratio: %s" % stats['Sharpe Ratio'])
-        print("Max drawdown: %s" % stats['Max Drawdown'])
-        print("BTC Max drawdown: %s" % stats['BTC Max Drawdown'])
-        print("Drawdown Duration: %s" % stats['Drawdown Duration'])
-        print("BTC Drawdown Duration: %s" % stats['BTC Drawdown Duration'])
+        print("Total USD return: %s" % general_stats['Total USD Return'])
+        print("Total BTC return: %s" % general_stats['Total BTC Return'])
+        print("Sharpe Ratio: %s" % general_stats['Sharpe Ratio'])
+        print("Max drawdown: %s" % general_stats['Max Drawdown'])
+        print("BTC Max drawdown: %s" % general_stats['BTC Max Drawdown'])
+        print("Drawdown Duration: %s" % general_stats['Drawdown Duration'])
+        print("BTC Drawdown Duration: %s" % general_stats['BTC Drawdown Duration'])
         print("Signals: %s" % self.signals)
         print("Orders: %s" % self.orders)
         print("Fills: %s" % self.fills)
 
-        print("Final Portfolios: ")
-        print(self.portfolio.portfolio_dataframe.tail(10))
+        print('\nPNL STATS\n')
+        print(pnl_stats)
+
+        print('\nTRADE SUMMARY STATS\n')
+        print(trade_summary_stats)
+
+        print('\nTRADE DURATION STATS\n')
+        print(trade_duration_stats)
+
+        print('\nTRADE RETURNS STATS\n')
+        print(trade_returns_stats)
+
+        print("\nBEFORE AND AFTER: \n")
+        print(self.portfolio.portfolio_dataframe.head(1))
+        print(self.portfolio.portfolio_dataframe.tail(1))
 
         return stats
 
@@ -158,7 +177,7 @@ class MultiInstrumentsBacktest(object):
         num_backtest = len(self.instruments_list)
         out = open(os.path.join(self.last_result_dir, 'scores.csv'), "w")
 
-        fieldnames = [ 'Start Date', 'End Date', 'Total USD Return', 'Total BTC Return', 'Sharpe Ratio', 'BTC Sharpe Ratio',
+        fieldnames = [ 'Instrument', 'Total USD Return', 'Total BTC Return', 'Sharpe Ratio', 'BTC Sharpe Ratio',
         'Max Drawdown', 'BTC Max Drawdown', 'Drawdown Duration', 'BTC Drawdown Duration',
         'Avg. winning trade', 'Median duration', 'Avg. losing trade', 'Median returns winning', 'Largest losing trade',
         'Gross loss', 'Largest winning trade', 'Avg duration', 'Avg returns losing', 'Median returns losing', 'Profit factor',

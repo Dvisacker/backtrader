@@ -3,10 +3,13 @@
   "end_date": "5/3/2019",
   "csv_dir": "data",
   "result_dir": "results",
-  "feeds": { "bitmex": ["BTC/USD", "XRP/BTC", "EOS/BTC"] },
+  "feeds": { "bitmex": ["BTC/USD", "XRP/BTC", "EOS/BTC", "ADA/BTC", "LTC/BTC", "BCH/BTC"] },
   "instruments": [
     { "bitmex": ["XRP/BTC"] },
-    { "bitmex": ["EOS/BTC"] }
+    { "bitmex": ["EOS/BTC"] },
+    { "bitmex": ["ADA/BTC"] },
+    { "bitmex": ["LTC/BTC"] },
+    { "bitmex": ["BCH/BTC"] }
   ],
   "assets": { "bitmex": [ "BTC" ]},
   "initial_capital" : 100000.0,
