@@ -79,7 +79,7 @@ class OLSMeanReversionStrategy(Strategy):
             print('LONG,SHORT')
             self.long_market = True
             y_signal = SignalEvent(1, ex, p0, dt, 'LONG', 1.0)
-            x_signal = SignalEvent(1, ex, p1, dt, 'SHORT', hr)
+            x_signal = SignalEvent(1, ex, p1, dt, 'SHORT', 1.0)
 
         # If we're long the market and between the
         # absolute value of the low zscore threshold
@@ -95,7 +95,7 @@ class OLSMeanReversionStrategy(Strategy):
             print('SHORT,LONG')
             self.short_market = True
             y_signal = SignalEvent(1, ex, p0, dt, 'SHORT', 1.0)
-            x_signal = SignalEvent(1, ex, p1, dt, 'LONG', hr)
+            x_signal = SignalEvent(1, ex, p1, dt, 'LONG', 1.0)
 
         # If we're short the market and between the
         # absolute value of the low zscore threshold

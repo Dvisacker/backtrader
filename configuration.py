@@ -89,6 +89,20 @@ class Configuration(object):
       else:
         self.end_dates = None
 
+      if 'use_stops' in configuration:
+        self.use_stops = configuration['use_stops']
+      else:
+        self.use_stops = True
+
+      if 'take_profit_gap' in configuration:
+        self.take_profit_gap = configuration['take_profit_gap']
+      else:
+        self.take_profit_gap = 0.05
+
+      if 'stop_loss_gap' in configuration:
+        self.stop_loss_gap = configuration['stop_loss_gap']
+      else:
+        self.stop_loss_gap = 0.05
 
 
       if 'default_leverage' in configuration:

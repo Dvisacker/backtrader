@@ -77,7 +77,7 @@ class MultiBacktest(object):
         self.data_handler = self.data_handler_cls(self.events, self.configuration)
         self.strategy = self.strategy_cls(self.data_handler, self.events, self.configuration, **strategy_params_dict)
         self.portfolio = self.portfolio_cls(self.data_handler, self.events, self.configuration)
-        self.execution_handler = self.execution_handler_cls(self.events, self.configuration)
+        self.execution_handler = self.execution_handler_cls(self.data_handler, self.events, self.configuration)
 
     def _run(self):
         """
@@ -103,6 +103,7 @@ class MultiBacktest(object):
                         if event.type == 'MARKET':
                             self.strategy.calculate_signals(event)
                             self.portfolio.update_timeindex(event)
+                            self.execution_handler.fill_triggered_orders(event)
 
                         elif event.type == 'SIGNAL':
                             event.print_signals()
@@ -185,7 +186,6 @@ class MultiBacktest(object):
         'Total number of round trips', 'Ratio Avg. Win:Avg. Loss', 'Avg. trade net profit', 'Even round trips']
 
         try:
-          print(self.strat_params)
           with out as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             writer.writeheader()

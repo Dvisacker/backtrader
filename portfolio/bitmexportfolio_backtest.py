@@ -4,6 +4,8 @@
 # portfolio.py
 from __future__ import print_function
 
+# import pdb
+
 import os
 import datetime
 import functools
@@ -69,6 +71,10 @@ class BitmexPortfolioBacktest(object):
 
         self.db = MongoHandler()
         self.legends_added = False
+
+        self.take_profit_gap = configuration.take_profit_gap
+        self.stop_loss_gap = configuration.stop_loss_gap
+        self.use_stops = configuration.use_stops
 
 
     def construct_current_portfolios(self):
@@ -233,6 +239,7 @@ class BitmexPortfolioBacktest(object):
         txn['txn_dollars'] = direction * entry_price * btc_price * quantity
         txn['symbol'] = symbol
 
+        # pdb.set_trace()
         self.all_transactions.append(txn)
 
     def update_portfolio_from_exit(self, fill):
@@ -294,9 +301,9 @@ class BitmexPortfolioBacktest(object):
 
         txn = {}
         txn['datetime'] = latest_datetime
-        txn['amount'] = direction * quantity
+        txn['amount'] = direction * abs(quantity)
         txn['price'] = price * btc_price
-        txn['txn_dollars'] = direction * entry_price * btc_price * quantity
+        txn['txn_dollars'] = direction * entry_price * btc_price * abs(quantity)
         txn['symbol'] = symbol
 
         self.all_transactions.append(txn)
@@ -350,12 +357,14 @@ class BitmexPortfolioBacktest(object):
 
             if side == "buy":
               other_side = 'sell'
-              stop_loss_px = truncate(0.95 * price, precision)
-              take_profit_px = truncate(1.05 * price, precision)
+              # print('IN BUY SIDE, {}'.format(sig.symbol))
+              stop_loss_px = truncate((1 - self.stop_loss_gap) * price, precision)
+              take_profit_px = truncate((1 + self.take_profit_gap) * price, precision)
             elif side == "sell":
               other_side = 'buy'
-              stop_loss_px = truncate(1.05 * price, precision)
-              take_profit_px = truncate(0.95 * price, precision)
+              # print('IN SELL SIDE, {}'.format(sig.symbol))
+              stop_loss_px = truncate((1 + self.stop_loss_gap) * price, precision)
+              take_profit_px = truncate((1 - self.take_profit_gap) * price, precision)
 
             stop_loss = OrderEvent(exchange, sig.symbol, 'StopLoss', quantity, other_side, 1, stop_loss_px)
             take_profit = OrderEvent(exchange, sig.symbol, 'TakeProfit', quantity, other_side, 1, take_profit_px)
@@ -479,6 +488,7 @@ class BitmexPortfolioBacktest(object):
         if not transactions.empty:
           transactions.set_index('datetime', inplace=True)
 
+        # pdb.set_trace()
 
         trades = pf.round_trips.extract_round_trips(transactions)
 

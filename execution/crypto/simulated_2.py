@@ -54,6 +54,8 @@ class SimulatedCryptoExchangeExecutionHandler(ExecutionHandler):
           open_p = self.data.get_latest_bar_value('bitmex', s, 'open') or 0
           upper = self.upper_limit_orders[e][s]
           lower = self.lower_limit_orders[e][s]
+          # print('OPEN PRICE', open_p)
+          # print('LOWER ORDERS', lower)
           triggered_upper = [ upper[key] for (key, value) in upper.items() if key <= open_p ]
           triggered_lower = [ lower[key] for (key, value) in lower.items() if key >= open_p ]
           self.upper_limit_orders[e][s] = dict((key, value) for key, value in upper.items() if key > open_p )
@@ -65,8 +67,6 @@ class SimulatedCryptoExchangeExecutionHandler(ExecutionHandler):
               direction = o['direction']
               order_type = o['type']
 
-              print('Upper order triggered')
-              print(o)
               fill = FillEvent(
                   datetime.datetime.utcnow(), s,
                   e, quantity, direction,
@@ -82,8 +82,6 @@ class SimulatedCryptoExchangeExecutionHandler(ExecutionHandler):
               direction = o['direction']
               order_type = o['type']
 
-              print('Lower order triggered')
-              print(o)
               fill = FillEvent(
                   datetime.datetime.utcnow(), s,
                   e, quantity, direction,
@@ -135,9 +133,9 @@ class SimulatedCryptoExchangeExecutionHandler(ExecutionHandler):
       if direction == "buy":
         order = { 'exchange': exchange, 'symbol': symbol, 'quantity': quantity, 'direction': direction, 'type': order_type }
         if price not in self.lower_limit_orders[exchange][symbol]:
-          self.lower_limit_orders[exchange][symbol][price] = [order]
+          self.upper_limit_orders[exchange][symbol][price] = [order]
         else:
-          self.lower_limit_orders[exchange][symbol][price].append(order)
+          self.upper_limit_orders[exchange][symbol][price].append(order)
 
     def open_limit_order(self, event):
       pass
@@ -148,8 +146,6 @@ class SimulatedCryptoExchangeExecutionHandler(ExecutionHandler):
       quantity = event.quantity
       direction = event.direction
       fill_type = { 'buy': 'MarketBuy', 'sell': 'MarketSell'}[direction]
-
-      print(fill_type)
 
       # Create a fill event object
       fill = FillEvent(

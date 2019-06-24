@@ -5,10 +5,11 @@
 
 from __future__ import print_function
 
-import datetime
+import os
+import csv
 import time
 import pprint
-import os
+import datetime
 
 from datetime import datetime
 from threading import Thread
@@ -43,6 +44,7 @@ class SimpleBacktest(object):
         self.configuration = configuration
         self.result_dir = configuration.result_dir
         self.result_filepath = os.path.join(self.result_dir, 'last/results.csv')
+        self.last_result_dir = os.path.join(self.result_dir, 'last')
 
         self.heartbeat = configuration.heartbeat
         self.graph_refresh_period = configuration.graph_refresh_period
@@ -111,6 +113,7 @@ class SimpleBacktest(object):
                             self.execution_handler.fill_triggered_orders(event)
 
                         elif event.type == 'SIGNAL':
+                            event.print_signals()
                             self.signals += 1
                             self.portfolio.update_signals(event)
 
@@ -139,17 +142,43 @@ class SimpleBacktest(object):
         self.portfolio.create_backtest_result_dataframe()
 
         self._open_results_in_excel()
-        self._show_stats()
-        self._save_results()
+        stats = self._show_stats()
+        self._save_results(stats)
         self._show_charts()
 
     def _show_charts(self):
         if self.show_charts:
           self.portfolio.output_graphs()
 
-    def _save_results(self):
+    def _save_results(self, stats):
         backtest_result_dir = os.path.join(self.result_dir, str(self.backtest_start_time))
         self.portfolio.save_results(backtest_result_dir)
+
+        fieldnames = [ 'Backtest Timestamp', 'Total USD Return', 'Total BTC Return', 'Sharpe Ratio', 'BTC Sharpe Ratio',
+        'Max Drawdown', 'BTC Max Drawdown', 'Drawdown Duration', 'BTC Drawdown Duration',
+        'Avg. winning trade', 'Median duration', 'Avg. losing trade', 'Median returns winning', 'Largest losing trade',
+        'Gross loss', 'Largest winning trade', 'Avg duration', 'Avg returns losing', 'Median returns losing', 'Profit factor',
+        'Winning round trips', 'Percent profitable', 'Total profit', 'Shortest duration', 'Median returns all round trips',
+        'Losing round trips', 'Longest duration', 'Avg returns all round trips', 'Gross profit', 'Avg returns winning',
+        'Total number of round trips', 'Ratio Avg. Win:Avg. Loss', 'Avg. trade net profit', 'Even round trips']
+
+        out = open(os.path.join(self.last_result_dir, 'scores.csv'), "w")
+
+        try:
+          with out as csv_file:
+            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+            writer.writeheader()
+
+            general_stats = stats['general']
+            pnl_stats = stats['pnl']['All trades'].to_dict()
+            summary_stats = stats['summary']['All trades'].to_dict()
+            duration_stats = stats['duration']['All trades'].to_dict()
+            return_stats = stats['returns']['All trades'].to_dict()
+
+            row = { 'Backtest Timestamp': self.backtest_start_time, **general_stats, **pnl_stats, **summary_stats, **duration_stats, **return_stats }
+            writer.writerow(row)
+        except IOError:
+          print('I/O Error')
 
     def _show_stats(self):
         print("Creating summary stats...")
@@ -185,8 +214,9 @@ class SimpleBacktest(object):
         print('\nTRADE RETURNS STATS\n')
         print(trade_returns_stats)
 
-        print("\nResults: \n")
-        print(self.portfolio.portfolio_dataframe.tail(10))
+        print("\nBEFORE AND AFTER: \n")
+        print(self.portfolio.portfolio_dataframe.head(1))
+        print(self.portfolio.portfolio_dataframe.tail(1))
 
         return stats
 

@@ -99,6 +99,7 @@ class MultiConditionsBacktest(object):
                         if event.type == 'MARKET':
                             self.strategy.calculate_signals(event)
                             self.portfolio.update_timeindex(event)
+                            self.execution_handler.fill_triggered_orders(event)
 
                         elif event.type == 'SIGNAL':
                             event.print_signals()

@@ -79,7 +79,7 @@ class MultiPeriodsBacktest(object):
         self.data_handler = self.data_handler_cls(self.events, configuration)
         self.strategy = self.strategy_cls(self.data_handler, self.events, configuration, **self.strategy_params)
         self.portfolio = self.portfolio_cls(self.data_handler, self.events, configuration)
-        self.execution_handler = self.execution_handler_cls(self.events, configuration)
+        self.execution_handler = self.execution_handler_cls(self.data_handler, self.events, configuration)
 
     def _run(self):
         """
@@ -105,6 +105,7 @@ class MultiPeriodsBacktest(object):
                         if event.type == 'MARKET':
                             self.strategy.calculate_signals(event)
                             self.portfolio.update_timeindex(event)
+                            self.execution_handler.fill_triggered_orders(event)
 
                         elif event.type == 'SIGNAL':
                             event.print_signals()
