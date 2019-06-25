@@ -107,7 +107,7 @@ class OLSMeanReversionStrategy(Strategy):
 
         return y_signal, x_signal
 
-    def calculate_signals_for_pairs(self):
+    def calculate_signals(self, event):
         """
         Generates a new set of signals based on the mean reversion
         strategy.
@@ -139,11 +139,3 @@ class OLSMeanReversionStrategy(Strategy):
 
                     events = SignalEvents(signals, 1)
                     self.events.put(events)
-
-
-    def calculate_signals(self, event):
-        """
-        Calculate the SignalEvents based on market data.
-        """
-        if event.type == 'MARKET':
-            self.calculate_signals_for_pairs()

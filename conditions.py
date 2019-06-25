@@ -47,6 +47,7 @@ def atr_crossunder(high, low, close, timeperiod, threshold):
   atr = talib.ATR(high, low, close, timeperiod=timeperiod)
   return crossunder(atr, threshold)
 
+
 def consecutive_ups(x):
   i = 0
   while True:
