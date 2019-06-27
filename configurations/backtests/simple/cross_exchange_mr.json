@@ -25,6 +25,6 @@
     "zscore_exit": 1.5,
     "zscore_entry": 3
   },
-  "backtester_type": "crypto_backtest",
+  "backtester_type": "simple_backtest",
   "portfolio_type": "crypto_portfolio"
 }

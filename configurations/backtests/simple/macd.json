@@ -12,7 +12,7 @@
   "update_charts": false,
   "show_charts": true,
   "portfolio_type": "bitmex_portfolio",
-  "backtester_type": "crypto_backtest",
+  "backtester_type": "simple_backtest",
   "strategy": "macd_crossover",
   "strategy_params": {
     "long_window": 52,

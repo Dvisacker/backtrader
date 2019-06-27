@@ -15,7 +15,7 @@
   "update_charts": false,
   "show_charts": true,
   "portfolio_type": "bitmex_portfolio",
-  "backtester_type": "crypto_backtest",
+  "backtester_type": "simple_backtest",
   "strategy": "rsi",
   "start_date": "01/06/2019",
   "end_date": "05/06/2019",

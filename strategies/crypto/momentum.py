@@ -11,12 +11,14 @@ from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import CryptoPortfolio
 
+from indicators import mean_momentum
+
 class MomentumStrategy(Strategy):
     """
-    Carries out a basic MACD Strategy
+    Carries out a basic Momentum Strategy
     """
 
-    def __init__(self, data, events, configuration, short_period=100, long_period=100, zscore_exit=1, zscore_entry=3):
+    def __init__(self, data, events, configuration, short_period=100, long_period=100, zscore_exit=1, zscore_entry=4):
         """
         Initialises the Moving Average Cross Strategy.
         :param data: The DataHandler object that provides bar information.
@@ -39,15 +41,15 @@ class MomentumStrategy(Strategy):
 
     def _calculate_initial_market_status(self):
         """
-        Adds keys to the bought dictionary for all symbols
+        Adds keys to the market_status dictionary for all symbols
         and sets them to ’OUT’.
         """
-        bought = dict( (k,v) for k,v in [(e, {}) for e in self.instruments])
+        market_status = dict( (k,v) for k,v in [(e, {}) for e in self.instruments])
         e = self.exchange
         for s in self.instruments[e]:
-            bought[e][s] = 'EXIT'
+            market_status[e][s] = 'EXIT'
 
-        return bought
+        return market_status
 
     def calculate_signals(self, event):
         """
@@ -62,13 +64,10 @@ class MomentumStrategy(Strategy):
             for s in self.instruments[e]:
                 prices = self.data.get_latest_bars_values(e, s, "close", N=self.long_period)
 
-                if not prices and prices != None:
+                if prices is not None:
                   bar_date = self.data.get_latest_bar_datetime(e, s)
-                  long_period_returns = (prices[-self.short_period] - prices[-self.long_period]) / (prices[-self.long_period])
-                  short_period_returns = (prices[-1] - prices[-self.short_period]) / (prices[-self.short_period])
-                  momentum = (long_period_returns - short_period_returns) / np.nanstd(prices)
+                  momentum = mean_momentum(prices, self.short_period, self.long_period)
                   dt = datetime.datetime.utcnow()
-
                   if momentum > self.zscore_entry and self.market_status[e][s] != 'LONG':
                       print("LONG: {}".format(bar_date))
                       sig_dir = 'LONG'
@@ -91,6 +90,6 @@ class MomentumStrategy(Strategy):
                       self.events.put(signal_events)
                       self.market_status[e][s] = 'EXIT'
 
-
-
-
+# long_period_returns = (prices[-self.short_period] - prices[-self.long_period]) / (prices[-self.long_period])
+# short_period_returns = (prices[-1] - prices[-self.short_period]) / (prices[-self.short_period])
+# momentum = (short_period_returns - long_period_returns) / long_period_returns

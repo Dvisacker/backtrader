@@ -51,12 +51,16 @@ def scrape_ohlcv(exchange, symbol, timeframe, from_datestring, to_datestring):
 
     delta = {
       '1m': timedelta(hours=12),
+      '5m': timedelta(days=2, hours=12),
+      '15m': timedelta(days=7, hours=12),
       '1h': timedelta(days=30),
       '1d': timedelta(days=365)
     }[timeframe]
 
     limit = {
       '1m': 720,
+      '5m': 720,
+      '15m': 720,
       '1h': 720,
       '1d': 365
     }[timeframe]

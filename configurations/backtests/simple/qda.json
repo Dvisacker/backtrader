@@ -1,5 +1,6 @@
 {
-  "start_date": "2018/1/1",
+  "start_date": "01/05/2019",
+  "end_date": "30/05/2019",
   "csv_dir": "data",
   "result_dir": "results",
   "feeds": { "bitmex": ["XRP/BTC", "BTC/USD"] },
@@ -13,7 +14,7 @@
   "update_charts": false,
   "show_charts": true,
   "portfolio_type": "bitmex_portfolio",
-  "backtester_type": "crypto_backtest",
+  "backtester_type": "simple_backtest",
   "initial_bars": 30,
   "strategy": "qda"
 }

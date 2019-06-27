@@ -189,7 +189,7 @@ def from_exchange_to_standard_notation(exchange, symbol):
       return 'ETH/BTC'
     elif symbol == ".BLTCXBT":
       return 'LTC/BTC'
-    elif symbol == ".BTRXXBT":
+    elif symbol == ".TRXXBT":
       return 'TRX/BTC'
     elif symbol == ".BXRPXBT":
       return 'XRP/BTC'
@@ -233,7 +233,7 @@ def from_standard_to_exchange_notation(exchange, symbol, index=False):
     elif symbol == "LTC/BTC":
       return ".BLTCXBT"
     elif symbol == "TRX/BTC":
-      return ".BTRXXBT"
+      return ".TRXXBT"
     elif symbol == "XRP/BTC":
       return ".BXRPXBT"
     elif symbol == "BTC/USD":
@@ -330,4 +330,5 @@ def merge(dict1, dict2):
   return res
 
 
-
+def format_instrument_list(instruments):
+  return '|'.join(x + ':' + '.'.join(y for y in instruments[x]) for x in instruments)

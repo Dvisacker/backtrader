@@ -11,7 +11,7 @@
   "graph_refresh_period": 300,
   "default_position_size": 0.05,
   "update_charts": false,
-  "backtester_type": "multi_backtest",
+  "backtester_type": "simple_backtest",
   "portfolio_type": "bitmex_portfolio",
   "show_charts": true,
   "strategy": "random"

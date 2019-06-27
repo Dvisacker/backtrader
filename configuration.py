@@ -48,8 +48,12 @@ class Configuration(object):
       if 'assets' in configuration:
         self.assets = configuration['assets']
 
-      if 'strategy_params' in configuration:
+      if configuration['backtester_type'] == "simple_backtest":
         self.strategy_params = configuration['strategy_params']
+      elif configuration['backtester_type'] == "super_backtest":
+        params_names, params_dict = self._compute_params_dict(configuration['strategy_params'])
+        self.params_names = params_names
+        self.strategy_params = params_dict
 
       if 'indicators' in configuration:
         self.indicators = configuration['indicators']
@@ -104,7 +108,6 @@ class Configuration(object):
       else:
         self.stop_loss_gap = 0.05
 
-
       if 'default_leverage' in configuration:
         self.default_leverage = configuration['default_leverage']
       else:
@@ -122,52 +125,26 @@ class Configuration(object):
       else:
         self.initial_bars = {
           60: 300,
+          300: 300,
+          900: 300,
           3600: 300,
           86400: 10
         }[self.ohlcv_window]
 
 
-class MultiMRConfiguration(Configuration):
-
-    def __init__(self, configuration):
-      super().__init__(configuration)
-
-      params = configuration['strategy_params']
-      params_names_list = list(params.keys())
+    def _compute_params_dict(self, params):
+      params_names = list(params.keys())
       params_product_list = list(product(*params.values()))
 
-      for key in params_names_list:
+      for key in params_names:
         self.__dict__[key] = params[key]
 
-      self.params_names = params_names_list
-
-      self.strat_params = []
+      params_dic = []
       for p in params_product_list:
         dic = {}
-        for (i,pn) in enumerate(params_names_list):
+        for (i,pn) in enumerate(params_names):
           dic[pn] = p[i]
 
-        self.strat_params.append(dic)
+        params_dic.append(dic)
 
-
-class MultiConditionConfiguration(Configuration):
-
-    def __init__(self, configuration):
-      super().__init__(configuration)
-
-      conditions = configuration['conditions']
-      conditions_names_list = list(conditions.keys())
-      conditions_product_list = list(product(*conditions.values()))
-
-      for key in conditions_names_list:
-        self.__dict__[key] = conditions[key]
-
-      self.conditions_names = conditions_names_list
-
-      self.strat_conditions = []
-      for p in conditions_product_list:
-        dic = {}
-        for (i,pn) in enumerate(conditions_names_list):
-          dic[pn] = p[i]
-
-        self.strat_conditions.append(dic)
+      return params_names, params_dic

@@ -9,7 +9,7 @@ from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import BitmexPortfolioBacktest, CryptoPortfolio
 from strategies.crypto.multi_random import MultiRandomStrategy
-from configuration import Configuration, MultiMRConfiguration
+from configuration import Configuration
 
 from strategies.crypto import *
 
@@ -18,6 +18,7 @@ if not sys.warnoptions:
 
 def parse_args():
   parser = argparse.ArgumentParser(description='Backtest')
+
   parser.add_argument('-f', '--file',
                       type=str,
                       required=True,
@@ -42,17 +43,20 @@ with open(args.file) as f:
     "rsi": RSIStrategy,
     "random": MultiRandomStrategy,
     "mean_reversion": OLSMeanReversionStrategy,
+    "generalized_mean_reversion": GeneralizedMeanReversion,
     "moving_average_crossover": MovingAverageCrossoverStrategy,
     "macd_crossover": MACDCrossover,
-    "condition": ConditionBasedStrategy
+    "condition": ConditionBasedStrategy,
+    "momentum": MomentumStrategy,
+    "only_short_momentum": OnlyShortMomentumStrategy,
+    "only_long_momentum": OnlyLongMomentumStrategy
   }
 
   backtesters = {
-    "crypto_backtest": SimpleBacktest,
-    "multi_params_backtest": MultiBacktest,
-    "multi_instrument_backtest": MultiInstrumentsBacktest,
+    "simple_backtest": SimpleBacktest,
+    "multi_params_backtest": MultiParamsBacktest,
     "multi_conditions_backtest": MultiConditionsBacktest,
-    "multi_periods_backtest": MultiPeriodsBacktest
+    "super_backtest": SuperBacktest
   }
 
   portfolios = {
@@ -60,10 +64,7 @@ with open(args.file) as f:
     "bitmex_portfolio": BitmexPortfolioBacktest
   }
 
-  if (data['backtester_type'] == "multi_params_backtest"):
-    configuration = MultiMRConfiguration(data)
-  else:
-    configuration = Configuration(data)
+  configuration = Configuration(data)
 
   if args.conditions:
     configuration.conditions = condition_file.conditions
