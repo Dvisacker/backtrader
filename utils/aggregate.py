@@ -9,6 +9,8 @@ from decimal import Decimal
 from .helpers import from_standard_to_exchange_notation
 from threading import Lock
 
+import pdb
+
 
 def ceil_dt(dt, delta):
     return datetime.min + math.ceil((dt - datetime.min) / delta) * delta
@@ -22,21 +24,18 @@ class OHLCV(AggregateCallback):
 
     def __init__(self, *args, start_time, exchange, instruments, window=300, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.window = window
         self.exchange = exchange
         self.start_time = datetime.fromtimestamp(start_time)
         self.last_update = datetime.fromtimestamp(start_time)
-        self.instruments = [from_standard_to_exchange_notation(
-            exchange, i) for i in instruments[exchange]]
+        self.instruments = [from_standard_to_exchange_notation(exchange, i) for i in instruments[exchange]]
         self.previous_data = {}
         self.data = {}
-        self.mutex = Lock()
+        # self.mutex = Lock()
 
-    def _agg(self, pair, amount, price):
+    def _update(self, pair, amount, price):
         if pair not in self.data:
-            self.data[pair] = {'open': price, 'high': price,
-                'low': price, 'close': price, 'volume': 0, 'vwap': 0}
+            self.data[pair] = {'open': price, 'high': price, 'low': price, 'close': price, 'volume': 0, 'vwap': 0}
 
         self.data[pair]['close'] = price
         self.data[pair]['volume'] += amount
@@ -48,7 +47,7 @@ class OHLCV(AggregateCallback):
         self.data[pair]['vwap'] += price * amount
 
     async def __call__(self, *, feed: str, pair: str, side: str, amount: Decimal, price: Decimal, order_id=None, timestamp=None):
-        now = datetime.utcnow()
+        now = datetime.now()
         amount = float(amount)
         price = float(price)
 
@@ -83,4 +82,4 @@ class OHLCV(AggregateCallback):
             self.data = {}
 
         else:
-            self._agg(pair, amount, price)
+            self._update(pair, amount, price)

@@ -1,8 +1,6 @@
 {
   "start_date": "2019/3/26",
   "end_date": "2019/3/26",
-  "csv_dir": "data",
-  "result_dir": "results",
   "feeds": {
     "bitmex": ["BTC/USD"],
     "binance": ["BTC/USD"]
@@ -13,12 +11,8 @@
   },
   "assets": { "bitmex": [ "BTC" ], "binance": [ "BTC"]},
   "initial_capital" : 100000.0,
-  "ohlcv_window": "1m",
-  "heartbeat" : 0,
-  "graph_refresh_period": 300,
+  "timeframe": "1m",
   "default_position_size": 0.05,
-  "update_charts": false,
-  "show_charts": true,
   "strategy": "mean_reversion",
   "strategy_params": {
     "ols_window": 100,

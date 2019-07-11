@@ -1,13 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
-
+import os
+import logging
 import datetime
-
 import pandas as pd
 import numpy as np
-import os
+
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
 from .strategy import Strategy
@@ -16,7 +15,9 @@ from trader import SimpleBacktest
 from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import CryptoPortfolio
-from utils import date_parse, create_lagged_crypto_series, get_data_file, get_ohlcv_window
+from utils import date_parse, create_lagged_crypto_series, get_data_file, get_timeframe
+
+from utils.log import logger
 
 class QDAStrategy(Strategy):
     """
@@ -31,7 +32,7 @@ class QDAStrategy(Strategy):
         self.csv_dir = configuration.csv_dir
         self.exchanges = configuration.exchange_names
         self.initial_bars = configuration.initial_bars
-        self.timeframe = get_ohlcv_window(configuration.ohlcv_window)
+        self.timeframe = get_timeframe(configuration.timeframe)
         self.events = events
         self.datetime_now = datetime.datetime.utcnow()
 
@@ -58,8 +59,6 @@ class QDAStrategy(Strategy):
 
         self.model_start_date = self.model_data.index[5]
         self.model_end_date = self.model_data.index[self.initial_bars]
-        # self.model_start_test_date = self.model_start_date + (self.model_end_date - self.model_start_date) * 0.8
-        # print(self.model_start_test_date)
 
         self.model_data.dropna(inplace=True)
         self.model_data['returns'] = self.model_data['close'].pct_change()

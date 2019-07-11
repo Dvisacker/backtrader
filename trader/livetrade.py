@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 # backtest.py
 
-from __future__ import print_function
 
-import datetime
-import time
-import pprint
 import io
 import os
+import time
+import pprint
+import logging
+import datetime
+
 
 from threading import Thread
 from datetime import datetime
@@ -43,7 +44,7 @@ class CryptoLiveTrade(object):
         """
 
         self.configuration = configuration
-        self.backtest_start_time = datetime.utcnow()
+        self.backtest_date = datetime.utcnow()
         self.data_handler_cls = data_handler
         self.execution_handler_cls = execution_handler
         self.portfolio_cls = portfolio
@@ -58,6 +59,7 @@ class CryptoLiveTrade(object):
         self.result_dir = configuration.result_dir
         self.exchange_names = configuration.exchange_names
         self.latest_timestamp = None
+        self.logger = configuration.logger
         self._generate_trading_instances()
 
     def _generate_trading_instances(self):
@@ -65,7 +67,7 @@ class CryptoLiveTrade(object):
         Generates the trading instance objects from
         their class types.
         """
-        print("Creating DataHandler, Strategy, Portfolio and ExecutionHandler")
+        self.logger.info("Creating DataHandler, Strategy, Portfolio and ExecutionHandler")
         self.exchanges = create_exchange_instances(self.exchange_names)
         self.data_handler = self.data_handler_cls(self.events, self.configuration, self.exchanges)
         self.strategy = self.strategy_cls(self.data_handler, self.events, self.configuration)
@@ -87,7 +89,7 @@ class CryptoLiveTrade(object):
                 pass
             else:
                 if event is not None:
-                    print('Receiving {} event. Current Queue size: {}'.format(event.type, self.events.qsize()))
+                    self.logger.info('Receiving {} event. Current Queue size: {}'.format(event.type, self.events.qsize()))
                     if event.type == 'MARKET':
                         # Avoid duplicate ticks
                         if self.latest_timestamp and event.timestamp <= self.latest_timestamp:
@@ -97,9 +99,10 @@ class CryptoLiveTrade(object):
                         self.data_handler.insert_new_bar_bitmex(event.data, event.timestamp)
                         self.strategy.calculate_signals(event)
                         self.portfolio.update_timeindex(event)
-                        # self.portfolio.update_charts()
+
 
                     elif event.type == 'SIGNAL':
+                        event.print_signals()
                         self.signals += len(event.events)
                         self.portfolio.update_signals(event)
 
@@ -108,36 +111,12 @@ class CryptoLiveTrade(object):
                         self.orders += 1
                         self.execution_handler.execute_order(event)
 
-                    elif event.type == 'BULK_ORDER':
-                        self.orders += len(event.events)
-                        self.execution_handler.execute_orders(event)
-
                     elif event.type == 'FILL':
                         self.fills += 1
                         self.portfolio.update_fill(event)
 
             time.sleep(self.heartbeat)
 
-
-    def _output_performance(self):
-        """
-        Outputs the strategy performance from the backtest.
-        """
-        # Create a timestamped directory for backtest results
-        backtest_result_dir = os.path.join(self.result_dir, str(self.backtest_start_time))
-        os.mkdir(backtest_result_dir)
-        self.portfolio.create_backtest_result_dataframe()
-
-        print("Creating summary stats...")
-        stats = self.portfolio.output_summary_stats_and_graphs(backtest_result_dir)
-
-        print("Creating equity curve...")
-        print(self.portfolio.equity_curve.tail(10))
-        pprint.pprint(stats)
-
-        print("Signals: %s" % self.signals)
-        print("Orders: %s" % self.orders)
-        print("Fills: %s" % self.fills)
 
     def start_trading(self):
         """

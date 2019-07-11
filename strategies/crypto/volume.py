@@ -11,12 +11,16 @@ from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import CryptoPortfolio
 
+from indicators import mean_volume_deviation
+from utils.log import logger
+
+
 class VolumeStrategy(Strategy):
     """
     Carries out a basic Volume Strategy
     """
 
-    def __init__(self, data, events, configuration, timeperiod=14, zscore_exit=1, zscore_entry=3):
+    def __init__(self, data, events, configuration, window=100, zscore_exit=1, zscore_entry=4):
         """
         Initialises the Moving Average Cross Strategy.
         :param data: The DataHandler object that provides bar information.
@@ -31,7 +35,7 @@ class VolumeStrategy(Strategy):
         self.events = events
         self.zscore_exit = zscore_exit
         self.zscore_entry = zscore_entry
-        self.timeperiod = timeperiod
+        self.window = window
 
         # Set to True if a symbol is in the market
         self.market_status = self._calculate_initial_market_status()
@@ -57,28 +61,34 @@ class VolumeStrategy(Strategy):
         """
         e = self.exchange
 
-        for s in self.instruments[e]:
-            volumes = self.data.get_latest_bars_values(e, s, "volume", N=self.timeperiod)
-            bar_date = self.data.get_latest_bar_datetime(e, s)
-
-            if volumes is not None and volumes != []:
-                dt = datetime.datetime.utcnow()
-                zscore_last = ((volumes - volumes.mean())/volumes.std())[-1]
-
-                if zscore_last > self.zscore_entry and self.market_status[e][s] != 'LONG':
-                    print("LONG: {}".format(bar_date))
-                    sig_dir = 'LONG'
-                    signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
-                    signal_events = SignalEvents(signals, 1)
-                    self.market_status[e][s] = 'LONG'
-                    self.events.put(signal_events)
-                elif abs(zscore_last) <= self.zscore_exit and self.market_status[e][s] != 'SHORT':
-                    print("SHORT: {}".format(bar_date))
-                    sig_dir = 'SHORT'
-                    signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
-                    signal_events = SignalEvents(signals, 1)
-                    self.events.put(signal_events)
-                    self.market_status[e][s] = 'SHORT'
+        if event.type == 'MARKET':
+            for s in self.instruments[e]:
+                volumes = self.data.get_latest_bars_values(e, s, "volume", N=self.window*3)
+                if volumes is not None:
+                  bar_date = self.data.get_latest_bar_datetime(e, s)
+                  volume_score = mean_volume_deviation(volumes, self.window)
+                  dt = datetime.datetime.utcnow()
+                  if volume_score > self.zscore_entry and self.market_status[e][s] != 'LONG':
+                      logger.info("LONG: {}".format(bar_date))
+                      sig_dir = 'LONG'
+                      signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
+                      signal_events = SignalEvents(signals, 1)
+                      self.market_status[e][s] = 'LONG'
+                      self.events.put(signal_events)
+                  elif volume_score <= -self.zscore_entry and self.market_status[e][s] != 'SHORT':
+                      logger.info("SHORT: {}".format(bar_date))
+                      sig_dir = 'SHORT'
+                      signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
+                      signal_events = SignalEvents(signals, 1)
+                      self.events.put(signal_events)
+                      self.market_status[e][s] = 'SHORT'
+                  elif abs(volume_score) <= self.zscore_exit and self.market_status[e][s] != 'EXIT':
+                      logger.info("EXIT: {}".format(bar_date))
+                      sig_dir = 'EXIT'
+                      signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
+                      signal_events = SignalEvents(signals, 1)
+                      self.events.put(signal_events)
+                      self.market_status[e][s] = 'EXIT'
 
 
 

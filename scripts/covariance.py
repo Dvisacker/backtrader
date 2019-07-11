@@ -12,7 +12,7 @@ import argparse
 import pandas as pd
 
 from datetime import datetime
-from utils.helpers import get_ohlcv_file, get_ohlcv_window
+from utils.helpers import get_ohlcv_file, get_timeframe
 from utils.scrape import scrape_ohlcv
 from utils import from_exchange_to_standard_notation, from_standard_to_exchange_notation
 

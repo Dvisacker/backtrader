@@ -1,10 +1,12 @@
-from __future__ import print_function
 
-import ccxt
 import os, os.path
+import pdb
+import ccxt
+import asyncio
+import logging
+
 import numpy as np
 import pandas as pd
-import asyncio
 
 from cryptofeed.callback import Callback
 from cryptofeed import FeedHandler
@@ -40,22 +42,25 @@ class LiveDataHandler(DataHandler):
         self.events = events
         self.exchanges = exchanges
         self.exchange_names = configuration.exchange_names
+        self.feeds = configuration.feeds
         self.instruments = configuration.instruments
-        self.ohlcv_window = configuration.ohlcv_window
+        self.timeframe = configuration.timeframe
         self.continue_backtest = True
+        self.logger = configuration.logger
 
-        for e in self.instruments:
-          for s in self.instruments[e]:
+        for e in self.feeds:
+          for s in self.feeds[e]:
             self.symbol_data[e] = {}
             self.latest_symbol_data[e] = {}
 
-        for e in self.instruments:
-          for s in self.instruments[e]:
+        for e in self.feeds:
+          for s in self.feeds[e]:
             self.symbol_data[e][s] = []
             self.latest_symbol_data[e][s] = []
 
 
         self._initialize_exchange_data(self.exchanges)
+
         Thread(target = self._listen_to_exchange_data).start()
 
         # In case we have only one exchange
@@ -70,17 +75,17 @@ class LiveDataHandler(DataHandler):
         return datetime.fromtimestamp(int(timestamp))
 
     def _initialize_exchange_data(self, exchanges):
-      print('Initializing exchange data')
-      for e in self.instruments:
-        for s in self.instruments[e]:
+      self.logger.info('Initializing exchange data')
+      for e in self.feeds:
+        for s in self.feeds[e]:
           sym = {
-            "ADA/BTC": "ADAM19",
-            "BCH/BTC": "BCHM19",
-            "EOS/BTC": "EOSM19",
-            "ETH/BTC": "ETHM19",
-            "LTC/BTC": "LTCM19",
-            "TRX/BTC": "TRXM19",
-            "XRP/BTC": "XRPM19",
+            "ADA/BTC": "ADAU19",
+            "BCH/BTC": "BCHU19",
+            "EOS/BTC": "EOSU19",
+            "ETH/BTC": "ETHU19",
+            "LTC/BTC": "LTCU19",
+            "TRX/BTC": "TRXU19",
+            "XRP/BTC": "XRPU19",
             "BTC/USD": "BTC/USD",
             "ETH/USD": "ETH/USD"
           }[s]
@@ -93,22 +98,22 @@ class LiveDataHandler(DataHandler):
           self.latest_symbol_data[e][s] = parsed_ohlcv
           self.symbol_data[e][s] = parsed_ohlcv
 
-      # self.events.put(MarketEvent())
-
 
     def _listen_to_exchange_data(self):
       # Listen to exchange data is executed in a separate thread which requires a new event loop
       asyncio.set_event_loop(asyncio.new_event_loop())
+      self.logger.info('Logging some stuff')
+
       f = FeedHandler()
       symbols = []
-      for e in self.instruments:
+      for e in self.feeds:
         if e == 'bitmex':
-          for i in self.instruments[e]:
+          for i in self.feeds[e]:
             start_time = self.symbol_data[e][i][-1]['time']
             s = from_standard_to_exchange_notation(e, i)
             symbols.append(s)
 
-          f.add_feed(Bitmex(pairs=symbols, channels=[TRADES], callbacks={TRADES: OHLCV(Callback(self._handle_new_bar_bitmex), start_time=start_time, exchange='bitmex', instruments=self.instruments, window=self.ohlcv_window)}))
+          f.add_feed(Bitmex(pairs=symbols, channels=[TRADES], callbacks={TRADES: OHLCV(Callback(self._handle_new_bar_bitmex), start_time=start_time, exchange='bitmex', instruments=self.feeds, window=self.timeframe)}))
 
       f.run()
 
@@ -117,12 +122,12 @@ class LiveDataHandler(DataHandler):
       """
       Insert a new bar into the data feed
       """
-      print('Handling new bar bitmex')
+      self.logger.info('New bar bitmex')
       if data and timestamp:
         self.events.put(MarketEvent(data, timestamp))
 
-
     def insert_new_bar_bitmex(self, data, timestamp):
+        self.logger.info('Insert new bar bitmex')
         for instrument in list(data.keys()):
           tick = data[instrument]
           symbol = from_exchange_to_standard_notation('bitmex', instrument)
@@ -134,11 +139,10 @@ class LiveDataHandler(DataHandler):
             tick['low'] = previous_tick['low']
             tick['volume'] = 0
             tick['vwap'] = 0
-            self.symbol_data['bitmex'][symbol].append(tick)
             self.latest_symbol_data['bitmex'][symbol].append(tick)
           else:
-            self.symbol_data['bitmex'][symbol].append(tick)
             self.latest_symbol_data['bitmex'][symbol].append(tick)
+
 
 
     def _get_new_bar(self, exchange, symbol):
@@ -155,7 +159,7 @@ class LiveDataHandler(DataHandler):
         try:
             bars_list = self.latest_symbol_data[exchange][symbol]
         except KeyError:
-            print("That symbol is not available in the historical data set.")
+            self.logger.error("That symbol is not available in the historical data set.")
             raise
         else:
             return bars_list[-1]
@@ -168,7 +172,7 @@ class LiveDataHandler(DataHandler):
         try:
             bars_list = self.latest_symbol_data[exchange][symbol]
         except KeyError:
-            print("That symbol is not available in the historical data set.")
+            self.logger.error("That symbol is not available in the historical data set.")
             raise
         else:
             return bars_list[-N:]
@@ -180,7 +184,7 @@ class LiveDataHandler(DataHandler):
         try:
             bars_list = self.latest_symbol_data[exchange][symbol]
         except KeyError:
-            print("That symbol is not available in the historical data set.")
+            self.logger.error("That symbol is not available in the historical data set.")
             raise
         else:
             return bars_list[-1]['timestamp']
@@ -193,7 +197,7 @@ class LiveDataHandler(DataHandler):
         try:
             bars_list = self.latest_symbol_data[exchange][symbol]
         except KeyError:
-            print("That symbol is not available in the historical data set.")
+            self.logger.error("That symbol is not available in the historical data set.")
             raise
         else:
             return bars_list[-1][val_type]
@@ -206,7 +210,7 @@ class LiveDataHandler(DataHandler):
         try:
             bars_list = self.get_latest_bars(exchange, symbol, N)
         except KeyError:
-            print("That symbol is not available in the historical data set.")
+            self.logger.error("That symbol is not available in the historical data set.")
             raise
         else:
             return np.array([b[val_type] for b in bars_list])
@@ -220,7 +224,7 @@ class LiveDataHandler(DataHandler):
           instrument_symbol = asset_symbol + "/USD"
           bars_list = self.get_latest_bars(exchange, instrument_symbol, 1)
         except KeyError:
-          print("That symbol is not available in the historical data set.")
+          self.logger.error("That symbol is not available in the historical data set.")
           raise
         else:
           return np.array([getattr(b[1], 'close') for b in bars_list])

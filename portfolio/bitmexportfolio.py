@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 # portfolio.py
-from __future__ import print_function
-
 import os
+import pdb
+import logging
 import datetime
 import functools
 from math import floor
@@ -17,14 +17,19 @@ except ImportError:
 
 import numpy as np
 import pandas as pd
+import webbrowser
 import matplotlib.pyplot as plt
 import pyfolio as pf
 import seaborn as sns; sns.set()
+import matplotlib.gridspec as gridspec
 
 from db.mongo_handler import MongoHandler
 from event import FillEvent, OrderEvent, BulkOrderEvent
 from performance import create_sharpe_ratio, create_drawdowns
 from utils import ceil_dt, from_exchange_to_standard_notation, from_standard_to_exchange_notation, truncate, get_precision
+from utils.helpers import plot, move_figure, compute_all_indicators
+
+from stats.trades import generate_trade_stats
 
 class BitmexPortfolio(object):
     """
@@ -56,63 +61,60 @@ class BitmexPortfolio(object):
         self.start_date = configuration.start_date
         self.result_dir = configuration.result_dir
         self.default_position_size = configuration.default_position_size
+        self.indicators = configuration.indicators
+        self.save_to_db = configuration.save_to_db
+        self.default_leverage = configuration.default_leverage
 
-        self.current_positions = self.construct_current_positions()
-        self.all_positions = [ self.current_positions ]
-        self.current_holdings = self.construct_current_holdings()
-        self.all_holdings = [ self.current_holdings ]
+        self.current_portfolio = self.construct_current_portfolios()
+        self.all_portfolios = []
+        self.all_transactions = []
 
         self.db = MongoHandler()
+        self.legends_added = False
 
-    def construct_current_positions(self):
+        self.take_profit_gap = configuration.take_profit_gap
+        self.stop_loss_gap = configuration.stop_loss_gap
+        self.use_stops = configuration.use_stops
+
+    def construct_current_portfolios(self):
         """
         Constructs the positions list using the start_date
         to determine when the time index will begin.
         """
 
         d = {}
-        d['datetime'] = self.start_date
         d['total'] = 0.0
-        d['total-USD'] = 0.0
+        d['total-in-USD'] = 0.0
 
         position_array = self.exchange.private_get_position()
         positions = { p['symbol']: p for p in position_array }
+        btc_price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', 'close')
+
+        response = self.exchange.fetch_balance()
+        btc_balance = response['total']['BTC']
+        available_btc_balance = response['total']['BTC']
 
         for s in self.instruments:
           price = self.data.get_latest_bar_value('bitmex', s, 'close') or 0
-          btc_price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', 'close')
+
           exchange_symbol = from_standard_to_exchange_notation('bitmex', s)
           quantity = positions[exchange_symbol]['currentQty'] if exchange_symbol in positions else 0
 
           d['bitmex-{}'.format(s)] = quantity
           d['bitmex-{}-price'.format(s)] = price
-          d['bitmex-{}-in-BTC'.format(s)] = quantity * price
-          d['bitmex-{}-in-USD'.format(s)] = quantity * price * btc_price
-          d['bitmex-{}-leverage'.format(s)] = 1
+          d['bitmex-{}-position'.format(s)] = quantity
+          d['bitmex-{}-position-in-BTC'.format(s)] = quantity * price
+          d['bitmex-{}-position-in-USD'.format(s)] = quantity * price * btc_price
+          d['bitmex-{}-leverage'.format(s)] = self.default_leverage
+          d['bitmex-{}-fill'.format(s)] = ''
           d['total'] += quantity * price
-          d['total-USD'] += quantity * price * btc_price
+          d['total-in-USD'] += quantity * price * btc_price
 
-        return d
-
-    def construct_current_holdings(self):
-        """
-        This constructs the dictionary which will hold the instantaneous
-        value of the portfolio across all symbols.
-        """
-        d = {}
-        d['datetime'] = self.start_date
-
-        response = self.exchange.fetch_balance()
-        balance = response['total']['BTC']
-        available_balance = response['total']['BTC']
-        price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', "close")
-
-        d['bitmex-BTC-available-balance'] = available_balance
-        d['bitmex-BTC-balance'] = balance
-        d['bitmex-BTC-price'] = price
-        d['bitmex-BTC-value'] = balance * price
-        d['bitmex-BTC-fill'] = ''
-        d['total-USD'] = balance * price
+        d['bitmex-BTC-available-balance'] = available_btc_balance
+        d['bitmex-BTC-balance'] = btc_balance
+        d['bitmex-BTC-price'] = btc_price
+        d['total'] += btc_balance
+        d['total-in-USD'] += btc_balance * btc_price
         d['fee'] = 0
 
         return d
@@ -124,64 +126,60 @@ class BitmexPortfolio(object):
         current market data at this stage is known (OHLCV).
         Makes use of a MarketEvent from the events queue.
         """
-        # print('Updating Time Index')
         latest_datetime = self.data.get_latest_bar_datetime('bitmex', self.instruments[0])
 
         # Update positions
         # ================
-        dp = {}
-        dp['datetime'] = latest_datetime
-        dp['total'] = 0
-        dp['total-USD'] = 0
+        df = {}
+        df['datetime'] = latest_datetime
+        df['bitmex-total-position-in-BTC'] = 0
+        df['bitmex-total-position-in-USD'] = 0
+
+        btc_price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', 'close')
 
         for s in self.instruments:
-          quantity = self.current_positions['bitmex-{}'.format(s)]
-          price = self.current_positions['bitmex-{}-price'.format(s)]
-          btc_price = self.current_positions['bitmex-BTC/USD-price']
-          dp['bitmex-{}'.format(s)] = self.current_positions['bitmex-{}'.format(s)]
-          dp['bitmex-{}-price'.format(s)] = self.current_positions['bitmex-{}-price'.format(s)]
-          dp['bitmex-{}-in-BTC'.format(s)] = self.current_positions['bitmex-{}-in-BTC'.format(s)]
-          dp['bitmex-{}-in-USD'.format(s)] = self.current_positions['bitmex-{}-in-USD'.format(s)]
+          quantity = self.current_portfolio['bitmex-{}-position'.format(s)]
+          price = self.data.get_latest_bar_value('bitmex', s, 'close')
+          df['bitmex-{}-price'.format(s)] = price
+          df['bitmex-{}-position'.format(s)] = quantity
+          df['bitmex-{}-position-in-BTC'.format(s)] = quantity * price
+          df['bitmex-{}-position-in-USD'.format(s)] = quantity * price * btc_price
+          df['bitmex-{}-fill'.format(s)] = self.current_portfolio['bitmex-{}-fill'.format(s)]
 
-          if 'bitmex-{}-leverage'.format(s) in self.current_positions:
-            dp['bitmex-{}-leverage'.format(s)] = self.current_positions['bitmex-{}-leverage'.format(s)]
+          if 'bitmex-{}-leverage'.format(s) in self.current_portfolio:
+            df['bitmex-{}-leverage'.format(s)] = self.current_portfolio['bitmex-{}-leverage'.format(s)]
           else:
-            dp['bitmex-{}-leverage'.format(s)] = 0
+            df['bitmex-{}-leverage'.format(s)] = 0
 
-          dp['total'] += quantity * price
-          dp['total-USD'] += quantity * price * btc_price
-
-        # Append the current positions
-        self.all_positions.append(dp)
+          df['bitmex-total-position-in-BTC'] += quantity * price
+          df['bitmex-total-position-in-USD'] += quantity * price * btc_price
 
         # Update holdings
         # ===============
-        dh = {}
-        dh['datetime'] = latest_datetime
-        dh['fee'] = self.current_holdings['fee']
-        dh['total-USD'] = 0
+        df['fee'] = self.current_portfolio['fee']
+        df['total'] = 0
+        df['total-in-USD'] = 0
 
         for s in self.assets:
           price = self.data.get_latest_bar_value('bitmex', '{}/USD'.format(s), "close")
-          balance = self.current_holdings['bitmex-{}-balance'.format(s)]
-          available_balance = self.current_holdings['bitmex-{}-available-balance'.format(s)]
+          balance = self.current_portfolio['bitmex-{}-balance'.format(s)]
+          available_balance = self.current_portfolio['bitmex-{}-available-balance'.format(s)]
 
-          dh['bitmex-{}-available-balance'.format(s)] = available_balance
-          dh['bitmex-{}-balance'.format(s)] = balance
-          dh['bitmex-{}-price'.format(s)] = price
-          dh['bitmex-{}-value'.format(s)] = balance * price
-          dh['bitmex-{}-fill'.format(s)] = self.current_holdings['bitmex-{}-fill'.format(s)]
-          dh['total-USD'] += balance * price
-
-        dh['fee'] += 0.0
+          df['bitmex-{}-available-balance'.format(s)] = available_balance
+          df['bitmex-{}-balance'.format(s)] = balance
+          df['bitmex-{}-balance-in-USD'.format(s)] = balance * price
+          df['bitmex-{}-price'.format(s)] = price
+          df['total'] += balance
+          df['total-in-USD'] += balance * price
 
         # Append the current holdings
-        self.all_holdings.append(dh)
+        self.all_portfolios.append(df)
 
         for s in self.assets:
-          self.current_holdings['bitmex-{}-fill'.format(s)] = 0
+          self.current_portfolio['bitmex-{}-fill'.format(s)] = ''
 
-        self.write(dp, dh)
+        if self.save_to_db:
+          self.write_to_db(df)
 
     # ======================
     # FILL/POSITION HANDLING
@@ -191,41 +189,17 @@ class BitmexPortfolio(object):
         Updates the portfolio current positions and holdings
         from a FillEvent.
         """
-        if event.type == 'FILL':
-          self.update_positions_from_fill(event)
-          self.update_holdings_from_fill(event)
-
-    def update_holdings_from_fill(self, fill):
-        """
-        Takes a Fill object and updates the holdings matrix to
-        reflect the holdings value
-        Parameters:
-        fill - The Fill object to update the holdings with
-        """
-        data = self.exchange.fetch_balance()
-        balances = data['total']
-
-        # Check whether the fill is a buy or sell
-        fill_dir = 0
-        if fill.direction == 'BUY':
-            fill_dir = 1
-        if fill.direction == 'SELL':
-            fill_dir = -1
-
-        balance = balances['BTC']
-        available_balance = balances['BTC']
-        price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', "close")
-
-        # Update holdings list with new quantities
-        self.current_holdings['bitmex-BTC-available-balance'] = available_balance
-        self.current_holdings['bitmex-BTC-balance'] = balance
-        self.current_holdings['bitmex-BTC-price'] = price
-        self.current_holdings['bitmex-BTC-value'] = balance * price
-        self.current_holdings['bitmex-BTC-fill'] = fill.direction
-        self.current_holdings['fee'] += fill.fee
+        if event.type == 'FILL' and (event.fill_type == 'MarketBuy' or event.fill_type == 'MarketSell'):
+          self.update_portfolio_from_fill(event)
+        elif event.type == 'FILL' and event.fill_type == 'ClosePosition':
+          self.update_portfolio_from_exit(event)
+        elif event.type == 'FILL' and event.fill_type == 'StopLoss':
+          self.update_portfolio_from_exit(event)
+        elif event.type == 'FILL' and event.fill_type == 'TakeProfit':
+          self.update_portfolio_from_exit(event)
 
 
-    def update_positions_from_fill(self, fill):
+    def update_portfolio_from_fill(self, fill):
         """
         Takes a Fill object and updates the position matrix to
         reflect the new position.
@@ -233,22 +207,125 @@ class BitmexPortfolio(object):
         fill - The Fill object to update the positions with.
         """
         # Check whether the fill is a buy or sell
-        position_array = self.exchange.private_get_position()
-        positions = { p['symbol']: p for p in position_array }
+        latest_datetime = self.data.get_latest_bar_datetime('bitmex', self.instruments[0])
+        direction = { 'buy': 1, 'sell': -1 }[fill.direction]
+        symbol = fill.symbol
+        quantity = fill.quantity
+        fee_rate = fill.fee
+        fill_type = fill.fill_type
 
-        for s in self.instruments:
-          price = self.data.get_latest_bar_value('bitmex', s, 'close') or 0
-          btc_price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', 'close')
-          exchange_symbol = from_standard_to_exchange_notation('bitmex', s)
-          quantity = positions[exchange_symbol]['currentQty'] if exchange_symbol in positions else 0
+        data = self.exchange.fetch_balance()
+        balances = data['total']
+        btc_balance = balances['BTC']
+        btc_available_balance = balances['BTC']
 
-          self.current_positions['bitmex-{}'.format(s)] = quantity
-          self.current_positions['bitmex-BTC-price'] = btc_price
-          self.current_positions['bitmex-{}-price'.format(s)] = price
-          self.current_positions['bitmex-{}-in-BTC'.format(s)] = quantity * price
-          self.current_positions['bitmex-{}-in-USD'.format(s)] = quantity * price * btc_price
-          self.current_positions['bitmex-{}-leverage'.format(s)] = 1
+        btc_price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', 'close')
+        previous_position = self.current_portfolio['bitmex-{}-position'.format(symbol)]
+        new_position = previous_position + direction * quantity
+        entry_price = self.data.get_latest_bar_value('bitmex', symbol, 'close')
 
+        btc_value = entry_price * quantity
+        btc_fee = btc_value * fee_rate
+        leverage = self.default_leverage
+
+        self.current_portfolio['bitmex-{}-position'.format(symbol)] += direction * quantity
+        self.current_portfolio['bitmex-{}-price'.format(symbol)] = entry_price
+        self.current_portfolio['bitmex-{}-position-in-BTC'.format(symbol)] = direction * btc_value
+        self.current_portfolio['bitmex-{}-position-in-USD'.format(symbol)] = direction * btc_value * btc_price
+        self.current_portfolio['bitmex-{}-leverage'.format(symbol)] = leverage
+        self.current_portfolio['bitmex-{}-fill'.format(symbol)] = fill_type
+        self.current_portfolio['bitmex-total-position-in-BTC'] += direction * btc_value * btc_price
+        self.current_portfolio['bitmex-total-position-in-USD'] += direction * btc_value
+
+        # Update holdings list with new quantities
+        self.current_portfolio['bitmex-BTC-balance'] -= btc_fee
+        self.current_portfolio['bitmex-{}-entry-price'.format(symbol)] = entry_price
+        self.current_portfolio['bitmex-BTC-available-balance'] = btc_available_balance - (abs(new_position) - abs(previous_position)) * (entry_price / leverage) - btc_fee
+        self.current_portfolio['bitmex-BTC-price'] = btc_price
+        self.current_portfolio['bitmex-BTC-balance-in-USD'] = (btc_balance - btc_fee) * btc_price
+        self.current_portfolio['total'] = (btc_balance - btc_fee)
+        self.current_portfolio['total-in-USD'] = (btc_balance - btc_fee) * btc_price
+        self.current_portfolio['fee'] += btc_fee
+
+        txn = {}
+        txn['datetime'] = latest_datetime
+        txn['amount'] = direction * quantity
+        txn['price'] = entry_price * btc_price
+        txn['txn_dollars'] = direction * entry_price * btc_price * quantity
+        txn['symbol'] = symbol
+
+        # pdb.set_trace()
+        self.all_transactions.append(txn)
+
+    def update_portfolio_from_exit(self, fill):
+        symbol = fill.symbol
+        fee_rate = fill.fee
+        fill_type = fill.fill_type
+
+        latest_datetime = self.data.get_latest_bar_datetime('bitmex', self.instruments[0])
+        data = self.exchange.fetch_balance()
+        balances = data['total']
+        btc_balance = balances['BTC']
+        btc_available_balance = balances['BTC']
+
+        btc_price = self.data.get_latest_bar_value('bitmex', 'BTC/USD', 'close')
+        entry_price = self.current_portfolio['bitmex-{}-entry-price'.format(symbol)]
+        price = self.data.get_latest_bar_value('bitmex', symbol, 'close') or 0
+        quantity = self.current_portfolio['bitmex-{}-position'.format(symbol)]
+        direction = -1 if quantity > 0 else 1
+        leverage = self.default_leverage
+
+        # We distinguish between the different contracts
+        if (symbol == 'BTC/USD'):
+          btc_value = quantity / price
+          btc_fee = btc_value * fee_rate
+          self.current_portfolio['bitmex-{}-position'.format(symbol)] = 0
+          self.current_portfolio['bitmex-{}-price'.format(symbol)] = price
+          self.current_portfolio['bitmex-{}-position-in-BTC'.format(symbol)] = 0
+          self.current_portfolio['bitmex-{}-position-in-USD'.format(symbol)] = 0
+          self.current_portfolio['bitmex-{}-leverage'.format(symbol)] = leverage
+          self.current_portfolio['bitmex-{}-fill'.format(symbol)] = fill_type
+          self.current_portfolio['bitmex-total-position-in-BTC'] -= btc_value
+          self.current_portfolio['bitmex-total-position-in-USD'] -= btc_value * btc_price
+          self.current_portfolio['bitmex-BTC-balance'] = btc_balance
+          self.current_portfolio['bitmex-BTC-available-balance'] = btc_available_balance
+          self.current_portfolio['bitmex-BTC-price'] = btc_price
+          self.current_portfolio['bitmex-BTC-balance-in-USD'] = btc_balance * btc_price
+
+          # here, total, totalUSD are equal to the bitmex-BTC-Balance and bitmex-BTC-balance-in-USD fields
+          self.current_portfolio['total'] = btc_balance
+          self.current_portfolio['total-in-USD'] = btc_balance * btc_price
+          self.current_portfolio['fee'] += btc_fee
+
+        else:
+          btc_value = quantity * price
+          btc_fee = btc_value * fee_rate
+          self.current_portfolio['bitmex-{}-position'.format(symbol)] = 0
+          self.current_portfolio['bitmex-{}-price'.format(symbol)] = price
+          self.current_portfolio['bitmex-{}-position-in-BTC'.format(symbol)] = 0
+          self.current_portfolio['bitmex-{}-position-in-USD'.format(symbol)] = 0
+          self.current_portfolio['bitmex-{}-leverage'.format(symbol)] = leverage
+          self.current_portfolio['bitmex-{}-fill'.format(symbol)] = fill_type
+          self.current_portfolio['bitmex-total-position-in-BTC'] -= btc_value
+          self.current_portfolio['bitmex-total-position-in-USD'] -= btc_value * btc_price
+          self.current_portfolio['bitmex-BTC-balance'] = btc_balance
+          self.current_portfolio['bitmex-BTC-available-balance'] = btc_available_balance
+          self.current_portfolio['bitmex-BTC-price'] = btc_price
+          self.current_portfolio['bitmex-BTC-balance-in-USD'] = btc_balance * btc_price
+
+          # here, total, totalUSD are equal to the bitmex-BTC-Balance and bitmex-BTC-balance-in-USD fields
+          self.current_portfolio['total'] = btc_balance
+          self.current_portfolio['total-in-USD'] = btc_balance * btc_price
+          self.current_portfolio['fee'] += btc_fee
+
+        txn = {}
+        txn['datetime'] = latest_datetime
+        txn['amount'] = direction * abs(quantity)
+        txn['price'] = price * btc_price
+        txn['txn_dollars'] = direction * entry_price * btc_price * abs(quantity)
+        txn['symbol'] = symbol
+
+        self.all_transactions.append(txn)
 
     def rebalance_portfolio(self, signals):
         """
@@ -257,7 +334,7 @@ class BitmexPortfolio(object):
         Parameters:
         signals - Array of signal events
         """
-        available_balance = self.current_holdings['bitmex-BTC-available-balance']
+        available_balance = self.current_portfolio['bitmex-BTC-available-balance']
         exchange = 'bitmex'
         new_order_events = []
         cancel_orders_events = []
@@ -268,6 +345,7 @@ class BitmexPortfolio(object):
           sig.print_signal()
           price = self.data.get_latest_bar_value('bitmex', sig.symbol, "close")
           if not price:
+            # Might want to throw an error here
             continue
 
           if sig.signal_type == "EXIT":
@@ -278,21 +356,22 @@ class BitmexPortfolio(object):
           else:
             direction = { 'LONG': 1, 'SHORT': -1 }[sig.signal_type]
             target_allocation = direction * default_position_size * sig.strength
-            current_quantity = self.current_positions['bitmex-{}'.format(sig.symbol)]
-
-
+            current_quantity = self.current_portfolio['bitmex-{}'.format(sig.symbol)]
             target_quantity = floor(target_allocation / price)
+            side = 'buy' if (target_quantity - current_quantity) > 0 else 'sell'
+            quantity = abs(target_quantity - current_quantity)
+
             print('TARGET ALLOCATION: {}'.format(target_allocation))
             print('PRICE: {}'.format(price))
             print('CURRENT QUANTITY: {}'.format(current_quantity))
             print('POSITION QUANTITY: {} for {}'.format(target_quantity, sig.symbol))
-            side = 'buy' if (target_quantity - current_quantity) > 0 else 'sell'
-            quantity = abs(target_quantity - current_quantity)
 
             if (target_allocation > available_balance):
+                # Might want to throw an error here
                 continue
 
             if (quantity == 0):
+              # Might want to throw an error here
                 continue
 
             order = OrderEvent(exchange, sig.symbol, 'Market', quantity, side, 1)
@@ -300,17 +379,15 @@ class BitmexPortfolio(object):
 
             if side == 'buy':
               other_side = 'sell'
-              stop_loss_stop_px = truncate(0.9 * price, precision)
-              take_profit_stop_px = truncate(1.1 * price, precision)
+              stop_loss_px = truncate((1 - self.stop_loss_gap) * price, precision)
+              take_profit_px = truncate((1 + self.take_profit_gap) * price, precision)
             elif side == 'sell':
               other_side = 'buy'
-              stop_loss_stop_px = truncate(1.1 * price, precision)
-              take_profit_stop_px = truncate(0.9 * price, precision)
+              stop_loss_px = truncate((1 + self.stop_loss_gap) * price, precision)
+              take_profit_px = truncate((1 - self.take_profit_gap) * price, precision)
 
-            stop_loss_params = { 'stopPx': stop_loss_stop_px, 'execInst': 'LastPrice,Close' }
-            stop_loss = OrderEvent(exchange, sig.symbol, 'Stop', None, other_side, 1, stop_loss_params)
-            take_profit_params = { 'stopPx': take_profit_stop_px, 'execInst': 'LastPrice,Close' }
-            take_profit = OrderEvent(exchange, sig.symbol, 'MarketIfTouched', None, other_side, 1, take_profit_params)
+            stop_loss = OrderEvent(exchange, sig.symbol, 'StopLoss', quantity, other_side, 1, stop_loss_px)
+            take_profit = OrderEvent(exchange, sig.symbol, 'TakeProfit', quantity, other_side, 1, take_profit_px)
             cancel_other_orders = OrderEvent(exchange, sig.symbol, 'CancelAll')
 
             new_order_events += [order, stop_loss, take_profit]
@@ -340,148 +417,8 @@ class BitmexPortfolio(object):
     # POST-BACKTEST STATISTICS
     # ========================
 
-    def write(self, current_positions, current_holdings):
+    def write_to_db(self, current_portfolio):
         """
         Saves the position and holdings updates to a database or to a file
         """
-        self.db.insert_positions(current_positions)
-        self.db.insert_holdings(current_holdings)
-
-    def create_backtest_result_dataframe(self):
-        """
-        Creates a pandas DataFrame from the all_holdings
-        list of dictionaries.
-        """
-        curve = pd.DataFrame(self.all_holdings)
-        curve.set_index('datetime', inplace=True)
-        curve['returns'] = curve['total'].pct_change()
-        curve['equity_curve'] = (1.0+curve['returns']).cumprod()
-        self.portfolio_dataframe = curve
-
-    def print_summary_stats(self):
-        """
-        Print a list of summary statistics for the portfolio.
-        """
-        total_return = self.portfolio_dataframe['equity_curve'][-1]
-        returns = self.portfolio_dataframe['returns']
-        pnl = self.portfolio_dataframe['equity_curve']
-
-        sharpe_ratio = create_sharpe_ratio(returns)
-        drawdown, max_dd, dd_duration = create_drawdowns(pnl)
-        self.portfolio_dataframe['drawdown'] = drawdown
-
-        stats = [("Total Return", "%0.2f%%" % ((total_return - 1.0) * 100.0)),
-                 ("Sharpe Ratio", "%0.2f" % sharpe_ratio),
-                 ("Max Drawdown", "%0.2f%%" % (max_dd * 100.0)),
-                 ("Drawdown Duration", "%d" % dd_duration)]
-
-        return stats
-
-
-    def output_summary_stats(self, backtest_result_dir):
-        """
-        Creates a list of summary statistics for the portfolio.
-        """
-        total_return = self.portfolio_dataframe['equity_curve'][-1]
-        returns = self.portfolio_dataframe['returns']
-        pnl = self.portfolio_dataframe['equity_curve']
-
-        sharpe_ratio = create_sharpe_ratio(returns)
-        drawdown, max_dd, dd_duration = create_drawdowns(pnl)
-        self.portfolio_dataframe['drawdown'] = drawdown
-
-        stats = [("Total Return", "%0.2f%%" % ((total_return - 1.0) * 100.0)),
-                 ("Sharpe Ratio", "%0.2f" % sharpe_ratio),
-                 ("Max Drawdown", "%0.2f%%" % (max_dd * 100.0)),
-                 ("Drawdown Duration", "%d" % dd_duration)]
-
-        # We output both to the most recent backtest folder and to a backtest timestamped folder
-        self.portfolio_dataframe.to_csv(os.path.join(self.result_dir, 'results.csv'))
-        self.portfolio_dataframe.to_csv(os.path.join(backtest_result_dir, 'results.csv'))
-        return stats
-
-    def output_summary_stats_and_graphs(self, backtest_result_dir):
-        """
-        Creates a list of summary statistics and plots
-        performance graphs
-        """
-
-        total_return = self.portfolio_dataframe['equity_curve'][-1]
-        returns = self.portfolio_dataframe['returns']
-        pnl = self.portfolio_dataframe['equity_curve']
-
-        sharpe_ratio = create_sharpe_ratio(returns)
-        drawdown, max_dd, dd_duration = create_drawdowns(pnl)
-        self.portfolio_dataframe['drawdown'] = drawdown
-
-        stats = [("Total Return", "%0.2f%%" % ((total_return - 1.0) * 100.0)),
-                 ("Sharpe Ratio", "%0.2f" % sharpe_ratio),
-                 ("Max Drawdown", "%0.2f%%" % (max_dd * 100.0)),
-                 ("Drawdown Duration", "%d" % dd_duration)]
-
-        self.portfolio_dataframe.to_csv(os.path.join(self.result_dir, 'results.csv'))
-        self.portfolio_dataframe.to_csv(os.path.join(backtest_result_dir, 'results.csv'))
-
-        returns = self.portfolio_dataframe['returns']
-        equity_curve = self.portfolio_dataframe['equity_curve']
-        drawdown = self.portfolio_dataframe['drawdown']
-
-        # Plot three charts: Equity curve,
-        # period returns, drawdowns
-        fig = plt.figure(figsize=(15,10))
-        # Set the outer colour to white
-        fig.patch.set_facecolor('white')
-        # Plot the equity curve
-        ax1 = fig.add_subplot(311, ylabel='Portfolio value, %')
-        equity_curve.plot(ax=ax1, color="blue", lw=2.)
-        plt.grid(True)
-
-        # Plot the returns
-        ax2 = fig.add_subplot(312, ylabel='Period returns, %')
-        returns.plot(ax=ax2, color="black", lw=2.)
-        plt.grid(True)
-
-        # Plot the returns
-        ax3 = fig.add_subplot(313, ylabel='Drawdowns, %')
-        drawdown.plot(ax=ax3, color="red", lw=2.)
-        plt.grid(True)
-
-        # pf.show_perf_stats(returns)
-        # pf.show_worst_drawdown_periods(returns)
-
-        plt.figure(figsize = (15, 10))
-        pf.plot_drawdown_underwater(returns).set_xlabel('Date')
-
-        plt.figure(figsize = (15, 10))
-        pf.plot_drawdown_periods(returns, top=5).set_xlabel('Date')
-
-        plt.figure(figsize = (15, 10))
-        pf.plot_returns(returns).set_xlabel('Date')
-
-        plt.figure(figsize = (15, 10))
-        pf.plot_return_quantiles(returns).set_xlabel('Timeframe')
-
-        plt.figure(figsize = (15, 10))
-        pf.plot_monthly_returns_dist(returns).set_xlabel('Returns')
-
-        plt.figure(figsize = (15, 10))
-        pf.plot_rolling_volatility(returns, rolling_window=30).set_xlabel('date')
-
-        plt.figure(figsize = (15, 10))
-        pf.plot_rolling_sharpe(returns, rolling_window=30).set_xlabel('Date')
-
-        pf.create_returns_tear_sheet(returns)
-        return stats
-
-
-
-
-
-
-
-
-
-
-
-
-
+        self.db.insert_portfolio(current_portfolio)

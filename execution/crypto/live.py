@@ -1,16 +1,17 @@
 # Python
-from __future__ import print_function
 
-import datetime
-import time
 import os
+import pdb
+import time
 import ccxt
 import json
+import logging
+import datetime
 
 from .execution import ExecutionHandler
 from abc import ABCMeta, abstractmethod
 from event import FillEvent, OrderEvent, BulkOrderEvent
-from utils.helpers import from_standard_to_exchange_notation
+from utils.helpers import from_standard_to_exchange_notation, convert_order_type
 
 try:
     import Queue as queue
@@ -36,11 +37,12 @@ class LiveExecutionHandler(ExecutionHandler):
         self.stop_loss_gap = 0.5
         self.fill_dict = {}
         self.order_id = 1
+        self.logger = logging.getLogger('logger')
 
     def _error_handler(self, msg):
         """Handles the capturing of error messages"""
         # Currently no error handling.
-        print("Server Error: %s" % msg)
+        self.logger.error("Server Error: %s" % msg)
 
     def _reply_handler(self, msg):
         """Handles of server replies"""
@@ -124,13 +126,12 @@ class LiveExecutionHandler(ExecutionHandler):
 
       # symbol = event.symbol
     def execute_market_order(self, event):
-      print("IN EXECUTE MARKET ORDER")
       exchange = event.exchange
       symbol = from_standard_to_exchange_notation(exchange, event.symbol)
       order_type = event.order_type
       quantity = event.quantity
       direction = event.direction
-      params = event.params
+      params = {}
 
       order = self.exchanges[event.exchange].create_order(symbol, order_type, direction, quantity, None, params)
       order_id = order['id']
@@ -153,52 +154,56 @@ class LiveExecutionHandler(ExecutionHandler):
         )
 
         # Place the fill event onto the event queue
-        print("ORDER FILLED")
+        self.logger.info("ORDER FILLED")
         self.events.put(fill)
       else:
-        print("ORDER COULD NOT BE FILLED")
+        self.logger.info("ORDER COULD NOT BE FILLED")
 
     def execute_take_profit(self, event):
-      print("Executing take profit order")
+      self.logger.info("Executing take profit order")
+      self.logger.info("Price: {}".format(event.price))
       exchange = event.exchange
       symbol = from_standard_to_exchange_notation(exchange, event.symbol)
-      order_type = event.order_type
+      order_type = convert_order_type(event.order_type)
       quantity = event.quantity
       direction = event.direction
-      params = event.params
+      price = event.price
+      params = { 'ordType': 'MarketIfTouched', 'stopPx': price, 'execInst': 'LastPrice,Close' }
 
       order = self.exchanges[event.exchange].create_order(symbol, order_type, direction, quantity, None, params)
-      print('TAKE PROFIT ORDER SET')
+      self.logger.info('TAKE PROFIT ORDER SET')
 
     def execute_stop_loss(self, event):
-      print("Executing stop loss order")
+      self.logger.info("Executing stop loss order")
+      self.logger.info("Price: {}".format(event.price))
       exchange = event.exchange
       symbol = from_standard_to_exchange_notation(exchange, event.symbol)
-      order_type = event.order_type
+      order_type = convert_order_type(event.order_type)
       quantity = event.quantity
       direction = event.direction
-      params = event.params
+      price = event.price
+      params = { 'ordType': 'Stop', 'stopPx': price, 'execInst': 'LastPrice,Close'}
 
       order = self.exchanges[event.exchange].create_order(symbol, order_type, direction, quantity, None, params)
-      print('STOP LOSS ORDER SET')
+      self.logger.info('STOP LOSS ORDER SET')
 
     def execute_close_position(self, event):
-      print('Executing close {} position'.format(event.symbol))
+      self.logger.info('Executing close {} position'.format(event.symbol))
       exchange = event.exchange
       symbol = from_standard_to_exchange_notation(exchange, event.symbol)
       params = { 'symbol': symbol }
 
       self.exchanges[exchange].private_post_order_closeposition(params)
-      print('CLOSE POSITION DONE')
+      self.logger.info('CLOSE POSITION DONE')
 
     def execute_cancel_all_orders(self, event):
-      print('Executing close {} position'.format(event.symbol))
+      self.logger.info('Executing close {} position'.format(event.symbol))
       exchange = event.exchange
       symbol = from_standard_to_exchange_notation(exchange, event.symbol)
       params = { 'symbol': symbol }
 
       self.exchanges[exchange].private_delete_order_all(params)
-      print('CANCEL ALL ORDERS')
+      self.logger.info('CANCEL ALL ORDERS')
 
 
     def execute_order(self, event):
@@ -209,9 +214,9 @@ class LiveExecutionHandler(ExecutionHandler):
       if event.type == 'ORDER':
         if event.order_type == "Market":
           self.execute_market_order(event)
-        elif event.order_type == "MarketIfTouched":
+        elif event.order_type == "TakeProfit":
           self.execute_take_profit(event)
-        elif event.order_type == "Stop":
+        elif event.order_type == "StopLoss":
           self.execute_stop_loss(event)
         elif event.order_type == "Limit":
           self.execute_limit_order(event)

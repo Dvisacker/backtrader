@@ -1,5 +1,5 @@
 from .cross_exchange_mr import *
-from .mr import *
+from .single_mr import *
 from .mavg_crossover import *
 from .qda import *
 from .strategy import *
@@ -8,7 +8,8 @@ from .multi_random import *
 from .macd_crossover import *
 from .rsi import *
 from .condition import *
-from .generalized_mr import *
+from .mr import *
 from .momentum import *
 from .only_short_momentum import *
 from .only_long_momentum import *
+from .volume import *

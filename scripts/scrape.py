@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 if __name__ == "__main__" and __package__ is None:
     from sys import path
     from os.path import dirname as dir
@@ -116,6 +118,7 @@ if not args.from_date and not args.to_date:
   }[args.timeframe]
 
   while current_time < now:
+    print(current_time.timetuple())
     since = time.mktime(current_time.timetuple()) * 1000
     data = exchange.fetch_ohlcv(symbol, args.timeframe, since=since, limit=limit)
 
@@ -153,6 +156,7 @@ if args.from_date and args.days:
   }[args.timeframe]
 
   while current_time < to_date:
+    print(current_time.timetuple())
     since = time.mktime(current_time.timetuple()) * 1000
     data = exchange.fetch_ohlcv(symbol, args.timeframe, since=since, limit=limit)
     header = ['Time', 'Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume']

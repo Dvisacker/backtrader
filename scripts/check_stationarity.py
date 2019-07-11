@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 if __name__ == "__main__" and __package__ is None:
     from sys import path
     from os.path import dirname as dir
@@ -12,7 +14,7 @@ import argparse
 import pandas as pd
 
 from datetime import datetime
-from utils.helpers import get_ohlcv_file, get_ohlcv_window
+from utils.helpers import get_ohlcv_file, get_timeframe
 from utils.scrape import scrape_ohlcv
 from utils import from_exchange_to_standard_notation, from_standard_to_exchange_notation
 from statsmodels.tsa.stattools import adfuller, coint
@@ -77,7 +79,7 @@ def parse_args():
 
     parser.add_argument('-t','--timeframe',
                         type=str,
-                        default='1d',
+                        default='5m',
                         choices=['1m', '5m','15m', '30m','1h', '2h', '3h', '4h', '6h', '12h', '1d', '1M', '1y'],
                         help='The timeframe to download')
 
@@ -101,8 +103,6 @@ def parse_args():
                             help=('Print Sizer Debugs'))
 
     return parser.parse_args()
-
-
 
 args = parse_args()
 
@@ -159,15 +159,43 @@ if symbol1 not in exchange.symbols:
 create_csv_files(exchange_name, [args.symbol1], timeframe, start, end)
 df = open_convert_csv_files(exchange_name, args.symbol1, timeframe, start, end)
 
-def check_for_stationarity(X, cutoff=0.01):
-    # H_0 in adfuller is unit root exists (non-stationary)
-    # We must observe significant p-value to convince ourselves that the series is stationary
-    pvalue = adfuller(X)[1]
-    if pvalue < cutoff:
-        print('p-value = ' + str(pvalue) + ' The returns series is likely stationary.')
-        return True
-    else:
-        print('p-value = ' + str(pvalue) + ' The returns series is likely non-stationary.')
-        return False
 
-check_for_stationarity(df['returns'])
+def check_for_stationarity(X):
+  df['z_close'] = (df['close'] - df.close.rolling(window=12).mean()) / df.close.rolling(window=12).std()
+  df['zp_close'] = df['z_close'] - df['z_close'].shift(12)
+
+  print("\n> Is the prices series stationary ?")
+  dftest = adfuller(df.close, autolag='AIC')
+  print("Test statistic = {:.3f}".format(dftest[0]))
+  print("P-value = {:.3f}".format(dftest[1]))
+  print("Critical values :")
+  for k, v in dftest[4].items():
+      print("\t{}: {} - The price series is {} stationary with {}% confidence".format(k, v, "not" if v<dftest[0] else "", 100-int(k[:-1])))
+
+  print("\n> Is the returns series stationary ?")
+  dftest = adfuller(df.returns, autolag='AIC')
+  print("Test statistic = {:.3f}".format(dftest[0]))
+  print("P-value = {:.3f}".format(dftest[1]))
+  print("Critical values :")
+  for k, v in dftest[4].items():
+      print("\t{}: {} - The returns series is {} stationary with {}% confidence".format(k, v, "not" if v<dftest[0] else "", 100-int(k[:-1])))
+
+  print("\n> Is the de-trended price series stationary ?")
+  dftest = adfuller(df.z_close.dropna(), autolag='AIC')
+  print("Test statistic = {:.3f}".format(dftest[0]))
+  print("P-value = {:.3f}".format(dftest[1]))
+  print("Critical values :")
+  for k, v in dftest[4].items():
+      print("\t{}: {} - The price series is {} stationary with {}% confidence".format(k, v, "not" if v<dftest[0] else "", 100-int(k[:-1])))
+
+  print("\n> Is the 12-lag differenced de-trended price series stationary ?")
+  dftest = adfuller(df.zp_close.dropna(), autolag='AIC')
+  print("Test statistic = {:.3f}".format(dftest[0]))
+  print("P-value = {:.3f}".format(dftest[1]))
+  print("Critical values :")
+  for k, v in dftest[4].items():
+      print("\t{}: {} - The price series is {} stationary with {}% confidence".format(k, v, "not" if v<dftest[0] else "", 100-int(k[:-1])))
+
+  print('\n\n')
+
+check_for_stationarity(df)

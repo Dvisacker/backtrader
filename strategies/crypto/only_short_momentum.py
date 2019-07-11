@@ -1,5 +1,5 @@
-import datetime
 import talib
+import datetime
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -10,6 +10,7 @@ from trader import SimpleBacktest
 from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import CryptoPortfolio
+from utils.log import logger
 
 from indicators import mean_momentum
 
@@ -72,14 +73,14 @@ class OnlyShortMomentumStrategy(Strategy):
                   momentum = mean_momentum(prices, self.short_period, self.long_period)
                   dt = datetime.datetime.utcnow()
                   if momentum <= -self.zscore_entry and self.market_status[e][s] != 'SHORT':
-                      print("SHORT: {}".format(bar_date))
+                      logger.info("SHORT: {}".format(bar_date))
                       sig_dir = 'SHORT'
                       signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
                       signal_events = SignalEvents(signals, 1)
                       self.events.put(signal_events)
                       self.market_status[e][s] = 'SHORT'
                   elif abs(momentum) <= self.zscore_exit and self.market_status[e][s] != 'EXIT':
-                      print("EXIT: {}".format(bar_date))
+                      logger.info("EXIT: {}".format(bar_date))
                       sig_dir = 'EXIT'
                       signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
                       signal_events = SignalEvents(signals, 1)

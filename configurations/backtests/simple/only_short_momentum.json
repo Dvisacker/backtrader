@@ -1,16 +1,10 @@
 {
-  "csv_dir": "data",
-  "result_dir": "results",
   "feeds": { "bitmex": ["XRP/BTC", "EOS/BTC", "ADA/BTC", "BCH/BTC", "BTC/USD"] },
   "instruments": { "bitmex": ["XRP/BTC", "EOS/BTC", "ADA/BTC", "BCH/BTC"] },
   "assets": { "bitmex": [ "BTC" ]},
   "initial_capital" : 5000.0,
-  "ohlcv_window": "1m",
-  "heartbeat" : 0,
-  "graph_refresh_period": 300,
+  "timeframe": "1m",
   "default_position_size": 0.15,
-  "update_charts": false,
-  "show_charts": true,
   "portfolio_type": "bitmex_portfolio",
   "backtester_type": "simple_backtest",
   "strategy": "only_short_momentum",
@@ -22,6 +16,5 @@
   },
   "start_date": "01/05/2019",
   "end_date": "05/05/2019",
-  "default_leverage": 1,
-  "save_to_db": false
+  "default_leverage": 1
 }

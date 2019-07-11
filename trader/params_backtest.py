@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 
 # backtest.py
-from __future__ import print_function
 
 import os
 import csv
 import time
 import pprint
+import logging
 import datetime
 
 from datetime import datetime
@@ -44,7 +44,7 @@ class MultiParamsBacktest(object):
         self.last_result_dir = os.path.join(self.result_dir, 'last')
 
         self.heartbeat = configuration.heartbeat
-        self.backtest_start_time = datetime.utcnow()
+        self.backtest_date = datetime.utcnow()
 
         self.strategy_params = configuration.strategy_params
         self.params_names = configuration.params_names
@@ -204,4 +204,4 @@ class MultiParamsBacktest(object):
               writer.writerow(row)
 
         except IOError:
-          print('I/O Error')
+          logging.error('I/O Error')

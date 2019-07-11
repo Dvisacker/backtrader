@@ -1,4 +1,5 @@
 import os
+import logging
 import pymongo
 import pandas as pd
 
@@ -17,19 +18,19 @@ class MongoHandler(object):
     try:
       self.db.portfolios.insert_one(portfolio)
     except Exception as e:
-      print('Could not save current position: {}'.format(e))
+      logging.error('Could not save current position: {}'.format(e))
 
   def insert_positions(self, positions):
     try:
       self.db.positions.insert_one(positions)
     except Exception as e:
-      print('Could not save current position: {}'.format(e))
+      logging.error('Could not save current position: {}'.format(e))
 
   def insert_holdings(self, holdings):
     try:
       self.db.holdings.insert_one(holdings)
     except Exception as e:
-      print('Could not save current holdings: {}'.format(e))
+      logging.error('Could not save current holdings: {}'.format(e))
 
   def read_positions(self):
     cursor = self.db.positions.find({})
@@ -68,7 +69,7 @@ class MongoHandler(object):
     try:
       os.mkdir(folder_name)
     except OSError:
-      print("Creation of the directory failed %s" % folder_name)
+      logging.error("Creation of the directory failed %s" % folder_name)
     else:
       all_data.to_csv(all_data_filename)
       positions_indexed.to_csv(positions_filename)

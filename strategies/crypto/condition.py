@@ -10,6 +10,7 @@ from trader import SimpleBacktest
 from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import CryptoPortfolio
+from utils.log import logger
 
 class ConditionBasedStrategy(Strategy):
     """
@@ -35,6 +36,7 @@ class ConditionBasedStrategy(Strategy):
 
         # Set to True if a symbol is in the market
         self.bought = self._calculate_initial_bought()
+        self.logger = logger
 
     def _calculate_initial_bought(self):
         """
@@ -70,21 +72,21 @@ class ConditionBasedStrategy(Strategy):
                     sig_dir = ""
 
                     if self.long_condition(prices) and self.bought[e][s] != 'LONG':
-                        print("LONG: {}".format(bar_date))
+                        self.logger.info("LONG: {}".format(bar_date))
                         sig_dir = 'LONG'
                         signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
                         signal_events = SignalEvents(signals, 1)
                         self.bought[e][s] = 'LONG'
                         self.events.put(signal_events)
                     elif self.short_condition(prices) and self.bought[e][s] != 'SHORT':
-                        print("SHORT: {}".format(bar_date))
+                        self.logger.info("SHORT: {}".format(bar_date))
                         sig_dir = 'SHORT'
                         signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
                         signal_events = SignalEvents(signals, 1)
                         self.events.put(signal_events)
                         self.bought[e][s] = 'SHORT'
                     elif self.exit_condition(prices) and self.bought[e][s] != 'EXIT':
-                        print("EXIT: {}".format(bar_date))
+                        self.logger.info("EXIT: {}".format(bar_date))
                         sig_dir = 'EXIT'
                         signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
                         signal_events = SignalEvents(signals, 1)

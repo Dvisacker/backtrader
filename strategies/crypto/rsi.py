@@ -1,5 +1,6 @@
-import datetime
+
 import talib
+import datetime
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -10,6 +11,7 @@ from trader import SimpleBacktest
 from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import CryptoPortfolio
+from utils.log import logger
 
 class RSIStrategy(Strategy):
     """
@@ -70,14 +72,14 @@ class RSIStrategy(Strategy):
                     sig_dir = ""
 
                     if rsi[-1] > 70 and rsi[-2] < 70 and self.bought[e][s] != 'LONG':
-                        print("LONG: {}".format(bar_date))
+                        logger.info("LONG: {}".format(bar_date))
                         sig_dir = 'LONG'
                         signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
                         signal_events = SignalEvents(signals, 1)
                         self.bought[e][s] = 'LONG'
                         self.events.put(signal_events)
                     elif rsi[-1] < 30 and rsi[-2] > 30 and self.bought[e][s] != 'SHORT':
-                        print("SHORT: {}".format(bar_date))
+                        logger.info("SHORT: {}".format(bar_date))
                         sig_dir = 'SHORT'
                         signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
                         signal_events = SignalEvents(signals, 1)

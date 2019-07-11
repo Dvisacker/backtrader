@@ -1,3 +1,4 @@
+import logging
 import datetime
 import numpy as np
 import pandas as pd
@@ -9,6 +10,7 @@ from trader import SimpleBacktest
 from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import CryptoPortfolio
+from utils.log import logger
 
 class MovingAverageCrossoverStrategy(Strategy):
     """
@@ -35,6 +37,8 @@ class MovingAverageCrossoverStrategy(Strategy):
 
         # Set to True if a symbol is in the market
         self.bought = self._calculate_initial_bought()
+
+        self.logger = logger
 
     def _calculate_initial_bought(self):
         """
@@ -74,14 +78,14 @@ class MovingAverageCrossoverStrategy(Strategy):
                     sig_dir = ""
 
                     if short_sma > long_sma and self.bought[e][s] == 'OUT':
-                        print("LONG: {}".format(bar_date))
+                        self.logger.info("LONG: {}".format(bar_date))
                         sig_dir = 'LONG'
                         signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
                         signal_events = SignalEvents(signals, 1)
                         self.bought[e][s] = 'LONG'
                         self.events.put(signal_events)
                     elif short_sma < long_sma and self.bought[e][s] == 'LONG':
-                        print("EXIT: {}".format(bar_date))
+                        self.logger.info("EXIT: {}".format(bar_date))
                         sig_dir = 'EXIT'
                         signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
                         signal_events = SignalEvents(signals, 1)

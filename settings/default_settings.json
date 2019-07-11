@@ -1,0 +1,9 @@
+{
+  "show_charts": false,
+  "update_charts": false,
+  "save_to_db": false,
+  "graph_refresh_period": 300,
+  "csv_dir": "data",
+  "result_dir": "results",
+  "heartbeat": 0.1
+}

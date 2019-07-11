@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 if __name__ == "__main__" and __package__ is None:
     from sys import path
     from os.path import dirname as dir
@@ -14,7 +16,7 @@ import matplotlib.pyplot as plt
 import statsmodels.tsa.stattools as ts
 
 from datetime import datetime
-from utils.helpers import get_ohlcv_file, get_ohlcv_window
+from utils.helpers import get_ohlcv_file, get_timeframe
 from utils.scrape import scrape_ohlcv
 from utils import from_exchange_to_standard_notation, from_standard_to_exchange_notation
 
@@ -161,6 +163,9 @@ create_csv_files(exchange_name, [args.symbol], timeframe, start, end)
 df = open_convert_csv_files(exchange_name, args.symbol, timeframe, start, end)
 
 def plot_prices(prices):
+  close = df['close']
+
+
   fig = plt.figure(figsize=(20,15))
   ax = fig.add_subplot(111, ylabel='{} Price'.format(symbol))
   prices.plot(ax=ax, color='blue', lw=1., label='{} Close Price'.format(symbol))

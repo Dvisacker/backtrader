@@ -2,6 +2,6 @@
   "default_start_date": "01/06/2019",
   "default_end_date": "05/06/2019",
   "default_exchange": "bitmex",
-  "default_timeframe": "1m",
+  "default_timeframe": "5m",
   "default_value": "close"
 }

@@ -1,8 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# portfolio.py
-from __future__ import print_function
+# bitmexportfolio_backtest.py
 
 # import pdb
 
@@ -29,6 +28,7 @@ from db.mongo_handler import MongoHandler
 from event import FillEvent, OrderEvent, BulkOrderEvent
 from performance import create_sharpe_ratio, create_drawdowns
 from utils import ceil_dt, from_exchange_to_standard_notation, from_standard_to_exchange_notation, truncate, get_precision
+from utils.log import logger
 from utils.helpers import move_figure, plot, compute_all_indicators
 
 from stats.trades import generate_trade_stats
@@ -56,6 +56,7 @@ class BitmexPortfolioBacktest(object):
         self.instruments = configuration.instruments['bitmex']
         self.assets = configuration.assets['bitmex']
         self.start_date = configuration.start_date
+        self.end_date = configuration.end_date
         self.result_dir = configuration.result_dir
         self.default_position_size = configuration.default_position_size
         self.default_leverage = configuration.default_leverage
@@ -78,7 +79,7 @@ class BitmexPortfolioBacktest(object):
 
 
     def construct_current_portfolios(self):
-      print('Building current portfolios')
+      logger.info('Building current portfolios')
       d = {}
 
       for s in self.instruments:
@@ -140,7 +141,6 @@ class BitmexPortfolioBacktest(object):
         df['bitmex-total-position-in-BTC'] += quantity * price
         df['bitmex-total-position-in-USD'] += quantity * price * btc_price
 
-      # Append the current positions
       # Update holdings
       # ===============
       df['fee'] = self.current_portfolio['fee']
@@ -328,7 +328,6 @@ class BitmexPortfolioBacktest(object):
             # Might want to throw an error here
             continue
 
-          # We don't take into account take profits and stop losses for now
           if sig.signal_type == "EXIT":
             cancel_open_orders = OrderEvent(exchange, sig.symbol, 'CancellAll')
             close_position_order = OrderEvent(exchange, sig.symbol, 'ClosePosition')
@@ -343,7 +342,7 @@ class BitmexPortfolioBacktest(object):
             quantity = abs(target_quantity - current_quantity)
 
             if (target_allocation > available_balance):
-                print('Available Balance exceeded')
+                logging.error('Available Balance exceeded')
                 # Might want to throw an error here
                 continue
 
@@ -357,12 +356,10 @@ class BitmexPortfolioBacktest(object):
 
             if side == "buy":
               other_side = 'sell'
-              # print('IN BUY SIDE, {}'.format(sig.symbol))
               stop_loss_px = truncate((1 - self.stop_loss_gap) * price, precision)
               take_profit_px = truncate((1 + self.take_profit_gap) * price, precision)
             elif side == "sell":
               other_side = 'buy'
-              # print('IN SELL SIDE, {}'.format(sig.symbol))
               stop_loss_px = truncate((1 + self.stop_loss_gap) * price, precision)
               take_profit_px = truncate((1 - self.take_profit_gap) * price, precision)
 
@@ -487,8 +484,6 @@ class BitmexPortfolioBacktest(object):
 
         if not transactions.empty:
           transactions.set_index('datetime', inplace=True)
-
-        # pdb.set_trace()
 
         trades = pf.round_trips.extract_round_trips(transactions)
 
@@ -687,6 +682,9 @@ class BitmexPortfolioBacktest(object):
         btc_drawdown, btc_max_dd, btc_dd_duration = create_drawdowns(btc_pnl)
         self.portfolio_dataframe['btc_drawdown'] = btc_drawdown
 
+        start_datetime = datetime.datetime.strptime(self.start_date, '%d/%m/%Y')
+        end_datetime = datetime.datetime.strptime(self.end_date, '%d/%m/%Y')
+
         stats = generate_trade_stats(self.trades_dataframe)
         stats['general'] = {
           "Total USD Return": "%0.2f%%" % ((total_return - 1.0) * 100.0),
@@ -696,7 +694,9 @@ class BitmexPortfolioBacktest(object):
           "Max Drawdown": "%0.2f%%" % (max_dd * 100.0),
           "BTC Max Drawdown": "%0.2f%%" % (btc_max_dd * 100.0),
           "Drawdown Duration": "%d" % dd_duration,
-          "BTC Drawdown Duration": "%d" % btc_dd_duration
+          "BTC Drawdown Duration": "%d" % btc_dd_duration,
+          "Monthly BTC Return": "%0.2f" % (((total_btc_return - 1.0) * 100.0) * (datetime.timedelta(days=30) / (end_datetime - start_datetime))),
+          "Yearly BTC Return": "%0.2f" % (((total_btc_return - 1.0) * 100.0) * (datetime.timedelta(days=365) / (end_datetime - start_datetime)))
         }
 
         return stats

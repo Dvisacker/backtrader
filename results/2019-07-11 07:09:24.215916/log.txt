@@ -1,0 +1,55 @@
+2019-07-11 16:09:24,216 - INFO - Creating DataHandler, Strategy, Portfolio and ExecutionHandler
+2019-07-11 16:09:24,219 - INFO - Initializing exchange data
+2019-07-11 16:09:31,604 - INFO - Logging some stuff
+2019-07-11 16:11:00,048 - INFO - New bar bitmex
+2019-07-11 16:11:00,140 - INFO - Receiving MARKET event. Current Queue size: 0
+2019-07-11 16:11:00,140 - INFO - Insert new bar bitmex
+2019-07-11 16:11:00,142 - INFO - SCORE_LAST: -0.05353569253894765
+2019-07-11 16:12:02,609 - INFO - New bar bitmex
+2019-07-11 16:12:02,627 - INFO - Receiving MARKET event. Current Queue size: 0
+2019-07-11 16:12:02,628 - INFO - Insert new bar bitmex
+2019-07-11 16:12:02,629 - INFO - SCORE_LAST: 0.14986592146547545
+2019-07-11 16:13:04,875 - INFO - New bar bitmex
+2019-07-11 16:13:04,920 - INFO - Receiving MARKET event. Current Queue size: 0
+2019-07-11 16:13:04,920 - INFO - Insert new bar bitmex
+2019-07-11 16:13:04,921 - INFO - SCORE_LAST: 0.13750203630338406
+2019-07-11 16:14:04,564 - INFO - New bar bitmex
+2019-07-11 16:14:04,583 - INFO - Receiving MARKET event. Current Queue size: 0
+2019-07-11 16:14:04,583 - INFO - Insert new bar bitmex
+2019-07-11 16:14:04,584 - INFO - SCORE_LAST: 0.1806615703337723
+2019-07-11 16:15:01,737 - INFO - New bar bitmex
+2019-07-11 16:15:01,835 - INFO - Receiving MARKET event. Current Queue size: 0
+2019-07-11 16:15:01,835 - INFO - Insert new bar bitmex
+2019-07-11 16:15:01,837 - INFO - SCORE_LAST: 0.11591306614232465
+2019-07-11 16:16:06,931 - INFO - New bar bitmex
+2019-07-11 16:16:06,993 - INFO - Receiving MARKET event. Current Queue size: 0
+2019-07-11 16:16:06,993 - INFO - Insert new bar bitmex
+2019-07-11 16:16:06,994 - INFO - SCORE_LAST: 0.18921287384809043
+2019-07-11 16:17:01,726 - INFO - New bar bitmex
+2019-07-11 16:17:01,735 - INFO - Receiving MARKET event. Current Queue size: 0
+2019-07-11 16:17:01,735 - INFO - Insert new bar bitmex
+2019-07-11 16:17:01,737 - INFO - SCORE_LAST: -0.2435654175714111
+2019-07-11 16:18:00,795 - INFO - New bar bitmex
+2019-07-11 16:18:00,830 - INFO - Receiving MARKET event. Current Queue size: 0
+2019-07-11 16:18:00,831 - INFO - Insert new bar bitmex
+2019-07-11 16:18:00,832 - INFO - SCORE_LAST: -0.07990497869735919
+2019-07-11 16:19:09,093 - INFO - New bar bitmex
+2019-07-11 16:19:09,194 - INFO - Receiving MARKET event. Current Queue size: 0
+2019-07-11 16:19:09,195 - INFO - Insert new bar bitmex
+2019-07-11 16:19:09,196 - INFO - SCORE_LAST: 0.18631330354321635
+2019-07-11 16:20:01,955 - INFO - New bar bitmex
+2019-07-11 16:20:01,962 - INFO - Receiving MARKET event. Current Queue size: 0
+2019-07-11 16:20:01,962 - INFO - Insert new bar bitmex
+2019-07-11 16:20:01,964 - INFO - SCORE_LAST: 0.319586745759145
+2019-07-11 16:21:02,548 - INFO - New bar bitmex
+2019-07-11 16:21:02,641 - INFO - Receiving MARKET event. Current Queue size: 0
+2019-07-11 16:21:02,641 - INFO - Insert new bar bitmex
+2019-07-11 16:21:02,643 - INFO - SCORE_LAST: 0.43476398842946085
+2019-07-11 16:22:02,758 - INFO - New bar bitmex
+2019-07-11 16:22:02,843 - INFO - Receiving MARKET event. Current Queue size: 0
+2019-07-11 16:22:02,843 - INFO - Insert new bar bitmex
+2019-07-11 16:22:02,846 - INFO - SCORE_LAST: 0.04522905150907911
+2019-07-11 16:23:01,431 - INFO - New bar bitmex
+2019-07-11 16:23:01,484 - INFO - Receiving MARKET event. Current Queue size: 0
+2019-07-11 16:23:01,484 - INFO - Insert new bar bitmex
+2019-07-11 16:23:01,486 - INFO - SCORE_LAST: 0.181049568854942

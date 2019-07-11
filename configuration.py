@@ -1,10 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# event.py
-
-from __future__ import print_function
 from itertools import product
+from datetime import datetime
 
 class Configuration(object):
     """
@@ -13,11 +11,49 @@ class Configuration(object):
     trading infrastructure.
     """
 
-    def __init__(self, configuration):
-      self.result_dir = configuration['result_dir']
-      self.instruments = configuration['instruments']
-      self.heartbeat = configuration['heartbeat']
+    def __init__(self, configuration, default):
+      self.heartbeat = configuration.get("heartbeat", default.get("heartbeat"))
+      self.show_charts = configuration.get("show_charts", default.get("show_charts"))
+      self.update_charts = configuration.get("update_charts", default.get("update_charts"))
+      self.save_to_db = configuration.get("save_to_db", default.get("save_to_db"))
+      self.graph_refresh_period = configuration.get("graph_refresh_period", default.get("graph_refresh_period"))
+      self.csv_dir = configuration.get("csv_dir", default.get("csv_dir"))
+      self.result_dir = configuration.get("result_dir", default.get("result_dir"))
       self.conditions = None
+
+      timeframe = configuration.get("timeframe")
+      self.timeframe = {
+        '10s': 10,
+        '1m': 60,
+        '5m': 300,
+        '15m': 900,
+        '1h': 3600,
+        '1d': 86400
+      }[timeframe]
+
+
+      self.backtest_date = datetime.utcnow()
+      self.instruments = configuration.get("instruments")
+      self.strategy = configuration.get("strategy")
+      self.initial_capital = configuration.get("initial_capital")
+      self.feeds = configuration.get("feeds")
+      self.assets = configuration.get("assets")
+      self.indicators = configuration.get("indicators", [])
+      self.default_position_size = configuration.get("default_position_size")
+      self.start_date = configuration.get("start_date")
+      self.end_date = configuration.get("end_date", None)
+      self.start_dates = configuration.get("start_dates", None)
+      self.end_dates = configuration.get("end_dates", None)
+      self.use_stops = configuration.get("use_stops", True)
+      self.take_profit_gap = configuration.get("take_profit_gap", 0.1)
+      self.stop_loss_gap = configuration.get("stop_loss_gap", 0.1)
+      self.default_leverage = configuration.get("default_leverage", 1)
+
+      # There are three ways to set the backtest name.
+      # 1) Add backtest_name field in the .json configuration file
+      # 2) Add the backtest name through the command line argument -n.
+      # 3) Otherwise the backtest name will default to the strategy name
+      self.backtest_name = configuration.get("backtest_name", self.strategy)
 
       # In the case of a multi instrument backtest, the instruments keys is an array
       if isinstance(self.instruments, list):
@@ -25,112 +61,38 @@ class Configuration(object):
       else:
         self.exchange_names = list(self.instruments.keys())
 
-      self.ohlcv_window = {
-        '1m': 60,
-        '5m': 300,
-        '15m': 900,
-        '1h': 3600,
-        '1d': 86400
-      }[configuration['ohlcv_window']]
 
-      if 'csv_dir' in configuration:
-        self.csv_dir = configuration['csv_dir']
+      if 'strategy_params' in configuration:
+        if configuration['backtester_type'] == "simple_backtest":
+          self.params_names = list(configuration['strategy_params'].keys())
+          self.strategy_params = configuration.get('strategy_params')
+        elif configuration['backtester_type'] == "super_backtest":
+          params_names, params_dict = self._compute_params_dict(configuration['strategy_params'])
+          self.params_names = params_names
+          self.strategy_params = params_dict
 
-      if 'initial_capital' in configuration:
-        self.initial_capital = configuration['initial_capital']
 
-      if 'graph_refresh_period' in configuration:
-        self.graph_refresh_period = configuration['graph_refresh_period']
-
-      if 'feeds' in configuration:
-        self.feeds = configuration['feeds']
-
-      if 'assets' in configuration:
-        self.assets = configuration['assets']
-
-      if configuration['backtester_type'] == "simple_backtest":
-        self.strategy_params = configuration['strategy_params']
-      elif configuration['backtester_type'] == "super_backtest":
-        params_names, params_dict = self._compute_params_dict(configuration['strategy_params'])
-        self.params_names = params_names
-        self.strategy_params = params_dict
-
-      if 'indicators' in configuration:
-        self.indicators = configuration['indicators']
-      else:
-        self.indicators = []
-
-      if 'default_position_size' in configuration:
-        self.default_position_size = configuration['default_position_size']
-
-      if 'show_charts' in configuration:
-        self.show_charts = configuration['show_charts']
-      else:
-        self.show_charts = True
-
-      if 'update_charts' in configuration:
-        self.update_charts = configuration['update_charts']
-      else:
-        self.update_charts = True
-
-      if 'start_date' in configuration:
-        self.start_date = configuration['start_date']
-      else:
-        self.start_date = None
-
-      if 'end_date' in configuration:
-        self.end_date = configuration['end_date']
-      else:
-        self.end_date = None
-
-      if 'start_dates' in configuration:
-        self.start_dates = configuration['start_dates']
-      else:
-        self.start_dates = None
-
-      if 'end_dates' in configuration:
-        self.end_dates = configuration['end_dates']
-      else:
-        self.end_dates = None
-
-      if 'use_stops' in configuration:
-        self.use_stops = configuration['use_stops']
-      else:
-        self.use_stops = True
-
-      if 'take_profit_gap' in configuration:
-        self.take_profit_gap = configuration['take_profit_gap']
-      else:
-        self.take_profit_gap = 0.05
-
-      if 'stop_loss_gap' in configuration:
-        self.stop_loss_gap = configuration['stop_loss_gap']
-      else:
-        self.stop_loss_gap = 0.05
-
-      if 'default_leverage' in configuration:
-        self.default_leverage = configuration['default_leverage']
-      else:
-        self.default_leverage = 1
-
-      if 'save_to_db' in configuration:
-        self.save_to_db = configuration['save_to_db']
-      else:
-        self.save_to_db = False
-
-      # Initial bars represents the number of bars that are considered already
+      # Initial bars is the number of bars that are considered already
       # past when the backtest is started and will thus not be fed into the event loop
-      if 'initial_bars' in configuration:
-        self.initial_bars = configuration['initial_bars']
-      else:
-        self.initial_bars = {
+      default_initial_bars = {
+          10: 300,
           60: 300,
           300: 300,
           900: 300,
           3600: 300,
           86400: 10
-        }[self.ohlcv_window]
+      }[self.timeframe]
 
+      self.initial_bars = configuration.get("initial_bars", default_initial_bars)
+
+    def set_configuration_filename(self, filename):
+      self.configuration_filename = filename
+
+    def set_configuration_backtest_name(self, backtest_name):
+      self.backtest_name = backtest_name
+
+    def set_logger(self, logger):
+      self.logger = logger
 
     def _compute_params_dict(self, params):
       params_names = list(params.keys())

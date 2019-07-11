@@ -3,8 +3,6 @@
 
 # mr.py
 
-from __future__ import print_function
-
 from datetime import datetime
 
 import numpy as np
@@ -17,6 +15,7 @@ from trader import SimpleBacktest
 from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import CryptoPortfolio
+from utils.log import logger
 
 class OLSMeanReversionStrategy(Strategy):
     """
@@ -76,7 +75,7 @@ class OLSMeanReversionStrategy(Strategy):
         # If we're long the market and below the
         # negative of the high zscore threshold
         if zscore_last <= -self.zscore_entry and not self.long_market:
-            print('LONG,SHORT')
+            logger.info('LONG,SHORT')
             self.long_market = True
             y_signal = SignalEvent(1, ex, p0, dt, 'LONG', 1.0)
             x_signal = SignalEvent(1, ex, p1, dt, 'SHORT', 1.0)
@@ -84,7 +83,7 @@ class OLSMeanReversionStrategy(Strategy):
         # If we're long the market and between the
         # absolute value of the low zscore threshold
         if abs(zscore_last) <= self.zscore_exit and self.long_market:
-            print('EXIT,EXIT')
+            logger.info('EXIT,EXIT')
             self.long_market = False
             y_signal = SignalEvent(1, ex, p0, dt, 'EXIT', 1.0)
             x_signal = SignalEvent(1, ex, p1, dt, 'EXIT', 1.0)
@@ -92,7 +91,7 @@ class OLSMeanReversionStrategy(Strategy):
         # If we're short the market and above
         # the high zscore threshold
         if zscore_last >= self.zscore_entry and not self.short_market:
-            print('SHORT,LONG')
+            logger.info('SHORT,LONG')
             self.short_market = True
             y_signal = SignalEvent(1, ex, p0, dt, 'SHORT', 1.0)
             x_signal = SignalEvent(1, ex, p1, dt, 'LONG', 1.0)
@@ -100,7 +99,7 @@ class OLSMeanReversionStrategy(Strategy):
         # If we're short the market and between the
         # absolute value of the low zscore threshold
         if abs(zscore_last) <= self.zscore_exit and self.short_market:
-            print('EXIT,EXIT')
+            logger.info('EXIT,EXIT')
             self.short_market = False
             y_signal = SignalEvent(1, ex, p0, dt, 'EXIT', 1.0)
             x_signal = SignalEvent(1, ex, p1, dt, 'EXIT', 1.0)

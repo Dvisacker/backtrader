@@ -1,0 +1,8 @@
+2019-07-11 16:01:18,794 - INFO - Creating DataHandler, Strategy, Portfolio and ExecutionHandler
+2019-07-11 16:01:26,032 - INFO - Logging some stuff
+2019-07-11 16:03:00,423 - INFO - New bar bitmex
+2019-07-11 16:03:00,465 - INFO - Receiving MARKET event. Current Queue size: 0
+2019-07-11 16:03:00,465 - INFO - Insert new bar bitmex
+2019-07-11 16:03:00,467 - INFO - SCORE_LAST: -7.965915982599369
+2019-07-11 16:03:00,467 - INFO - LONG,SHORT
+2019-07-11 16:03:00,569 - INFO - Receiving SIGNAL event. Current Queue size: 0

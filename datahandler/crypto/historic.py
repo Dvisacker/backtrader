@@ -1,16 +1,19 @@
-from __future__ import print_function
+
 
 import math
-from abc import ABCMeta, abstractmethod
-from datetime import datetime
 import os, os.path
 import numpy as np
 import pandas as pd
 
+from abc import ABCMeta, abstractmethod
+from datetime import datetime
+
 from event import MarketEvent
-from utils.helpers import get_data_file, get_ohlcv_file, get_ohlcv_window
+from utils.helpers import get_data_file, get_ohlcv_file, get_timeframe
 from utils.scrape import scrape_ohlcv
+from utils.log import logger
 from .datahandler import DataHandler
+
 
 
 class HistoricCSVCryptoDataHandler(DataHandler):
@@ -31,7 +34,7 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         """
         self.events = events
         self.csv_dir = configuration.csv_dir
-        self.timeframe = get_ohlcv_window(configuration.ohlcv_window)
+        self.timeframe = get_timeframe(configuration.timeframe)
         self.feeds = configuration.feeds
         self.start_date = configuration.start_date
         self.end_date = configuration.end_date
@@ -56,9 +59,9 @@ class HistoricCSVCryptoDataHandler(DataHandler):
             csv_filename = get_ohlcv_file(e, s, self.timeframe, self.start_date, self.end_date)
             csv_filepath = os.path.join(self.csv_dir, csv_filename)
             if not os.path.isfile(csv_filepath):
-              print('Downloading {}'.format(csv_filename))
+              logger.info('Downloading {}'.format(csv_filename))
               scrape_ohlcv(e,s,self.timeframe, self.start_date, self.end_date)
-              print('Downloaded {}'.format(csv_filename))
+              logger.info('Downloaded {}'.format(csv_filename))
 
 
     def _open_convert_csv_files(self):
@@ -122,7 +125,7 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         try:
             bars_list = self.latest_symbol_data[exchange][symbol]
         except KeyError:
-            print("That symbol is not available in the historical data set.")
+            logger.error("That symbol is not available in the historical data set.")
             raise
         else:
             return bars_list[-1]
@@ -135,7 +138,7 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         try:
             bars_list = self.latest_symbol_data[exchange][symbol]
         except KeyError:
-            print("That symbol is not available in the historical data set.")
+            logger.error("That symbol is not available in the historical data set.")
             raise
         else:
             return bars_list[-N:]
@@ -144,7 +147,7 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         try:
             bars_list = self.latest_symbol_data[exchange][symbol]
         except KeyError:
-            print("That symbol is not available in the historical data set.")
+            logger.error("That symbol is not available in the historical data set.")
             raise
         else:
             return bars_list
@@ -156,7 +159,7 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         try:
             bars_list = self.latest_symbol_data[exchange][symbol]
         except KeyError:
-            print("That symbol is not available in the historical data set.")
+            logger.error("That symbol is not available in the historical data set.")
             raise
         else:
             return bars_list[-1][0]
@@ -169,7 +172,7 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         try:
             bars_list = self.latest_symbol_data[exchange][symbol]
         except KeyError:
-            print("That symbol is not available in the historical data set.")
+            logger.error("That symbol is not available in the historical data set.")
             raise
         else:
             return getattr(bars_list[-1][1], val_type)
@@ -182,7 +185,7 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         try:
             bars_list = self.get_latest_bars(exchange, symbol, N)
         except KeyError:
-            print("That symbol is not available in the historical data set.")
+            logger.error("That symbol is not available in the historical data set.")
             raise
         else:
             return np.array([getattr(b[1], val_type) for b in bars_list])
@@ -191,7 +194,7 @@ class HistoricCSVCryptoDataHandler(DataHandler):
         try:
             bars_list = self.get_all_bars(exchange, symbol)
         except KeyError:
-            print("That symbol is not available in the historical data set.")
+            logger.error("That symbol is not available in the historical data set.")
             raise
         else:
             return np.array([getattr(b[1], val_type) for b in bars_list])
@@ -206,7 +209,7 @@ class HistoricCSVCryptoDataHandler(DataHandler):
           instrument_symbol = asset_symbol + "/USD"
           bars_list = self.get_latest_bars(exchange, instrument_symbol, 1)
         except KeyError:
-          print("That symbol is not available in the historical data set.")
+          logger.error("That symbol is not available in the historical data set.")
           raise
         else:
           return np.array([getattr(b[1], 'close') for b in bars_list])

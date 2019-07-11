@@ -1,19 +1,23 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# backtest.py
+# simple_backtest.py
 
 from __future__ import print_function
 
 import os
 import csv
+import pdb
 import time
 import pprint
 import datetime
+import subprocess
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from threading import Thread
+from utils.helpers import format_instrument_list
 from distutils.dir_util import copy_tree
+from utils.log import logger
 
 try:
     import Queue as queue
@@ -46,9 +50,16 @@ class SimpleBacktest(object):
         self.result_filepath = os.path.join(self.result_dir, 'last/results.csv')
         self.last_result_dir = os.path.join(self.result_dir, 'last')
 
-        self.heartbeat = configuration.heartbeat
+        self.backtest_name = configuration.backtest_name
+        self.configuration_filename = configuration.configuration_filename
+        self.start_date = configuration.start_date
+        self.end_date = configuration.end_date
+        self.instruments = configuration.instruments
+        self.backtest_date = datetime.utcnow()
         self.graph_refresh_period = configuration.graph_refresh_period
-        self.backtest_start_time = datetime.utcnow()
+        self.heartbeat = configuration.heartbeat
+        self.default_leverage = configuration.default_leverage
+        self.strategy = configuration.strategy
 
         self.data_handler_cls = data_handler
         self.execution_handler_cls = execution_handler
@@ -65,6 +76,7 @@ class SimpleBacktest(object):
         self.update_charts = configuration.update_charts
         self.strategy_params = configuration.strategy_params
 
+        self._close_excel()
         self._generate_trading_instances()
 
     def _generate_trading_instances(self):
@@ -72,7 +84,7 @@ class SimpleBacktest(object):
         Generates the trading instance objects from
         their class types.
         """
-        print("Creating DataHandler, Strategy, Portfolio and ExecutionHandler")
+        logger.info("Creating DataHandler, Strategy, Portfolio and ExecutionHandler")
 
         self.data_handler = self.data_handler_cls(self.events, self.configuration)
         self.strategy = self.strategy_cls(self.data_handler, self.events, self.configuration, **self.strategy_params)
@@ -127,7 +139,7 @@ class SimpleBacktest(object):
                             self.fills += 1
                             self.portfolio.update_fill(event)
 
-            time.sleep(self.heartbeat)
+            # time.sleep(self.heartbeat)
 
     def _update_charts(self):
         self.portfolio.update_charts()
@@ -137,13 +149,13 @@ class SimpleBacktest(object):
         Outputs the strategy performance from the backtest.
         """
         # Create a timestamped directory for backtest results
-        backtest_result_dir = os.path.join(self.result_dir, str(self.backtest_start_time))
+        backtest_result_dir = os.path.join(self.result_dir, str(self.backtest_date))
         os.mkdir(backtest_result_dir)
         self.portfolio.create_backtest_result_dataframe()
 
-        self._open_results_in_excel()
         stats = self._show_stats()
         self._save_results(stats)
+        self._open_results_in_excel()
         self._show_charts()
 
     def _show_charts(self):
@@ -151,37 +163,67 @@ class SimpleBacktest(object):
           self.portfolio.output_graphs()
 
     def _save_results(self, stats):
-        backtest_result_dir = os.path.join(self.result_dir, str(self.backtest_start_time))
+        backtest_result_dir = os.path.join(self.result_dir, str(self.backtest_date))
         self.portfolio.save_results(backtest_result_dir)
 
-        fieldnames = [ 'Backtest Timestamp', 'Total USD Return', 'Total BTC Return', 'Sharpe Ratio', 'BTC Sharpe Ratio',
-        'Max Drawdown', 'BTC Max Drawdown', 'Drawdown Duration', 'BTC Drawdown Duration',
-        'Avg. winning trade', 'Median duration', 'Avg. losing trade', 'Median returns winning', 'Largest losing trade',
+        backtest_scores = os.path.join(self.last_result_dir, 'scores.csv')
+        all_backtest_scores = os.path.join(self.result_dir, 'all/scores.csv')
+
+        fieldnames = [ 'Backtest Name', 'Backtest Date', 'Strategy', 'Start Date', 'End Date', 'Instrument(s)', 'Params'] +\
+        [ 'Number of signals', 'Number of orders', 'Number of trades', 'Total USD Return', 'Total BTC Return',
+        'Sharpe Ratio', 'BTC Sharpe Ratio', 'Max Drawdown', 'BTC Max Drawdown', 'Drawdown Duration', 'BTC Drawdown Duration',
+        'Monthly BTC Return', 'Yearly BTC Return', 'Avg. winning trade', 'Median duration', 'Avg. losing trade', 'Median returns winning', 'Largest losing trade',
         'Gross loss', 'Largest winning trade', 'Avg duration', 'Avg returns losing', 'Median returns losing', 'Profit factor',
         'Winning round trips', 'Percent profitable', 'Total profit', 'Shortest duration', 'Median returns all round trips',
         'Losing round trips', 'Longest duration', 'Avg returns all round trips', 'Gross profit', 'Avg returns winning',
-        'Total number of round trips', 'Ratio Avg. Win:Avg. Loss', 'Avg. trade net profit', 'Even round trips']
+        'Total number of round trips', 'Ratio Avg. Win:Avg. Loss', 'Avg. trade net profit', 'Even round trips',
+        'Configuration Filename', 'Leverage']
 
-        out = open(os.path.join(self.last_result_dir, 'scores.csv'), "w")
+        all_backtest_scores_exists = os.path.isfile(all_backtest_scores)
 
         try:
-          with out as csv_file:
-            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-            writer.writeheader()
+          with open(backtest_scores, "w") as a, open(all_backtest_scores, "a") as b:
+            writer_a = csv.DictWriter(a, fieldnames=fieldnames)
+            writer_b = csv.DictWriter(b, fieldnames=fieldnames)
+
+            writer_a.writeheader()
+            if not all_backtest_scores_exists:
+              writer_b.writeheader()
 
             general_stats = stats['general']
             pnl_stats = stats['pnl']['All trades'].to_dict()
             summary_stats = stats['summary']['All trades'].to_dict()
             duration_stats = stats['duration']['All trades'].to_dict()
             return_stats = stats['returns']['All trades'].to_dict()
+            params = '/'.join([ '{}:{}'.format(item[0], item[1]) for item in self.strategy_params.items() ])
 
-            row = { 'Backtest Timestamp': self.backtest_start_time, **general_stats, **pnl_stats, **summary_stats, **duration_stats, **return_stats }
-            writer.writerow(row)
+            row = { 'Backtest Name': self.backtest_name,
+                    'Backtest Date': self.backtest_date,
+                    'Strategy': self.strategy,
+                    'Start Date': self.start_date,
+                    'End Date': self.end_date,
+                    'Instrument(s)': format_instrument_list(self.instruments),
+                    'Params': params,
+                    'Number of signals': self.signals,
+                    'Number of orders': self.orders,
+                    'Number of trades': self.fills,
+                    **general_stats,
+                    **pnl_stats,
+                    **summary_stats,
+                    **duration_stats,
+                    **return_stats,
+                    'Configuration Filename': self.configuration_filename,
+                    'Leverage': self.default_leverage
+                  }
+
+            writer_a.writerow(row)
+            writer_b.writerow(row)
+
         except IOError:
-          print('I/O Error')
+          logger.error('I/O Error')
 
     def _show_stats(self):
-        print("Creating summary stats...")
+        logger.info("Creating summary stats...")
         stats = self.portfolio.compute_stats()
 
         global_stats = stats['general']
@@ -222,8 +264,11 @@ class SimpleBacktest(object):
 
     def _open_results_in_excel(self):
         print("Opening results in excel")
+        all_backtest_scores = os.path.join(self.result_dir, 'all/scores.csv')
+        os.system("open -a 'Microsoft Excel.app' '%s'" % all_backtest_scores)
 
-        os.system("open -a 'Microsoft Excel.app' '%s'" % self.result_filepath)
+    def _close_excel(self):
+        subprocess.call(['osascript', '-e', 'tell application "Excel" to quit'])
 
     def start_trading(self):
         """

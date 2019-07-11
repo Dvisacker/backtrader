@@ -3,8 +3,7 @@
 
 # event.py
 
-from __future__ import print_function
-
+from utils.log import logger
 
 class Event(object):
     """
@@ -33,7 +32,7 @@ class MarketEvent(Event):
       """
       Outputs tick data
       """
-      print(
+      logger.info(
           "MARKET: Data=%s, Timestamp=%s" %
           (self.data, self.timestamp)
       )
@@ -67,7 +66,7 @@ class SignalEvent(Event):
         """
         Outputs the values within the Order.
         """
-        print(
+        logger.info(
             "SIGNAL: Exchange=%s, Symbol=%s, Type=%s, Strength=%s" %
             (self.exchange, self.symbol, self.signal_type, self.strength)
         )
@@ -93,7 +92,7 @@ class OrderEvent(Event):
     quantity and a direction.
     """
 
-    def __init__(self, exchange, symbol, order_type, quantity=0, direction='', leverage=1, price=None, params={}):
+    def __init__(self, exchange, symbol, order_type, quantity=0, direction='', leverage=1, price=None):
         """
         Initialises the order type, setting whether it is
         a Market order ('MKT') or Limit order ('LMT'), has
@@ -115,13 +114,12 @@ class OrderEvent(Event):
         self.direction = direction
         self.leverage = leverage
         self.price = price
-        self.params = params
 
     def print_order(self):
         """
         Outputs the values within the order
         """
-        print(
+        logger.info(
             "ORDER: Exchange=%s, Symbol=%s, Type=%s, Quantity=%s, Direction=%s, Price=%s" %
             (self.exchange, self.symbol, self.order_type, self.quantity, self.direction, self.price)
         )
@@ -192,7 +190,7 @@ class FillEvent(Event):
         """
         Outputs the values within the Order.
         """
-        print(
+        logger.info(
             "FILL: Exchange=%s, Symbol=%s, Quantity=%s, Direction=%s, Price=%s, Type=%s" %
             (self.exchange, self.symbol, self.quantity, self.direction, self.price, self.fill_type)
         )

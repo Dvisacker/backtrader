@@ -13,12 +13,18 @@ def truncate(n, decimals=0):
   multiplier = 10 ** decimals
   return int(n * multiplier) / multiplier
 
+def convert_order_type(order_type):
+  return {
+    "StopLoss": "Stop",
+    "TakeProfit": "MarketIfTouched"
+  }[order_type]
+
 def get_precision(symbol):
   return {
      "BCH/BTC": 4,
       "BCHM19": 4,
-     "EOS/BTC": 6,
-      "EOSM19": 6,
+     "EOS/BTC": 7,
+      "EOSM19": 7,
      "ETH/BTC": 4,
       "ETHM19": 4,
       "ETHXBT": 4,
@@ -28,8 +34,8 @@ def get_precision(symbol):
       "TRXM19": 7,
      "ADA/BTC": 7,
       "ADAM19": 7,
-     "XRP/BTC": 7,
-      "XRPM19": 7,
+     "XRP/BTC": 8,
+      "XRPM19": 8,
      "BTC/USD": 0,
       "XBTM19": 0,
      "ETH/USD": 1,
@@ -163,21 +169,21 @@ def from_exchange_to_standard_notation(exchange, symbol):
       return 'BTC/USD'
     elif symbol == 'ETHUSD':
       return 'ETH/USD'
-    elif symbol == 'ADAM19':
+    elif symbol == 'ADAU19':
       return 'ADA/BTC'
-    elif symbol == "BCHM19":
+    elif symbol == "BCHU19":
       return 'BCH/BTC'
-    elif symbol == "EOSM19":
+    elif symbol == "EOSU19":
       return 'EOS/BTC'
-    elif symbol == "ETHM19":
+    elif symbol == "ETHU19":
       return 'ETH/BTC'
-    elif symbol == "LTCM19":
+    elif symbol == "LTCU19":
       return 'LTC/BTC'
-    elif symbol == "TRXM19":
+    elif symbol == "TRXU19":
       return 'TRX/BTC'
-    elif symbol == "XRPM19":
+    elif symbol == "XRPU19":
       return 'XRP/BTC'
-    elif symbol == "XBTM19":
+    elif symbol == "XBTU19":
       return 'BTC/USD'
     elif symbol == '.BADAXBT':
       return 'ADA/BTC'
@@ -203,21 +209,21 @@ def from_exchange_to_standard_notation(exchange, symbol):
 def from_standard_to_exchange_notation(exchange, symbol, index=False):
   if exchange == 'bitmex' and index == False:
     if symbol == "ADA/BTC":
-      return "ADAM19"
+      return "ADAU19"
     elif symbol == "BCH/BTC":
-      return "BCHM19"
+      return "BCHU19"
     elif symbol == "EOS/BTC":
-      return "EOSM19"
+      return "EOSU19"
     elif symbol == "ETH/BTC":
-      return "ETHM19"
+      return "ETHU19"
     elif symbol == "LTC/BTC":
-      return "LTCM19"
+      return "LTCU19"
     elif symbol == "TRX/BTC":
-      return "TRXM19"
+      return "TRXU19"
     elif symbol == "XRP/BTC":
-      return "XRPM19"
+      return "XRPU19"
     elif symbol == "BTC/USD":
-      return "XBTM19"
+      return "XBTU19"
     elif symbol == "ETH/USD":
       return "ETH/USD"
 
@@ -247,7 +253,7 @@ def from_standard_to_exchange_notation(exchange, symbol, index=False):
   else:
     return symbol
 
-def get_ohlcv_window(period):
+def get_timeframe(period):
   if period == 60:
     return '1m'
   elif period == 300:

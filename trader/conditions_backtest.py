@@ -44,7 +44,7 @@ class MultiConditionsBacktest(object):
         self.result_filepath = os.path.join(self.result_dir, 'last/results.csv')
 
         self.heartbeat = configuration.heartbeat
-        self.backtest_start_time = datetime.utcnow()
+        self.backtest_date = datetime.utcnow()
 
         self.start_dates = configuration.start_date
         self.end_dates = configuration.end_date

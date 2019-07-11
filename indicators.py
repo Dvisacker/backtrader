@@ -31,6 +31,14 @@ def mean_momentum(series, short_window, long_window):
 
   return (new_mean - old_mean) / std
 
+def mean_volume_deviation(volumes, window):
+  volumes_series = pd.Series(volumes)
+  mean = volumes_series.rolling(window).mean()
+  std = volumes_series.rolling(window).std()
+
+  result = (volumes_series - mean) / std
+  return result.iloc[-1]
+
 def modified_momentum(high, low, close, momentum_window, atr_window, data_window):
   old_mean = np.mean(close[-data_window:-momentum_window])
   new_mean = np.mean(close[-momentum_window:-1])

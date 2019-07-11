@@ -1,5 +1,6 @@
-import datetime
+
 import talib
+import datetime
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -12,6 +13,8 @@ from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import CryptoPortfolio
 
 from indicators import mean_momentum
+
+from utils.log import logger
 
 class OnlyLongMomentumStrategy(Strategy):
     """
@@ -38,6 +41,8 @@ class OnlyLongMomentumStrategy(Strategy):
 
         # Set to True if a symbol is in the market
         self.market_status = self._calculate_initial_market_status()
+
+        self.logger = logger
 
     def _calculate_initial_market_status(self):
         """
@@ -72,14 +77,14 @@ class OnlyLongMomentumStrategy(Strategy):
                   momentum = mean_momentum(prices, self.short_period, self.long_period)
                   dt = datetime.datetime.utcnow()
                   if momentum > self.zscore_entry and self.market_status[e][s] != 'LONG':
-                      print("LONG: {}".format(bar_date))
+                      self.logger.info("LONG: {}".format(bar_date))
                       sig_dir = 'LONG'
                       signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
                       signal_events = SignalEvents(signals, 1)
                       self.market_status[e][s] = 'LONG'
                       self.events.put(signal_events)
                   elif abs(momentum) <= self.zscore_exit and self.market_status[e][s] != 'EXIT':
-                      print("EXIT: {}".format(bar_date))
+                      self.logger.info("EXIT: {}".format(bar_date))
                       sig_dir = 'EXIT'
                       signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
                       signal_events = SignalEvents(signals, 1)

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 if __name__ == "__main__" and __package__ is None:
     from sys import path
     from os.path import dirname as dir
@@ -13,7 +15,7 @@ import pandas as pd
 import statsmodels.tsa.stattools as ts
 
 from datetime import datetime
-from utils.helpers import get_ohlcv_file, get_ohlcv_window
+from utils.helpers import get_ohlcv_file, get_timeframe
 from utils.scrape import scrape_ohlcv
 from utils import from_exchange_to_standard_notation, from_standard_to_exchange_notation
 

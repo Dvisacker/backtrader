@@ -2,9 +2,6 @@
 # -*- coding: utf-8 -*-
 
 # mr.py
-
-from __future__ import print_function
-
 from datetime import datetime
 
 import random
@@ -15,6 +12,8 @@ from trader import SimpleBacktest
 from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import CryptoPortfolio
+
+from utils.log import logger
 
 class MultiRandomStrategy(Strategy):
     """
@@ -40,6 +39,8 @@ class MultiRandomStrategy(Strategy):
         self.datetime = datetime.utcnow()
         self.state = dict( (k,v) for k, v in [(s, '') for s in self.instruments])
 
+        self.logger = logger
+
     def calculate_signals(self, event):
         """
         Calculate the SignalEvents randomly
@@ -55,12 +56,12 @@ class MultiRandomStrategy(Strategy):
             choice = random.choice(range(20))
             if (self.state[s] != 'LONG' and self.state[s] != 'SHORT'):
               if choice == 1:
-                print('LONG {}'.format(s))
+                self.logger.info('LONG {}'.format(s))
                 self.state[s] = 'LONG'
                 signal = SignalEvent(1, ex, s, dt, 'LONG', 1.0)
                 signals.append(signal)
               elif choice == 2:
-                print('SHORT {}'.format(s))
+                self.logger.info('SHORT {}'.format(s))
                 self.state[s] = 'SHORT'
                 signal = SignalEvent(1, ex, s, dt, 'SHORT', 1.0)
                 signals.append(signal)
@@ -68,7 +69,7 @@ class MultiRandomStrategy(Strategy):
             else:
               # For each instrument, we have 1/10 chance to exit a position
               if choice == 1 or choice == 2:
-                print('EXIT {}'.format(s))
+                self.logger.info('EXIT {}'.format(s))
                 self.state[s] = 'EXIT'
                 signal = SignalEvent(1, ex, s, dt, 'EXIT', 1.0)
                 signals.append(signal)

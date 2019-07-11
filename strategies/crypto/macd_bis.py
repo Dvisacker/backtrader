@@ -1,5 +1,6 @@
 import datetime
 import talib
+import logging
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -10,6 +11,7 @@ from trader import SimpleBacktest
 from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import CryptoPortfolio
+from utils.log import logger
 
 class MACDCrossover(Strategy):
     """
@@ -35,6 +37,7 @@ class MACDCrossover(Strategy):
 
         # Set to True if a symbol is in the market
         self.market_status = self._calculate_initial_market_status()
+        self.logger = logger
 
     def _calculate_initial_market_status(self):
         """
@@ -73,14 +76,14 @@ class MACDCrossover(Strategy):
                     sig_dir = ""
 
                     if macd_line[-1] > signal_line[-1] and self.market_status[e][s] != 'LONG':
-                        print("LONG: {}".format(bar_date))
+                        self.logger.info("LONG: {}".format(bar_date))
                         sig_dir = 'LONG'
                         signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
                         signal_events = SignalEvents(signals, 1)
                         self.market_status[e][s] = 'LONG'
                         self.events.put(signal_events)
                     elif macd_line[-1] < signal_line[-1] and self.market_status[e][s] != 'SHORT':
-                        print("SHORT: {}".format(bar_date))
+                        self.logger.info("SHORT: {}".format(bar_date))
                         sig_dir = 'SHORT'
                         signals = [SignalEvent(1, e, s, dt, sig_dir, 1.0)]
                         signal_events = SignalEvents(signals, 1)
