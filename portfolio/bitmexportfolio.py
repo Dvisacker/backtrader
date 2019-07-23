@@ -422,3 +422,52 @@ class BitmexPortfolio(object):
         Saves the position and holdings updates to a database or to a file
         """
         self.db.insert_portfolio(current_portfolio)
+
+    def update_result_dataframe(self):
+        portfolios = pd.DataFrame(self.all_portfolios)
+        transactions = pd.DataFrame(self.all_transactions)
+        indicators = compute_all_indicators(self.instruments, self.data, self.indicators)
+        columns = ['datetime'] + [ 'bitmex-{}-position-in-USD'.format(s) for s in self.instruments ]
+        positions = portfolios[columns]
+        positions['cash'] = portfolios['bitmex-BTC-available-balance']
+        portfolios.set_index('datetime', inplace=True)
+        positions.set_index('datetime', inplace=True)
+
+        portfolios['benchmark_equity'] = 1 * (portfolios['bitmex-BTC-price'] / portfolios['bitmex-BTC-price'].ix[0])
+        portfolios['btc_benchmark_equity'] = 1 / portfolios['bitmex-BTC-price']
+
+        portfolios['returns'] = portfolios['total-in-USD'].pct_change()
+        portfolios['btc_returns'] = portfolios['total'].pct_change()
+        portfolios['benchmark_returns'] = portfolios['benchmark_equity'].pct_change()
+        portfolios['btc_benchmark_returns'] = portfolios['btc_benchmark_equity'].pct_change()
+
+        portfolios['equity_curve'] = (1.0 + portfolios['returns']).cumprod()
+        portfolios['btc_equity_curve'] = (1.0 + portfolios['btc_returns']).cumprod()
+        portfolios['benchmark_equity_curve'] = (1.0 + portfolios['benchmark_returns']).cumprod()
+        portfolios['btc_benchmark_equity_curve'] = (1.0 + portfolios['btc_benchmark_returns']).cumprod()
+
+        self.portfolio_dataframe = portfolios
+        self.positions_dataframe = positions
+
+        if not transactions.empty:
+          transactions.set_index('datetime', inplace=True)
+          trades = pf.round_trips.extract_round_trips(transactions)
+          self.transactions_dataframe = transactions
+          self.indicators_dataframe = indicators
+          self.trades_dataframe = trades
+        else:
+          self.transactions_dataframe = pd.DataFrame()
+          self.indicators_dataframe = pd.DataFrame()
+          self.trades_dataframe = pd.DataFrame()
+
+    def save_result_dataframe(self, live_result_dir):
+        self.portfolio_dataframe.to_csv(os.path.join(self.result_dir, 'last/results.csv'))
+        self.positions_dataframe.to_csv(os.path.join(self.result_dir, 'last/positions.csv'))
+        self.transactions_dataframe.to_csv(os.path.join(self.result_dir, 'last/transactions.csv'))
+        self.indicators_dataframe.to_csv(os.path.join(self.result_dir, 'last/indicators.csv'))
+        self.trades_dataframe.to_csv(os.path.join(self.result_dir, 'last/trades.csv'))
+        self.portfolio_dataframe.to_csv(os.path.join(live_result_dir, 'results.csv'))
+        self.positions_dataframe.to_csv(os.path.join(live_result_dir, 'positions.csv'))
+        self.transactions_dataframe.to_csv(os.path.join(live_result_dir, 'transactions.csv'))
+        self.indicators_dataframe.to_csv(os.path.join(live_result_dir, 'indicators.csv'))
+        self.trades_dataframe.to_csv(os.path.join(live_result_dir, 'trades.csv'))

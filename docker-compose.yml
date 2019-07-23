@@ -1,0 +1,34 @@
+version: '3'
+services:
+  bot:
+    image: "prooftrader:v1"
+    ports:
+      - '8000:8000'
+    volumes:
+      - results:/results
+    command: python3 prooftrader.py -f ./configurations/live/mr.json --live
+    environment:
+    - BITMEX_TEST_KEY_ID=${BITMEX_TEST_KEY_ID}
+    - BITMEX_TEST_KEY_SECRET=${BITMEX_TEST_KEY_SECRET}
+    tty: true
+    links:
+      - db
+    depends_on:
+      - db
+
+  db:
+    image: mongo:latest
+    container_name: "db"
+    environment:
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+    volumes:
+      - ./data/db:/data/db
+    ports:
+      - "27017:27017"
+    command: mongod
+
+
+volumes:
+  results:
+

@@ -102,7 +102,6 @@ class LiveDataHandler(DataHandler):
     def _listen_to_exchange_data(self):
       # Listen to exchange data is executed in a separate thread which requires a new event loop
       asyncio.set_event_loop(asyncio.new_event_loop())
-      self.logger.info('Logging some stuff')
 
       f = FeedHandler()
       symbols = []
@@ -122,12 +121,10 @@ class LiveDataHandler(DataHandler):
       """
       Insert a new bar into the data feed
       """
-      self.logger.info('New bar bitmex')
       if data and timestamp:
         self.events.put(MarketEvent(data, timestamp))
 
     def insert_new_bar_bitmex(self, data, timestamp):
-        self.logger.info('Insert new bar bitmex')
         for instrument in list(data.keys()):
           tick = data[instrument]
           symbol = from_exchange_to_standard_notation('bitmex', instrument)

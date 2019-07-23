@@ -14,7 +14,7 @@ from trader import SimpleBacktest
 from datahandler.crypto import HistoricCSVCryptoDataHandler
 from execution.crypto import SimulatedCryptoExchangeExecutionHandler
 from portfolio import CryptoPortfolio
-from utils.log import logger
+from utils.log import get_logger
 
 class SingleOLSMeanReversionStrategy(Strategy):
     """
@@ -56,6 +56,7 @@ class SingleOLSMeanReversionStrategy(Strategy):
         self.datetime = datetime.utcnow()
         self.long_market = False
         self.short_market = False
+        self.logger = configuration.logger
 
     def calculate_xy_signals(self, zscore_last):
         """
@@ -75,7 +76,7 @@ class SingleOLSMeanReversionStrategy(Strategy):
         # If we're long the market and below the
         # negative of the high zscore threshold
         if zscore_last <= -self.zscore_entry and not self.long_market:
-            logger.info('LONG,SHORT')
+            self.logger.info('LONG,SHORT')
             self.long_market = True
             y_signal = SignalEvent(1, ex, p0, dt, 'LONG', 1.0)
             x_signal = SignalEvent(1, ex, p1, dt, 'SHORT', 1.0)
@@ -83,7 +84,7 @@ class SingleOLSMeanReversionStrategy(Strategy):
         # If we're long the market and between the
         # absolute value of the low zscore threshold
         if abs(zscore_last) <= self.zscore_exit and self.long_market:
-            logger.info('EXIT,EXIT')
+            self.logger.info('EXIT,EXIT')
             self.long_market = False
             y_signal = SignalEvent(1, ex, p0, dt, 'EXIT', 1.0)
             x_signal = SignalEvent(1, ex, p1, dt, 'EXIT', 1.0)
@@ -91,7 +92,7 @@ class SingleOLSMeanReversionStrategy(Strategy):
         # If we're short the market and above
         # the high zscore threshold
         if zscore_last >= self.zscore_entry and not self.short_market:
-            logger.info('SHORT,LONG')
+            self.logger.info('SHORT,LONG')
             self.short_market = True
             y_signal = SignalEvent(1, ex, p0, dt, 'SHORT', 1.0)
             x_signal = SignalEvent(1, ex, p1, dt, 'LONG', 1.0)
@@ -99,7 +100,7 @@ class SingleOLSMeanReversionStrategy(Strategy):
         # If we're short the market and between the
         # absolute value of the low zscore threshold
         if abs(zscore_last) <= self.zscore_exit and self.short_market:
-            logger.info('EXIT,EXIT')
+            self.logger.info('EXIT,EXIT')
             self.short_market = False
             y_signal = SignalEvent(1, ex, p0, dt, 'EXIT', 1.0)
             x_signal = SignalEvent(1, ex, p1, dt, 'EXIT', 1.0)
@@ -128,7 +129,7 @@ class SingleOLSMeanReversionStrategy(Strategy):
                 # Calculate the current z-score of the residuals
                 spread = y - self.hedge_ratio * x
                 zscore_last = ((spread - spread.mean())/spread.std())[-1]
-                logger.info('SCORE_LAST: {}'.format(zscore_last))
+                self.logger.info('SCORE_LAST: {}'.format(zscore_last))
 
                 # Calculate signals and add to events queue
                 y_signal, x_signal = self.calculate_xy_signals(zscore_last)

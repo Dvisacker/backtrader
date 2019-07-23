@@ -6,6 +6,7 @@ logger = None
 def get_logger(configuration=None):
   if configuration is not None:
     logger = create_logger(configuration)
+    print('Creating logger')
     return logger
   else:
     return logger
@@ -17,7 +18,8 @@ def create_logger(configuration):
 
   logger = logging.getLogger('logger')
   log_format = '%(asctime)s - %(levelname)-3s - %(message)s'
-  formatter = logging.Formatter(log_format)
+  time_format = "%Y-%m-%d %H:%M:%S"
+  formatter = logging.Formatter(log_format, time_format)
 
   log_dir = os.path.join(result_dir, str(backtest_date))
   os.mkdir(log_dir)

@@ -1,6 +1,5 @@
 import datetime
 import talib
-import self.logger
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm

@@ -44,7 +44,7 @@ class CryptoLiveTrade(object):
         """
 
         self.configuration = configuration
-        self.backtest_date = datetime.utcnow()
+        self.backtest_date = configuration.backtest_date
         self.data_handler_cls = data_handler
         self.execution_handler_cls = execution_handler
         self.portfolio_cls = portfolio
@@ -60,7 +60,11 @@ class CryptoLiveTrade(object):
         self.exchange_names = configuration.exchange_names
         self.latest_timestamp = None
         self.logger = configuration.logger
+        self.live_result_dir = os.path.join(self.result_dir, str(self.backtest_date))
+
         self._generate_trading_instances()
+
+
 
     def _generate_trading_instances(self):
         """
@@ -99,6 +103,7 @@ class CryptoLiveTrade(object):
                         self.data_handler.insert_new_bar_bitmex(event.data, event.timestamp)
                         self.strategy.calculate_signals(event)
                         self.portfolio.update_timeindex(event)
+                        self.save_results()
 
 
                     elif event.type == 'SIGNAL':
@@ -117,6 +122,10 @@ class CryptoLiveTrade(object):
 
             time.sleep(self.heartbeat)
 
+
+    def save_results(self):
+        self.portfolio.update_result_dataframe()
+        self.portfolio.save_result_dataframe(self.live_result_dir)
 
     def start_trading(self):
         """

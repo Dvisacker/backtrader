@@ -1,0 +1,6 @@
+2019-07-11 17:59:58 - INFO - Creating DataHandler, Strategy, Portfolio and ExecutionHandler
+2019-07-11 17:59:58 - INFO - Initializing exchange data
+2019-07-11 18:02:01 - INFO - Receiving MARKET event. Current Queue size: 0
+2019-07-11 18:02:01 - INFO - SCORE_LAST: 0.6863028196280726
+2019-07-11 18:03:05 - INFO - Receiving MARKET event. Current Queue size: 0
+2019-07-11 18:03:05 - INFO - SCORE_LAST: 1.0721502133410472
