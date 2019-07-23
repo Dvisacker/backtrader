@@ -27,6 +27,7 @@ class QDAStrategy(Strategy):
     prediction.
     """
     def __init__(self, data, events, configuration):
+        self.strategy_name = "qda"
         self.data = data
         self.instruments = configuration.instruments
         self.csv_dir = configuration.csv_dir

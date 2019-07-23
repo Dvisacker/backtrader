@@ -34,6 +34,8 @@ class MACDCrossover(Strategy):
         self.long_window = long_window
         self.trigger_window = trigger_window
 
+        self.strategy_name = "macd_crossover"
+
         # Set to True if a symbol is in the market
         self.bought = self._calculate_initial_bought()
 

@@ -27,6 +27,7 @@ class OnlyShortMomentumStrategy(Strategy):
         :param short_window: The short moving average lookback.
         :param long_window: The long moving average lookback.
         """
+        self.strategy_name = "only_short_momentum"
         self.data = data
         self.instruments = configuration.instruments
         self.exchanges = configuration.exchange_names

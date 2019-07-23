@@ -51,8 +51,9 @@ class OLSMeanReversionStrategy(Strategy):
 
         self.long_market = False
         self.short_market = False
-
         self.logger = logger
+
+        self.strategy_name = "mean_reversion"
 
     def calculate_xy_signals(self, zscore_last):
         """

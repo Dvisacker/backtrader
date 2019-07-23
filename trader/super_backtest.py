@@ -251,7 +251,7 @@ class SuperBacktest(object):
                   row = {
                     'Backtest Name': self.backtest_name,
                     'Backtest Date': self.backtest_date,
-                    'Strategy': self.strategy,
+                    'Strategy': self.strategy.strategy_name,
                     'Start Date': start,
                     'End Date': end,
                     'Instrument(s)': format_instrument_list(instruments),

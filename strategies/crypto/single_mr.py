@@ -39,7 +39,7 @@ class SingleOLSMeanReversionStrategy(Strategy):
         events - The Event Queue object.
         """
         self.data = data
-        self.strategy_name = "mean_reversion"
+        self.strategy_name = "single_mean_reversion"
         self.instruments = configuration.instruments
         self.events = events
         self.ols_window = ols_window

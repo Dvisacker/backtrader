@@ -52,6 +52,7 @@ class CrossExchangeOLSMeanReversionStrategy(Strategy):
         self.short_market = False
 
         self.logger = logger
+        self.strategy_name = "cross_exchange_mr"
 
     def calculate_xy_signals(self, zscore_last):
         """

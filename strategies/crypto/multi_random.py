@@ -29,6 +29,7 @@ class MultiRandomStrategy(Strategy):
         self.data = data
         self.instruments = configuration.instruments
         self.events = events
+        self.strategy_name = "multi_random"
 
         # by default, we simply take the first given exchange
         self.exchanges = configuration.exchange_names

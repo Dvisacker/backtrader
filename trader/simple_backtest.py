@@ -201,7 +201,7 @@ class SimpleBacktest(object):
 
             row = { 'Backtest Name': self.backtest_name,
                     'Backtest Date': self.backtest_date,
-                    'Strategy': self.strategy,
+                    'Strategy': self.strategy.strategy_name,
                     'Start Date': self.start_date,
                     'End Date': self.end_date,
                     'Instrument(s)': format_instrument_list(self.instruments),

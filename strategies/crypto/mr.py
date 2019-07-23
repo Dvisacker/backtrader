@@ -57,6 +57,7 @@ class OLSMeanReversionStrategy(Strategy):
         self.position_status = dict((key, 'EXIT') for key in self.pairs )
 
         self.logger = logger
+        self.strategy_name = "mean_reversion"
 
     def calculate_xy_signals(self, pair, zscore_last):
         """

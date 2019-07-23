@@ -27,6 +27,7 @@ class RSIStrategy(Strategy):
         :param long_window: The long moving average lookback.
         """
         self.data = data
+        self.strategy_name = "rsi"
         self.instruments = configuration.instruments
         self.exchanges = configuration.exchange_names
         self.exchange = self.exchanges[0]
