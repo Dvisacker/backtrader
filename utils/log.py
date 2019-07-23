@@ -5,8 +5,8 @@ logger = None
 
 def get_logger(configuration=None):
   if configuration is not None:
+    global logger
     logger = create_logger(configuration)
-    print('Creating logger')
     return logger
   else:
     return logger

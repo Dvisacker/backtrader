@@ -1,0 +1,1 @@
+2019-07-23 23:34:03 - INFO - Creating DataHandler, Strategy, Portfolio and ExecutionHandler

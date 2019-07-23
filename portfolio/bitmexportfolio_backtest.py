@@ -70,7 +70,8 @@ class BitmexPortfolioBacktest(object):
 
         self.all_transactions = []
 
-        self.db = MongoHandler()
+        # Not convinced that this option is actually useful
+        # self.db = MongoHandler()
         self.legends_added = False
 
         self.take_profit_gap = configuration.take_profit_gap
@@ -79,7 +80,6 @@ class BitmexPortfolioBacktest(object):
 
 
     def construct_current_portfolios(self):
-      logger.info('Building current portfolios')
       d = {}
 
       for s in self.instruments:

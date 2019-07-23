@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # event.py
-
-from utils.log import logger
+from utils.log import get_logger
 
 class Event(object):
     """
@@ -32,7 +31,7 @@ class MarketEvent(Event):
       """
       Outputs tick data
       """
-      logger.info(
+      get_logger().info(
           "MARKET: Data=%s, Timestamp=%s" %
           (self.data, self.timestamp)
       )
@@ -66,7 +65,7 @@ class SignalEvent(Event):
         """
         Outputs the values within the Order.
         """
-        logger.info(
+        get_logger().info(
             "SIGNAL: Exchange=%s, Symbol=%s, Type=%s, Strength=%s" %
             (self.exchange, self.symbol, self.signal_type, self.strength)
         )
@@ -119,7 +118,7 @@ class OrderEvent(Event):
         """
         Outputs the values within the order
         """
-        logger.info(
+        get_logger().info(
             "ORDER: Exchange=%s, Symbol=%s, Type=%s, Quantity=%s, Direction=%s, Price=%s" %
             (self.exchange, self.symbol, self.order_type, self.quantity, self.direction, self.price)
         )
@@ -190,7 +189,7 @@ class FillEvent(Event):
         """
         Outputs the values within the Order.
         """
-        logger.info(
+        get_logger().info(
             "FILL: Exchange=%s, Symbol=%s, Quantity=%s, Direction=%s, Price=%s, Type=%s" %
             (self.exchange, self.symbol, self.quantity, self.direction, self.price, self.fill_type)
         )

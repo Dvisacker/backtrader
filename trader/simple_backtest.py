@@ -76,6 +76,8 @@ class SimpleBacktest(object):
         self.update_charts = configuration.update_charts
         self.strategy_params = configuration.strategy_params
 
+        self.logger = configuration.logger
+
         self._close_excel()
         self._generate_trading_instances()
 
@@ -84,7 +86,7 @@ class SimpleBacktest(object):
         Generates the trading instance objects from
         their class types.
         """
-        logger.info("Creating DataHandler, Strategy, Portfolio and ExecutionHandler")
+        self.logger.info("Creating DataHandler, Strategy, Portfolio and ExecutionHandler")
 
         self.data_handler = self.data_handler_cls(self.events, self.configuration)
         self.strategy = self.strategy_cls(self.data_handler, self.events, self.configuration, **self.strategy_params)
@@ -220,10 +222,10 @@ class SimpleBacktest(object):
             writer_b.writerow(row)
 
         except IOError:
-          logger.error('I/O Error')
+          self.logger.error('I/O Error')
 
     def _show_stats(self):
-        logger.info("Creating summary stats...")
+        self.logger.info("Creating summary stats...")
         stats = self.portfolio.compute_stats()
 
         global_stats = stats['general']
