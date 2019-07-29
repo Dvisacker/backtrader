@@ -10,16 +10,28 @@ if __name__ == "__main__" and __package__ is None:
 import os
 import ccxt
 import json
+import seaborn
+import warnings
 import argparse
 import pandas as pd
+import numpy as np
+import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt
 
 from datetime import datetime
 from utils.helpers import get_ohlcv_file, get_timeframe
 from utils.scrape import scrape_ohlcv
-from utils.csv import create_csv_files, open_convert_csv_files
+from utils.transforms import boxcox
 from utils.cmd import parse_args
+from utils.csv import create_csv_files, open_convert_csv_files
 from utils import from_exchange_to_standard_notation, from_standard_to_exchange_notation
+from plot.ts import tsplot
+from hmmlearn.hmm import GaussianHMM
+from matplotlib import cm
+from matplotlib.dates import YearLocator, MonthLocator
+
 from statsmodels.tsa.stattools import adfuller, coint
+from statsmodels.graphics.gofplots import qqplot
 
 args = parse_args()
 
@@ -75,44 +87,51 @@ if symbol1 not in exchange.symbols:
 
 create_csv_files(exchange_name, [args.symbols[0]], timeframe, start, end)
 df = open_convert_csv_files(exchange_name, args.symbols[0], timeframe, start, end)
+returns = df.returns
 
 
-def check_for_stationarity(X):
-  df['z_close'] = (df['close'] - df.close.rolling(window=12).mean()) / df.close.rolling(window=12).std()
-  df['zp_close'] = df['z_close'] - df['z_close'].shift(12)
+def plot_in_sample_hidden_states(hmm_model, df):
+    """
+    Plot the adjusted closing prices masked by
+    the in-sample hidden states as a mechanism
+    to understand the market regimes.
+    """
+    # Predict the hidden states array
+    stacked_returns = np.column_stack([df.returns])
+    hidden_states = hmm_model.predict(stacked_returns)
+    # Create the correctly formatted plot
+    fig, axs = plt.subplots(
+        hmm_model.n_components,
+        sharex=True, sharey=True
+    )
 
-  print("\n> Is the prices series stationary ?")
-  dftest = adfuller(df.close, autolag='AIC')
-  print("Test statistic = {:.3f}".format(dftest[0]))
-  print("P-value = {:.3f}".format(dftest[1]))
-  print("Critical values :")
-  for k, v in dftest[4].items():
-      print("\t{}: {} - The price series is {} stationary with {}% confidence".format(k, v, "not" if v<dftest[0] else "", 100-int(k[:-1])))
+    colours = cm.rainbow(
+        np.linspace(0, 1, hmm_model.n_components)
+    )
 
-  print("\n> Is the returns series stationary ?")
-  dftest = adfuller(df.returns, autolag='AIC')
-  print("Test statistic = {:.3f}".format(dftest[0]))
-  print("P-value = {:.3f}".format(dftest[1]))
-  print("Critical values :")
-  for k, v in dftest[4].items():
-      print("\t{}: {} - The returns series is {} stationary with {}% confidence".format(k, v, "not" if v<dftest[0] else "", 100-int(k[:-1])))
+    for i, (ax, colour) in enumerate(zip(axs, colours)):
+        mask = hidden_states == i
+        ax.plot_date(
+            df.index[mask],
+            df.close[mask],
+            ".", linestyle='none',
+            c=colour
+        )
+        ax.set_title("Hidden State #%s" % i)
+        ax.xaxis.set_major_locator(YearLocator())
+        ax.xaxis.set_minor_locator(MonthLocator())
+        ax.grid(True)
+    plt.show()
 
-  print("\n> Is the de-trended price series stationary ?")
-  dftest = adfuller(df.z_close.dropna(), autolag='AIC')
-  print("Test statistic = {:.3f}".format(dftest[0]))
-  print("P-value = {:.3f}".format(dftest[1]))
-  print("Critical values :")
-  for k, v in dftest[4].items():
-      print("\t{}: {} - The price series is {} stationary with {}% confidence".format(k, v, "not" if v<dftest[0] else "", 100-int(k[:-1])))
+stacked_returns = np.column_stack([df.returns])
+print(stacked_returns)
+hmm_model = GaussianHMM(n_components=2, covariance_type="full", n_iter=1000).fit(stacked_returns)
+print('Model Score:', hmm_model.score(stacked_returns))
+plot_in_sample_hidden_states(hmm_model, df)
 
-  print("\n> Is the 12-lag differenced de-trended price series stationary ?")
-  dftest = adfuller(df.zp_close.dropna(), autolag='AIC')
-  print("Test statistic = {:.3f}".format(dftest[0]))
-  print("P-value = {:.3f}".format(dftest[1]))
-  print("Critical values :")
-  for k, v in dftest[4].items():
-      print("\t{}: {} - The price series is {} stationary with {}% confidence".format(k, v, "not" if v<dftest[0] else "", 100-int(k[:-1])))
 
-  print('\n\n')
+# tsplot(returns, lags=30, title='Time Series Analysis Plot')
 
-check_for_stationarity(df)
+
+
+

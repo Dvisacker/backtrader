@@ -198,7 +198,7 @@ csv_dir	../mean_reversion.py	/^    csv_dir = '.\/data'$/;"	kind:variable	line:14
 csv_dir	../moving_avg_crossover.py	/^    csv_dir = '.\/data'$/;"	kind:variable	line:83
 csv_dir	../qda_crypto.py	/^    csv_dir = '.\/data'$/;"	kind:variable	line:116
 csv_dir	../snp_forecast.py	/^    csv_dir = '\/path\/to\/your\/csv\/file'  # CHANGE THIS!$/;"	kind:variable	line:100
-data	../archives/scrape.py	/^data = exchange.fetch_ohlcv(args.symbol, args.timeframe)$/;"	kind:variable	line:76
+data	../archives/scrape.py	/^data = exchange.fetch_ohlcv(args.symbols, args.timeframe)$/;"	kind:variable	line:76
 data	../plot_performance.py	/^    data = pd.io.parsers.read_csv($/;"	kind:variable	line:14
 data	../plot_pyfolio.py	/^    data = pd.io.parsers.read_csv($/;"	kind:variable	line:15
 data.py	../data.py	1;"	kind:file	line:1
@@ -414,7 +414,7 @@ instruments	../mean_reversion.py	/^    instruments = ['BTCUSD', 'ETHUSD']$/;"	ki
 instruments	../moving_avg_crossover.py	/^    instruments = [ 'BTCUSD' ]$/;"	kind:variable	line:86
 instruments	../qda_crypto.py	/^    instruments = [ 'BTCUSD' ]$/;"	kind:variable	line:119
 instruments	../snp_forecast.py	/^    instruments = ['SPY']$/;"	kind:variable	line:101
-symbol_out	../archives/scrape.py	/^symbol_out = args.symbol.replace("\/","")$/;"	kind:variable	line:81
+symbol_out	../archives/scrape.py	/^symbol_out = args.symbols.replace("\/","")$/;"	kind:variable	line:81
 test.py	../data/test.py	1;"	kind:file	line:1
 time	../archives/scrape-bis.py	/^import time$/;"	kind:namespace	line:3
 time	../backtest.py	/^import time$/;"	kind:namespace	line:14

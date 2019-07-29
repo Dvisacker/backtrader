@@ -16,93 +16,9 @@ import pandas as pd
 from datetime import datetime
 from utils.helpers import get_ohlcv_file, get_timeframe
 from utils.scrape import scrape_ohlcv
+from utils.csv import create_csv_files, open_convert_csv_files
+from utils.cmd import parse_args
 from utils import from_exchange_to_standard_notation, from_standard_to_exchange_notation
-
-csv_dir = 'data'
-
-def _date_parse(timestamp):
-        """
-        Parses timestamps into python datetime objects.
-        """
-        return datetime.fromtimestamp(float(timestamp))
-
-def create_csv_files(exchange, symbols, timeframe, start, end):
-    for symbol in symbols:
-      csv_filename = get_ohlcv_file(exchange, symbol, timeframe, start, end)
-      csv_filepath = os.path.join(csv_dir, csv_filename)
-      if not os.path.isfile(csv_filepath):
-        print('Downloading {}'.format(csv_filename))
-        scrape_ohlcv(exchange, symbol, timeframe, start, end)
-        print('Downloaded {}'.format(csv_filename))
-
-
-def open_convert_csv_files(exchange, symbol, timeframe, start, end):
-    """
-    Opens the CSV files from the data directory, converting
-    them into pandas DataFrames within a symbol dictionary.
-    For this handler it will be assumed that the data is
-    taken from Yahoo. Thus its format will be respected.
-    """
-    csv_filename = get_ohlcv_file(exchange, symbol, timeframe, start, end)
-    csv_filepath = os.path.join(csv_dir, csv_filename)
-    df = pd.read_csv(
-        csv_filepath,
-        parse_dates=True,
-        date_parser=_date_parse,
-        header=0,
-        sep=',',
-        index_col=1,
-        names=['time', 'timestamp', 'open', 'high', 'low', 'close', 'volume']
-    )
-
-    df.dropna(inplace=True)
-    df['returns'] = df['close'].pct_change()
-    df.index = df.index.tz_localize('UTC').tz_convert('US/Eastern')
-
-    data = df.sort_index()
-    return data
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='Market data downloader')
-
-
-    parser.add_argument('-s1','--symbol1',
-                        type=str,
-                        required=True,
-                        help='The Symbol of the Instrument/Currency Pair To Download')
-
-    parser.add_argument('-e','--exchange',
-                        type=str,
-                        help='The exchange to download from')
-
-    parser.add_argument('-t','--timeframe',
-                        type=str,
-                        default='1d',
-                        choices=['1m', '5m','15m', '30m','1h', '2h', '3h', '4h', '6h', '12h', '1d', '1M', '1y'],
-                        help='The timeframe to download')
-
-    parser.add_argument('-days', '--days',
-                         type=int,
-                         help='The number of days to fetch ohlcv'
-                        )
-
-    parser.add_argument('-from', '--from_date',
-                         type=str,
-                         help='The date from which to start dowloading ohlcv from'
-                        )
-
-    parser.add_argument('-end', '--to_date',
-                         type=str,
-                         help='The date up to which to download ohlcv to'
-                        )
-
-    parser.add_argument('--debug',
-                            action ='store_true',
-                            help=('Print Sizer Debugs'))
-
-    return parser.parse_args()
-
 
 
 args = parse_args()
@@ -118,7 +34,7 @@ end = args.to_date or default_settings['default_end_date']
 timeframe = args.timeframe or default_settings['default_timeframe']
 
 
-symbol1 = from_standard_to_exchange_notation(exchange_name, args.symbol1, index=True)
+symbol1 = from_standard_to_exchange_notation(exchange_name, args.symbols[0], index=True)
 symbols = [symbol1]
 
 # Get our Exchange
@@ -157,8 +73,8 @@ if symbol1 not in exchange.symbols:
     quit()
 
 
-create_csv_files(exchange_name, [args.symbol1], timeframe, start, end)
-df1 = open_convert_csv_files(exchange_name, args.symbol1, timeframe, start, end)
+create_csv_files(exchange_name, [args.symbols[0]], timeframe, start, end)
+df1 = open_convert_csv_files(exchange_name, args.symbols[0], timeframe, start, end)
 lags = [1,2,3,4,5,10,20,50,100]
 
 for l in lags:

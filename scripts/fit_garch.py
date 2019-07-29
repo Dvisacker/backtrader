@@ -11,23 +11,40 @@ import os
 import ccxt
 import json
 import argparse
+import math
 import pandas as pd
-import matplotlib.pyplot as plt
+import numpy as np
+import warnings
 
 from datetime import datetime
 from utils.helpers import get_ohlcv_file, get_timeframe
 from utils.scrape import scrape_ohlcv
-from utils.csv import create_csv_files, open_convert_csv_files
 from utils.cmd import parse_args
+from utils.csv import create_csv_files, open_convert_csv_files
 from utils import from_exchange_to_standard_notation, from_standard_to_exchange_notation
-from statsmodels.tsa.stattools import adfuller, coint
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from plot.ts import tsplot
+
+from scipy import stats
+from statsmodels.stats.stattools import jarque_bera
+import statsmodels.api as sm
+import statsmodels.tsa as tsa
+from statsmodels.tsa.arima_model import ARIMA
+from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
+from statsmodels.tsa.stattools import adfuller
+
+from statsmodels.graphics.tsaplots import plot_acf
+from statsmodels.graphics.tsaplots import plot_pacf
+from arch import arch_model
+
+warnings.filterwarnings("ignore")
 
 
 
 configuration_file = "./scripts/default_settings.json"
 with open(configuration_file) as f:
   default_settings = json.load(f)
+
 
 args = parse_args()
 exchange_name = args.exchange or default_settings['default_exchange']
@@ -76,29 +93,57 @@ if symbol not in exchange.symbols:
 
 
 create_csv_files(exchange_name, [args.symbols], timeframe, start, end)
-df = open_convert_csv_files(exchange_name, args.symbols, timeframe, start, end)
+df1 = open_convert_csv_files(exchange_name, args.symbols, timeframe, start, end)
+returns = df1['returns']
 
 
-def plot_correlograms(X):
-  plt.style.use('ggplot')
-  plt.rcParams['axes.grid'] = True
+def _get_best_model(TS):
+    best_aic = np.inf
+    best_order = None
+    best_model = None
+    pq_rng = range(5) # [0,1,2,3,4]
+    d_rng = range(2) # [0,1]
+    for i in pq_rng:
+        for d in d_rng:
+            for j in pq_rng:
+                try:
+                    tmp_mdl = sm.tsa.ARIMA(TS, order=(i,d,j)).fit(
+                        method='mle', trend='nc'
+                    )
+                    tmp_aic = tmp_mdl.aic
+                    if tmp_aic < best_aic:
+                        best_aic = tmp_aic
+                        best_order = (i, d, j)
+                        best_model = tmp_mdl
+                except: continue
+    print('aic: {:6.2f} | order: {}'.format(best_aic, best_order))
+    return best_aic, best_order, best_model
 
-  df['z_close'] = (df['close'] - df.close.rolling(window=12).mean()) / df.close.rolling(window=12).std()
-  df['zp_close'] = df['z_close'] - df['z_close'].shift(12)
 
-  fig, ax = plt.subplots(4, figsize=(15,10))
-  plot_acf(df.z_close.dropna(), ax=ax[0], lags=20)
-  plot_pacf(df.z_close.dropna(), ax=ax[1], lags=20)
-  plot_acf(df.returns.dropna(), ax=ax[2], lags=20)
-  plot_pacf(df.returns.dropna(), ax=ax[3], lags=20)
-  ax[0].title.set_text('Detrended prices autocorrelation')
-  ax[1].title.set_text('Detrended prices partial autocorrelation')
-  ax[2].title.set_text('Returns autocorrelation')
-  ax[3].title.set_text('Returns partial autocorrelation')
+# First fit an ARIMA model
+params = _get_best_model(returns)
+order = params[1]
+model = params[2]
 
-  plt.tight_layout()
-  plt.show()
+tsplot(model.resid, lags=30, title='Best ARIMA model (Residuals). Order={}'.format(order))
+tsplot(model.resid**2, lags=30, title='Best ARIMA model (Residuals Squared). Order={}'.format(order))
 
 
+# In case we see autocorrelation in squared residuals, we attempt to fit a GARCH model with the best ARIMA model
+p_ = order[0]
+o_ = order[1]
+q_ = order[2]
 
-plot_correlograms(df)
+garch_model = arch_model(model.resid, p=p_, o=o_, q=q_, dist='StudentsT')
+garch_model = garch_model.fit(update_freq=5, disp='off')
+print(garch_model.summary())
+
+tsplot(garch_model.resid, lags=30, title='Best GARCH Model (Residuals). Order={}'.format(order))
+tsplot(garch_model.resid**2, lags=30, title='Best GARCH Model (Residuals Squared). Order={}'.format(order))
+
+
+
+
+plt.show()
+
+
