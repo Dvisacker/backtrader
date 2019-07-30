@@ -18,3 +18,17 @@ def create_exchange_instances(exchange_names):
       exchanges['bitmex'] = bitmex
 
   return exchanges
+
+
+def create_exchange_instance(exchange_name):
+  if exchange_name == 'bitmex':
+    exchange = ccxt.bitmex({
+      'apiKey': os.environ['BITMEX_TEST_KEY_ID'],
+      'secret': os.environ['BITMEX_TEST_KEY_SECRET'],
+      'enableRateLimit': True
+    })
+
+    if 'test' in exchange.urls:
+      exchange.urls['api'] = exchange.urls['test']
+
+    return exchange

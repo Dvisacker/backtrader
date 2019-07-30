@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BitMEX Public Data</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; connect-src https://s3-eu-west-1.amazonaws.com; script-src 'sha384-3ceskX3iaEnIogmQchP8opvBy3Mi7Ce34nWjpBIwVTHfGYWQS9jwHDVRnpKKHJg7' 'sha384-n0cKBy1+1+ACIC9J2XunFZItQjpIi1bilP1FCayDxybB40OcUY1ipK4Qjr856KWI' 'sha384-Rncjr7coAsbMCINMdkum6h64TPVhqlDpqulDQB/a68yABAgOU21duBLDdlm86oKP'; child-src 'none'; object-src 'none'; require-sri-for script style; block-all-mixed-content;">
+</head>
+<body>
+  <div id="navigation"></div>
+  <div id="listing"></div>
+
+  <script type="text/javascript"
+    src="https://public.bitmex.com/jquery.min.js"
+    integrity="sha384-3ceskX3iaEnIogmQchP8opvBy3Mi7Ce34nWjpBIwVTHfGYWQS9jwHDVRnpKKHJg7"
+    crossorigin="anonymous"
+  ></script>
+  <script type="text/javascript"
+    src="https://public.bitmex.com/init.js"
+    integrity="sha384-n0cKBy1+1+ACIC9J2XunFZItQjpIi1bilP1FCayDxybB40OcUY1ipK4Qjr856KWI"
+    crossorigin="anonymous"
+  ></script>
+  <script type="text/javascript"
+    src="https://public.bitmex.com/list.js"
+    integrity="sha384-Rncjr7coAsbMCINMdkum6h64TPVhqlDpqulDQB/a68yABAgOU21duBLDdlm86oKP"
+    crossorigin="anonymous"
+  ></script>
+</body>
+</html>
