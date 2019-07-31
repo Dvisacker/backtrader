@@ -200,5 +200,3 @@ class FillEvent(Event):
         """
         fee = 0.0750 / 100
         return fee
-
-
