@@ -3,5 +3,8 @@
   "default_end_date": "05/06/2019",
   "default_exchange": "bitmex",
   "default_timeframe": "5m",
-  "default_value": "close"
+  "default_value": "close",
+  "default_bar_type": "time_bars",
+  "csv_dir": "data",
+  "result_dir": "results"
 }

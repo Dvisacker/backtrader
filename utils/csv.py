@@ -16,14 +16,15 @@ def _date_parse(timestamp):
 def create_csv_files(exchange, symbols, timeframe, start, end, csv_dir='data'):
     for symbol in symbols:
       csv_filename = get_ohlcv_file(exchange, symbol, timeframe, start, end)
-      csv_filepath = os.path.join(csv_dir, csv_filename)
+      bar_type = "time_bars"
+      csv_filepath = os.path.join(csv_dir, bar_type, csv_filename)
       if not os.path.isfile(csv_filepath):
         print('Downloading {}'.format(csv_filename))
         scrape_ohlcv(exchange, symbol, timeframe, start, end)
         print('Downloaded {}'.format(csv_filename))
 
 
-def open_convert_csv_files(exchange, symbol, timeframe, start, end, csv_dir='data'):
+def open_convert_csv_files(exchange, symbol, timeframe, start, end, csv_dir='data', bar_type='time_bars'):
     """
     Opens the CSV files from the data directory, converting
     them into pandas DataFrames within a symbol dictionary.
@@ -31,7 +32,7 @@ def open_convert_csv_files(exchange, symbol, timeframe, start, end, csv_dir='dat
     taken from Yahoo. Thus its format will be respected.
     """
     csv_filename = get_ohlcv_file(exchange, symbol, timeframe, start, end)
-    csv_filepath = os.path.join(csv_dir, csv_filename)
+    csv_filepath = os.path.join(csv_dir, bar_type, csv_filename)
     df = pd.read_csv(
         csv_filepath,
         parse_dates=True,
@@ -48,3 +49,4 @@ def open_convert_csv_files(exchange, symbol, timeframe, start, end, csv_dir='dat
 
     data = df.sort_index()
     return data
+

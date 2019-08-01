@@ -117,6 +117,7 @@ def scrape_bitmex_trades(from_datestring, to_datestring):
       date_string = current_datetime.strftime('%Y%m%d')
       file_name = date_string + '.csv.gz'
       file_url = url + file_name
+      print('Downloading {}'.format(file_name))
       response = requests.get(file_url, stream=True)
 
       with open(file_name, "wb") as handle:

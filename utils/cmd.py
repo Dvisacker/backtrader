@@ -1,5 +1,46 @@
 import argparse
 
+
+def default_parser():
+    parser = argparse.ArgumentParser(description='Market data downloader')
+    parser.add_argument('-s', '--symbols',
+                        type=str,
+                        nargs='+',
+                        required=True,
+                        help='The symbol of the instrument/currency pair')
+
+    parser.add_argument('-e','--exchange',
+                        type=str,
+                        help='The exchange to download from')
+
+    parser.add_argument('-t','--timeframe',
+                        type=str,
+                        default='1m',
+                        choices=['1m', '5m','15m', '30m','1h', '2h', '3h', '4h', '6h', '12h', '1d', '1M', '1y'],
+                        help='The timeframe to download')
+
+    parser.add_argument('-days', '--days',
+                         type=int,
+                         help='The number of days to fetch ohlcv'
+                        )
+
+    parser.add_argument('-from', '--from_date',
+                         type=str,
+                         help='The date from which to start dowloading ohlcv from'
+                        )
+
+    parser.add_argument('-to', '--to_date',
+                         type=str,
+                         help='The date up to which to download ohlcv to'
+                        )
+
+    parser.add_argument('--debug',
+                            action ='store_true',
+                            help=('Print Sizer Debugs'))
+
+    return parser
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Market data downloader')
     parser.add_argument('-s', '--symbols',
@@ -28,7 +69,7 @@ def parse_args():
                          help='The date from which to start dowloading ohlcv from'
                         )
 
-    parser.add_argument('-end', '--to_date',
+    parser.add_argument('-to', '--to_date',
                          type=str,
                          help='The date up to which to download ohlcv to'
                         )
@@ -38,6 +79,9 @@ def parse_args():
                             help=('Print Sizer Debugs'))
 
     return parser.parse_args()
+
+
+
 
 
 

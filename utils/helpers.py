@@ -271,15 +271,20 @@ def get_data_file(exchange, symbol, period):
   symbol = from_standard_to_file_notation(symbol)
   return '{}-{}-{}.csv'.format(exchange, symbol, period)
 
-def get_ohlcv_file(exchange, symbol, period, start_date, end_date):
+
+def get_bars_file(exchange, symbol, timeframe, start_date, end_date):
   symbol = from_standard_to_file_notation(symbol)
 
-  if start_date == None or end_date == None:
-    return '{}-{}-{}.csv'.format(exchange, symbol, period)
-  else:
-    start_date = start_date.replace("/", "")
-    end_date = end_date.replace("/", "")
-    return '{}-{}-{}-{}-{}.csv'.format(exchange, symbol, period, start_date, end_date)
+
+
+def get_ohlcv_file(exchange, symbol, period, start_date, end_date):
+  symbol = from_standard_to_file_notation(symbol)
+  start_date = start_date.replace("/", "")
+  end_date = end_date.replace("/", "")
+  return '{}-{}-{}-{}-{}.csv'.format(exchange, symbol, period, start_date, end_date)
+
+
+
 
 def to_ccxt_notation(symbol):
   symbol = symbol.replace("")
