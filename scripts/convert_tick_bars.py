@@ -10,7 +10,7 @@ import os
 import json
 import argparse
 import pandas as pd
-from utils.helpers import from_exchange_to_standard_notation
+from utils.helpers import from_exchange_to_standard_notation, get_bar_data_filename
 from utils.scrape import scrape_bitmex_trades
 from utils.bars import TIME_FREQUENCIES, get_candle_nb, BarSeriesUtils, BarSeries, VolumeBarSeries, BaseCurrencyVolumeBarSeries, QuoteCurrencyVolumeBarSeries, TickBarSeries
 from datetime import datetime, timedelta
@@ -51,7 +51,7 @@ df = pd.DataFrame()
 while current_date < to_date:
     current_date_string = datetime.strftime(current_date, '%Y%m%d')
     filename = 'data/tick_data/{}.csv.gz'.format(current_date_string)
-    daily_df = pd.read_csv(filename)
+    daily_df = pd.read_csv(filename,)
     print('Appending ...')
     df = df.append(daily_df)
     current_date += timedelta(days=1)
@@ -63,39 +63,36 @@ tick_data_filepath = os.path.join(data_dir, 'tick_data', tick_data_filename)
 df.to_csv(tick_data_filepath)
 
 print('Concatenated tick data')
-
 symbols = df.symbol.unique()
-symbol_dfs = {}
-
 time_frequency=TIME_FREQUENCIES[timeframe]
 bar_utils = BarSeriesUtils(days, timeframe)
 
 
 for s in symbols:
   print('Converting {} bars'.format(s))
-  symbol_dfs[s] = df[df.symbol == s]
-  symbol_dfs[s]['time'] = symbol_dfs[s].timestamp.map(lambda t: datetime.strptime(t[:-3], "%Y-%m-%dD%H:%M:%S.%f"))
-  symbol_dfs[s].set_index('time', inplace=True)
+  current_df = df[df.symbol == s]
+  current_df['time'] = current_df.timestamp.map(lambda t: datetime.strptime(t[:-3], "%Y-%m-%dD%H:%M:%S.%f"))
+  current_df.set_index('time', inplace=True)
 
-  tick_frequency = bar_utils.get_recommended_tick_frequency(symbol_dfs[s])
+  tick_frequency = bar_utils.get_recommended_tick_frequency(current_df)
   if (tick_frequency == 0):
     print('Tick frequency is equal to 0 for {}'.format(s))
     continue
 
-  contract_volume_frequency = bar_utils.get_recommended_volume_frequency(symbol_dfs[s])
-  base_currency_volume_frequency = bar_utils.get_recommended_base_currency_volume_frequency(symbol_dfs[s])
-  quote_currency_volume_frequency = bar_utils.get_recommended_quote_currency_volume_frequency(symbol_dfs[s])
+  contract_volume_frequency = bar_utils.get_recommended_volume_frequency(current_df)
+  base_currency_volume_frequency = bar_utils.get_recommended_base_currency_volume_frequency(current_df)
+  quote_currency_volume_frequency = bar_utils.get_recommended_quote_currency_volume_frequency(current_df)
 
   print('Processing time bars ..')
-  time_bars = BarSeries(symbol_dfs[s]).process_ticks(frequency=time_frequency)
+  time_bars = BarSeries(current_df).process_ticks(frequency=time_frequency)
   print('Processing tick bars ..')
-  tick_bars = TickBarSeries(symbol_dfs[s]).process_ticks(frequency=tick_frequency)
+  tick_bars = TickBarSeries(current_df).process_ticks(frequency=tick_frequency)
   print('Processing contract volume bars ..')
-  contract_volume_bars = VolumeBarSeries(symbol_dfs[s]).process_ticks(frequency=contract_volume_frequency)
+  contract_volume_bars = VolumeBarSeries(current_df).process_ticks(frequency=contract_volume_frequency)
   print('Processing base volume bars ..')
-  base_volume_bars = BaseCurrencyVolumeBarSeries(symbol_dfs[s]).process_ticks(frequency=base_currency_volume_frequency)
+  base_volume_bars = BaseCurrencyVolumeBarSeries(current_df).process_ticks(frequency=base_currency_volume_frequency)
   print('Processing quote volume bars ..')
-  quote_volume_bars = QuoteCurrencyVolumeBarSeries(symbol_dfs[s]).process_ticks(frequency=quote_currency_volume_frequency)
+  quote_volume_bars = QuoteCurrencyVolumeBarSeries(current_df).process_ticks(frequency=quote_currency_volume_frequency)
 
   num_time_bars = time_bars.shape[0]
   num_contract_volume_bars = contract_volume_bars.shape[0]
@@ -110,12 +107,13 @@ for s in symbols:
   print(num_base_volume_bars)
   print(num_quote_volume_bars)
 
-  general_symbol = from_exchange_to_standard_notation('bitmex', s)
-  time_bars_filename = '{}/time_bars/bitmex-{}-{}-{}.csv'.format(data_dir, s, from_date_string, to_date_string)
-  tick_bars_filename = '{}/tick_bars/bitmex-{}-{}-{}.csv'.format(data_dir, s, from_date_string, to_date_string)
-  contract_volume_bars_filename = '{}/contract_volume_bars/bitmex-{}-{}-{}.csv'.format(data_dir, s, from_date_string, to_date_string)
-  base_volume_bars_filename = '{}/base_volume_bars/bitmex-{}-{}-{}.csv'.format(data_dir, s, from_date_string, to_date_string)
-  quote_volume_bars_filename = '{}/quote_volume_bars/bitmex-{}-{}-{}.csv'.format(data_dir, s, from_date_string, to_date_string)
+  standard_symbol = from_exchange_to_standard_notation('bitmex', s)
+  filename = get_bar_data_filename('bitmex', standard_symbol, timeframe, from_date_string, to_date_string)
+  time_bars_filename = '{}/time_bars/{}'.format(data_dir, filename)
+  tick_bars_filename = '{}/tick_bars/{}'.format(data_dir, filename)
+  contract_volume_bars_filename = '{}/contract_volume_bars/{}'.format(data_dir, filename)
+  base_volume_bars_filename = '{}/base_volume_bars/{}'.format(data_dir, filename)
+  quote_volume_bars_filename = '{}/quote_volume_bars/{}'.format(data_dir, filename)
 
   time_bars.to_csv(time_bars_filename)
   tick_bars.to_csv(tick_bars_filename)

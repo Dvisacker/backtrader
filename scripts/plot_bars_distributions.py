@@ -52,10 +52,15 @@ timeframe = args.timeframe or default_settings['default_timeframe']
 bar_type = BAR_TYPES[args.bar_type]
 symbol = args.symbols[0]
 
+print('Processing time bars')
 time_bars = open_convert_csv_files(exchange_name, symbol, timeframe, start, end, bar_type='time_bars')
+print('Processing tick bars')
 tick_bars = open_convert_csv_files(exchange_name, symbol, timeframe, start, end, bar_type='tick_bars')
+print('Processing contract volume bars')
 contract_volume_bars = open_convert_csv_files(exchange_name, symbol, timeframe, start, end, bar_type='contract_volume_bars')
+print('Process base currency volume bars')
 base_currency_volume_bars = open_convert_csv_files(exchange_name, symbol, timeframe, start, end, bar_type='base_currency_volume_bars')
+print('Process quote currency volume bars')
 quote_currency_volume_bars = open_convert_csv_files(exchange_name, symbol, timeframe, start, end, bar_type='quote_currency_volume_bars')
 
 plt.figure(figsize = (15, 8))
