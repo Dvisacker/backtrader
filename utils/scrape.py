@@ -127,6 +127,26 @@ def scrape_bitmex_trades(from_datestring, to_datestring):
       print('Downloaded trade data for {}'.format(current_datetime))
       current_datetime += timedelta(days=1)
 
+
+def scrape_bitmex_quotes(from_datestring, to_datestring):
+    url = 'https://s3-eu-west-1.amazonaws.com/public.bitmex.com/data/quote/'
+    current_datetime = datetime.strptime(from_datestring, '%d/%m/%Y')
+    to_datetime = datetime.strptime(to_datestring, '%d/%m/%Y')
+
+    while current_datetime < to_datetime:
+      date_string = current_datetime.strftime('%Y%m%d')
+      file_name = date_string + '.csv.gz'
+      file_url = url + file_name
+      print('Downloading {}'.format(file_name))
+      response = requests.get(file_url, stream=True)
+
+      with open(file_name, "wb") as handle:
+        for data in response.iter_content():
+          handle.write(data)
+
+      print('Downloaded trade data for {}'.format(current_datetime))
+      current_datetime += timedelta(days=1)
+
 def scrape_trades(exchange, symbol, from_datestring, to_datestring):
     symbol = from_standard_to_exchange_notation(exchange, symbol, index=True)
     # Get our Exchange
@@ -158,9 +178,10 @@ def scrape_trades(exchange, symbol, from_datestring, to_datestring):
     to_date = datetime.strptime(to_datestring, '%d/%m/%Y')
     current_time = from_date
 
+
     limit = 500
     trades = []
-    while current_time > to_date:
+    while current_time < to_date:
       while True:
         try:
           since = time.mktime(current_time.timetuple()) * 1000

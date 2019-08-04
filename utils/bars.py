@@ -84,6 +84,65 @@ class BarSeries(object):
         return price_df
 
 
+
+
+class FlowImbalanceBarSeries(BarSeries):
+    def __init__(self, quotes, ticks, datetimecolumn='time'):
+        self.quotes = quotes
+        self.ticks = ticks
+        self.datetimecolumn = datetimecolumn
+
+    def process_column(self, column_name, frequency):
+        return self.ticks[column_name].resample(frequency, label='right').ohlc()
+
+    def process_volume(self, column_name, frequency):
+        return self.ticks[column_name].resample(frequency, label='right').sum()
+
+    def process_ofi(self, frequency):
+        quotes_df = self.quotes.copy().reset_index()
+        quotes_df['midprice'] = ((quotes_df['bidPrice'] + quotes_df['askPrice']) / 2)
+        quotes_df['midprice_returns'] = quotes_df['midprice'].diff()
+        quotes_df['prevBidPrice'] = quotes_df['bidPrice'].shift()
+        quotes_df['prevBidSize'] = quotes_df['bidSize'].shift()
+        quotes_df['prevAskPrice'] = quotes_df['askPrice'].shift()
+        quotes_df['prevAskSize'] = quotes_df['askSize'].shift()
+
+        quotes_df.dropna(inplace=True)
+        bid_geq = quotes_df['bidPrice'] >= quotes_df['prevBidPrice']
+        bid_leq = quotes_df['bidPrice'] <= quotes_df['prevBidPrice']
+        ask_geq = quotes_df['askPrice'] >= quotes_df['prevAskPrice']
+        ask_leq = quotes_df['askPrice'] <= quotes_df['prevAskPrice']
+
+        quotes_df['ofi'] = pd.Series(np.zeros(len(quotes_df)))
+        quotes_df['ofi'].loc[bid_geq] += quotes_df['bidSize'].loc[bid_geq]
+        quotes_df['ofi'].loc[bid_leq] -= quotes_df['prevBidSize'].loc[bid_leq]
+        quotes_df['ofi'].loc[ask_geq] += quotes_df['prevAskSize'][ask_geq]
+        quotes_df['ofi'].loc[ask_leq] -= quotes_df['askSize'][ask_leq]
+
+        quotes_df = quotes_df.set_index('time')
+        quotes_df = quotes_df[['midprice_returns','ofi']].resample(frequency).sum().dropna()
+        return quotes_df
+
+    def process_tfi(self, frequency):
+        trades_df = self.ticks.copy()
+        trades_df['signed_size'] = np.where(trades_df['side'] == 'Buy', trades_df['size'], -trades_df['size'])
+        tfi = trades_df['signed_size'].resample(frequency).sum().dropna()
+        return tfi
+
+    def process_ticks(self, price_column='price', volume_column='size', frequency='5T'):
+        price_df = self.process_column(price_column, frequency)
+        volume_df = self.process_volume(volume_column, frequency)
+        quotes_df = self.process_ofi(frequency)
+        tfi = self.process_tfi(frequency)
+
+        price_df['volume'] = volume_df
+        price_df['ofi'] = quotes_df['ofi']
+        price_df['tfi'] = tfi
+        price_df['midprice_returns'] = quotes_df['midprice_returns']
+
+        return price_df
+
+
 class TickBarSeries(BarSeries):
     '''
         Class for generating tick bars based on bid-ask-size dataframe
@@ -112,7 +171,7 @@ class TickBarSeries(BarSeries):
                 'volume': v
             })
 
-        res = pd.DataFrame(res)
+        res = pd.DataFrame(res).set_index(self.datetimecolumn)
         return res
 
 
@@ -163,7 +222,7 @@ class VolumeBarSeries(BarSeries):
 
                 buf, volume_buf = [], 0.
 
-        res = pd.DataFrame(res)
+        res = pd.DataFrame(res).set_index(self.datetimecolumn)
         return res
 
     def process_ticks(self, price_column = 'price', volume_column = 'size', frequency = 10000):
@@ -214,7 +273,7 @@ class QuoteCurrencyVolumeBarSeries(BarSeries):
 
                 buf, vbuf, quote_currency_volume_buf = [], [], 0.
 
-        res = pd.DataFrame(res)
+        res = pd.DataFrame(res).set_index(self.datetimecolumn)
         return res
 
     def process_ticks(self, price_column = 'price', volume_column = 'size', frequency = 10000):
@@ -266,7 +325,7 @@ class BaseCurrencyVolumeBarSeries(BarSeries):
 
                 buf, vbuf, base_currency_buf = [], [], 0.
 
-        res = pd.DataFrame(res)
+        res = pd.DataFrame(res).set_index(self.datetimecolumn)
         return res
 
     def process_ticks(self, price_column = 'price', volume_column = 'size', frequency = 10000):
@@ -372,7 +431,7 @@ class ImbalanceTickBarSeries(BarSeries):
                 vbuf.append(self.df[self.volume_column].iloc[i])
                 T += 1
 
-        res = pd.DataFrame(res)
+        res = pd.DataFrame(res).set_index(self.datetimecolumn)
         return res
 
     def process_ticks(self, price_column = 'price', volume_column = 'size', init = 100, min_bar = 10, max_bar = 1000):

@@ -19,7 +19,7 @@ def _parse_datestring(date):
         """
         Parses timestamps into python datetime objects.
         """
-        return datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
+        return datetime.strptime(date[:19], '%Y-%m-%d %H:%M:%S')
 
 def create_csv_files(exchange, symbols, timeframe, start, end, csv_dir='data'):
     for symbol in symbols:
@@ -51,8 +51,6 @@ def open_convert_csv_files(exchange, symbol, timeframe, start, end, csv_dir='dat
         # names=['time', 'open', 'high', 'low', 'close', 'volume']
         # names=['time', 'timestamp', 'open', 'high', 'low', 'close', 'volume']
     )
-
-    # pdb.set_trace()
 
     df['returns'] = df['close'].pct_change()
     df.index = df.index.tz_localize('UTC').tz_convert('US/Eastern')

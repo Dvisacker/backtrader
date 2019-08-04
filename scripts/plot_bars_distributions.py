@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# based on http://www.blackarbs.com/blog/mixture-model-trading-part-1/1/16/2018
-
 if __name__ == "__main__" and __package__ is None:
     from sys import path
     from os.path import dirname as dir
@@ -11,6 +9,7 @@ if __name__ == "__main__" and __package__ is None:
 import os
 import ccxt
 import json
+import numpy as np
 import warnings
 import argparse
 import scipy.stats as stats
@@ -30,6 +29,8 @@ from utils import from_exchange_to_standard_notation, from_standard_to_exchange_
 
 from statsmodels.tsa.stattools import adfuller, coint
 from statsmodels.graphics.gofplots import qqplot
+
+warnings.filterwarnings("ignore")
 
 
 configuration_file = "./scripts/default_settings.json"
@@ -59,62 +60,94 @@ tick_bars = open_convert_csv_files(exchange_name, symbol, timeframe, start, end,
 print('Processing contract volume bars')
 contract_volume_bars = open_convert_csv_files(exchange_name, symbol, timeframe, start, end, bar_type='contract_volume_bars')
 print('Process base currency volume bars')
-base_currency_volume_bars = open_convert_csv_files(exchange_name, symbol, timeframe, start, end, bar_type='base_currency_volume_bars')
+base_currency_volume_bars = open_convert_csv_files(exchange_name, symbol, timeframe, start, end, bar_type='base_volume_bars')
 print('Process quote currency volume bars')
-quote_currency_volume_bars = open_convert_csv_files(exchange_name, symbol, timeframe, start, end, bar_type='quote_currency_volume_bars')
+quote_currency_volume_bars = open_convert_csv_files(exchange_name, symbol, timeframe, start, end, bar_type='quote_volume_bars')
 
 plt.figure(figsize = (15, 8))
-plt.hist(time_bars.close.pct_change().dropna().values.tolist(), label = 'Time bars', alpha = 0.5, normed=True, bins=20, range = (-0.01, 0.01))
+plt.hist(time_bars.close.pct_change().dropna().values.tolist(),
+        label = 'Time bars', alpha = 0.5, normed=True, bins=20,
+        range = (-0.01, 0.01))
+
 plt.legend()
 
 plt.figure(figsize = (15, 8))
-plt.hist(tick_bars.close.pct_change().dropna().values.tolist(), label = 'Tick bars', alpha = 0.5, normed=True, bins=20, range = (-0.01, 0.01))
+plt.hist(tick_bars.close.pct_change().dropna().values.tolist(),
+        label = 'Tick bars', alpha = 0.5, normed=True, bins=20,
+        range = (-0.01, 0.01))
+
 plt.legend()
 
 plt.figure(figsize = (15, 8))
-plt.hist(contract_volume_bars.close.pct_change().dropna().values.tolist(), label = 'Volume bars', alpha = 0.5, normed=True, bins=20, range = (-0.01, 0.01))
+plt.hist(contract_volume_bars.close.pct_change().dropna().values.tolist(),
+        label = 'Volume bars', alpha = 0.5, normed=True, bins=20,
+        range = (-0.01, 0.01))
+
 plt.legend()
 
 plt.figure(figsize = (15, 8))
-plt.hist(base_currency_volume_bars.close.pct_change().dropna().values.tolist(), label = 'Base Currency Bars', alpha = 0.5, normed=True, bins=20, range = (-0.01, 0.01))
+plt.hist(base_currency_volume_bars.close.pct_change().dropna().values.tolist(),
+        label = 'Base Currency Bars', alpha = 0.5, normed=True, bins=20,
+        range = (-0.01, 0.01))
+
 plt.legend()
 
 plt.figure(figsize = (15, 8))
-plt.hist(quote_currency_volume_bars.close.pct_change().dropna().values.tolist(), label = 'Quote Currency Bars', alpha = 0.5, normed=True, bins=20, range = (-0.01, 0.01))
+plt.hist(quote_currency_volume_bars.close.pct_change().dropna().values.tolist(),
+        label = 'Quote Currency Bars', alpha = 0.5, normed=True, bins=20,
+        range = (-0.01, 0.01))
+
 plt.legend()
 
 plt.figure(figsize = (15, 8))
-plt.hist(time_bars.close.pct_change().dropna().values.tolist(), label = 'Time bars', alpha = 0.4, normed=True, bins=20, range = (-0.01, 0.01))
-plt.hist(tick_bars.close.pct_change().dropna().values.tolist(), label = 'Tick bars', alpha = 0.5, normed=True, bins=20, range = (-0.01, 0.01))
-plt.hist(contract_volume_bars.close.pct_change().dropna().values.tolist(), label = 'Contract Volume bars', alpha = 0.4, normed=True, bins=20, range = (-0.01, 0.01))
-plt.hist(base_currency_volume_bars.close.pct_change().dropna().values.tolist(), label = 'Base Currency Volume Bars', alpha = 0.4, normed=True, bins=20, range = (-0.01, 0.01))
-plt.hist(quote_currency_volume_bars.close.pct_change().dropna().values.tolist(), label = 'Quote Currency Volume Bars', alpha = 0.4, normed=True, bins=20, range = (-0.01, 0.01))
+plt.hist(time_bars.close.pct_change().dropna().values.tolist(),
+        label = 'Time bars', alpha = 0.4, normed=True, bins=20,
+        range = (-0.01, 0.01))
+
+plt.hist(tick_bars.close.pct_change().dropna().values.tolist(),
+        label = 'Tick bars', alpha = 0.5, normed=True, bins=20,
+        range = (-0.01, 0.01))
+
+plt.hist(contract_volume_bars.close.pct_change().dropna().values.tolist(),
+        label = 'Contract Volume bars', alpha = 0.4, normed=True, bins=20,
+        range = (-0.01, 0.01))
+
+plt.hist(base_currency_volume_bars.close.pct_change().dropna().values.tolist(),
+        label = 'Base Currency Volume Bars', alpha = 0.4, normed=True, bins=20,
+        range = (-0.01, 0.01))
+
+plt.hist(quote_currency_volume_bars.close.pct_change().dropna().values.tolist(),
+        label = 'Quote Currency Volume Bars', alpha = 0.4, normed=True, bins=20,
+        range = (-0.01, 0.01))
+
 plt.legend()
-plt.show()
+
 
 print('-' * 20)
 print('-' * 20)
 print("AUTOCORRELATIONS")
-print(pd.Series.autocorr(time_bars.close.pct_change().dropna()))
-print(pd.Series.autocorr(tick_bars.close.pct_change().dropna()))
-print(pd.Series.autocorr(contract_volume_bars.close.pct_change().dropna()))
-print(pd.Series.autocorr(base_currency_volume_bars.close.pct_change().dropna()))
-print(pd.Series.autocorr(quote_currency_volume_bars.close.pct_change().dropna()))
+print('Time bars: ', pd.Series.autocorr(time_bars.close.pct_change().dropna()))
+print('Tick bars: ',pd.Series.autocorr(tick_bars.close.pct_change().dropna()))
+print('Contract Volume bars: ',pd.Series.autocorr(contract_volume_bars.close.pct_change().dropna()))
+print('Base Volume bars: ',pd.Series.autocorr(base_currency_volume_bars.close.pct_change().dropna()))
+print('Quote Volume bars: ',pd.Series.autocorr(quote_currency_volume_bars.close.pct_change().dropna()))
 
 print('-' * 20)
 print('-' * 20)
 print("VARIANCE")
-print(np.var(time_bars.close.pct_change().dropna()))
-print(np.var(tick_bars.close.pct_change().dropna()))
-print(np.var(contract_volume_bars.close.pct_change().dropna()))
-print(np.var(base_currency_volume_bars.close.pct_change().dropna()))
-print(np.var(quote_currency_volume_bars.close.pct_change().dropna()))
+print('Time bars: ', np.var(time_bars.close.pct_change().dropna()))
+print('Tick bars: ',np.var(tick_bars.close.pct_change().dropna()))
+print('Contract Volume bars: ',np.var(contract_volume_bars.close.pct_change().dropna()))
+print('Base Volume bars: ',np.var(base_currency_volume_bars.close.pct_change().dropna()))
+print('Quote Volume bars: ',np.var(quote_currency_volume_bars.close.pct_change().dropna()))
 
 print('-' * 20)
 print('-' * 20)
 print("JARQUE BERA TEST")
-print(stats.jarque_bera(tick_bars.close.pct_change().dropna()))
-print(stats.jarque_bera(contract_volume_bars.close.pct_change().dropna()))
-print(stats.jarque_bera(base_currency_volume_bars.close.pct_change().dropna()))
-print(stats.jarque_bera(quote_currency_volume_bars.close.pct_change().dropna()))
-print(stats.jarque_bera(time_bars.close.pct_change().dropna()))
+print('Time bars: ', stats.jarque_bera(time_bars.close.pct_change().dropna()))
+print('Tick bars: ', stats.jarque_bera(tick_bars.close.pct_change().dropna()))
+print('Contract Volume bars: ', stats.jarque_bera(contract_volume_bars.close.pct_change().dropna()))
+print('Base Volume bars: ', stats.jarque_bera(base_currency_volume_bars.close.pct_change().dropna()))
+print('Quote Volume bars: ', stats.jarque_bera(quote_currency_volume_bars.close.pct_change().dropna()))
+
+plt.show()
