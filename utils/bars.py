@@ -9,7 +9,8 @@ BAR_TYPES = {
   "tick": "tick_bars",
   "volume": "volume_bars",
   "base_volume": "base_volume_bars",
-  "quote_volume": "quote_volume_bars"
+  "quote_volume": "quote_volume_bars",
+  "imbalance": "flow_imbalance_bars"
 }
 
 TIME_FREQUENCIES = {
@@ -101,6 +102,7 @@ class FlowImbalanceBarSeries(BarSeries):
     def process_ofi(self, frequency):
         quotes_df = self.quotes.copy().reset_index()
         quotes_df['midprice'] = ((quotes_df['bidPrice'] + quotes_df['askPrice']) / 2)
+        quotes_df['spread'] = (quotes_df['bidPrice'] - quotes_df['askPrice'])
         quotes_df['midprice_returns'] = quotes_df['midprice'].diff()
         quotes_df['prevBidPrice'] = quotes_df['bidPrice'].shift()
         quotes_df['prevBidSize'] = quotes_df['bidSize'].shift()
