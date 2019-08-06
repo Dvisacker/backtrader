@@ -7,7 +7,7 @@ import pdb
 BAR_TYPES = {
   "time": "time_bars",
   "tick": "tick_bars",
-  "volume": "volume_bars",
+  "volume": "contract_volume_bars",
   "base_volume": "base_volume_bars",
   "quote_volume": "quote_volume_bars",
   "imbalance": "flow_imbalance_bars"
@@ -125,6 +125,30 @@ class FlowImbalanceBarSeries(BarSeries):
         quotes_df = quotes_df[['midprice_returns','ofi']].resample(frequency).sum().dropna()
         return quotes_df
 
+    def process_vfi(self, frequency):
+        quotes_df = self.quotes.copy().reset_index()
+        quotes_df['prevBidPrice'] = quotes_df['bidPrice'].shift()
+        quotes_df['prevBidSize'] = quotes_df['bidSize'].shift()
+        quotes_df['prevAskPrice'] = quotes_df['askPrice'].shift()
+        quotes_df['prevAskSize'] = quotes_df['askSize'].shift()
+
+        quotes_df.dropna(inplace=True)
+        bid_geq = quotes_df['bidPrice'] > quotes_df['prevBidPrice']
+        bid_eq = quotes_df['bidPrice'] == quotes_df['prevBidPrice']
+        ask_leq = quotes_df['askPrice'] < quotes_df['prevAskPrice']
+        ask_eq = quotes_df['askPrice'] == quotes_df['prevAskPrice']
+
+        quotes_df['vfi'] = pd.Series(np.zeros(len(quotes_df)))
+        quotes_df['vfi'].loc[bid_eq] += quotes_df['bidSize'].loc[bid_eq] - quotes_df['prevBidSize'].loc[bid_eq]
+        quotes_df['vfi'].loc[bid_geq] += quotes_df['bidSize'].loc[bid_geq]
+        quotes_df['vfi'].loc[ask_leq] -= quotes_df['askSize'].loc[ask_leq]
+        quotes_df['vfi'].loc[ask_eq] += quotes_df['prevAskSize'].loc[ask_eq] - quotes_df['askSize'].loc[ask_eq]
+
+        quotes_df = quotes_df.set_index('time')
+        vfi = quotes_df['vfi'].resample(frequency).sum().dropna()
+        return vfi
+
+
     def process_tfi(self, frequency):
         trades_df = self.ticks.copy()
         trades_df['signed_size'] = np.where(trades_df['side'] == 'Buy', trades_df['size'], -trades_df['size'])
@@ -135,10 +159,11 @@ class FlowImbalanceBarSeries(BarSeries):
         price_df = self.process_column(price_column, frequency)
         volume_df = self.process_volume(volume_column, frequency)
         quotes_df = self.process_ofi(frequency)
+        vfi = self.process_vfi(frequency)
         tfi = self.process_tfi(frequency)
-
         price_df['volume'] = volume_df
         price_df['ofi'] = quotes_df['ofi']
+        price_df['vfi'] = vfi
         price_df['tfi'] = tfi
         price_df['midprice_returns'] = quotes_df['midprice_returns']
 

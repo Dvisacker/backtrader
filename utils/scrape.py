@@ -107,7 +107,6 @@ def scrape_ohlcv(exchange, symbol, timeframe, from_datestring, to_datestring):
     df.to_csv(filename)
 
 
-
 def scrape_bitmex_trades(from_datestring, to_datestring):
     url = 'https://s3-eu-west-1.amazonaws.com/public.bitmex.com/data/trade/'
     current_datetime = datetime.strptime(from_datestring, '%d/%m/%Y')

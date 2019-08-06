@@ -16,7 +16,7 @@ def default_parser():
     parser.add_argument('-t','--timeframe',
                         type=str,
                         default='1m',
-                        choices=['1m', '5m','15m', '30m','1h', '2h', '3h', '4h', '6h', '12h', '1d', '1M', '1y'],
+                        choices=['10s', '30s', '1m', '5m','15m', '30m','1h', '2h', '3h', '4h', '6h', '12h', '1d', '1M', '1y'],
                         help='The timeframe to download')
 
     parser.add_argument('-days', '--days',
@@ -56,7 +56,7 @@ def parse_args():
     parser.add_argument('-t','--timeframe',
                         type=str,
                         default='1m',
-                        choices=['1m', '5m','15m', '30m','1h', '2h', '3h', '4h', '6h', '12h', '1d', '1M', '1y'],
+                        choices=['10s', '30s', '1m', '5m','15m', '30m','1h', '2h', '3h', '4h', '6h', '12h', '1d', '1M', '1y'],
                         help='The timeframe to download')
 
     parser.add_argument('-days', '--days',

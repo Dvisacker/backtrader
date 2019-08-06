@@ -254,7 +254,11 @@ def from_standard_to_exchange_notation(exchange, symbol, index=False):
     return symbol
 
 def get_timeframe(period):
-  if period == 60:
+  if period == 10:
+    return '10s'
+  elif period == 30:
+    return '30s'
+  elif period == 60:
     return '1m'
   elif period == 300:
     return '5m'

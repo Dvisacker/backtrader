@@ -82,11 +82,14 @@ for s in symbols:
   current_trade_df['time'] = current_trade_df.timestamp.map(lambda t: datetime.strptime(t[:-3], "%Y-%m-%dD%H:%M:%S.%f"))
   current_trade_df.set_index('time', inplace=True)
 
-  for fr in ["1m", "5m", "15m"]:
+  for fr in ["10s","30s","1m","5m","15m","1h"]:
     parsed = {
+      "10s": "10S",
+      "30s": "30S",
       "1m": "1T",
       "5m": "5T",
-      "15m": "15T"
+      "15m": "15T",
+      "1h": "1H"
     }[fr]
 
     time_bars = FlowImbalanceBarSeries(current_quote_df, current_trade_df).process_ticks(frequency=parsed)
