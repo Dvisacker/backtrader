@@ -17,7 +17,7 @@ import pandas as pd
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+import statsmodels.api as sm
 
 from datetime import datetime
 from utils.helpers import get_ohlcv_file, get_timeframe
@@ -27,16 +27,11 @@ from utils.csv import create_csv_files, open_convert_csv_files
 from utils.cmd import default_parser
 from utils.transforms import boxcox
 from utils import from_exchange_to_standard_notation, from_standard_to_exchange_notation
-
-import models.forests as
-import statsmodels.api as sm
-
-
 from statsmodels.tsa.stattools import adfuller, coint
 from statsmodels.graphics.gofplots import qqplot
+from models import all_models
 
 warnings.filterwarnings("ignore")
-
 
 configuration_file = "./scripts/default_settings.json"
 with open(configuration_file) as f:
@@ -51,11 +46,13 @@ parser.add_argument('-bt', '--bar_type',
 parser.add_argument('-m', '--model',
                      type=str,
                      required=True,
-                     choices=list(models.keys()))
+                     choices=list(all_models.keys()))
 
 parser.add_argument('-ic', '--include_correlations',
                     type=str,
-                    required=False)
+                    nargs='+',
+                    required=False,
+                    help='Correlations you want to include')
 
 
 args = parser.parse_args()
@@ -66,18 +63,14 @@ end = args.to_date or default_settings['default_end_date']
 timeframe = args.timeframe or default_settings['default_timeframe']
 symbol = args.symbols[0]
 included_correlation_symbols  = args.include_correlations
-model_type = args.model_type
 bar_type = BAR_TYPES[args.bar_type]
+create_model = all_models[args.model]
 
-create_model = models[args.model]
-
-print('Processing time bars')
 bars = open_convert_csv_files(exchange_name, symbol, timeframe, start, end, bar_type=bar_type)
 
 raw_features = {}
-for s in included_correlation_symbols:
-  raw_features[s] = open_convert_csv_files(exchange_name, symbol, timeframe, start, end, bar_type=bar_type)
+if included_correlation_symbols:
+  for s in included_correlation_symbols:
+    raw_features[s] = open_convert_csv_files(exchange_name, s, timeframe, start, end, bar_type=bar_type)
 
-
-print('Processing tick bars')
 create_model(bars, raw_features)
