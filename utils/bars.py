@@ -257,6 +257,48 @@ class VolumeBarSeries(BarSeries):
         return price_df
 
 
+
+class BitcoinVolumeBarSeries(BarSeries):
+  '''
+      Class for generation bars based on the BTC/USD volume contract
+  '''
+
+  def __init__(self, df, btcusd_df, datetimecolumn = 'time', volume_column = 'size'):
+    self.volumn_column = volume_column
+    super(BitcoinVolumeBarSeries, self).__init__(df, datetimecolumn)
+
+  def process_column(self, column_name, dates):
+    res = []
+    for i in range(len(dates) - 1):
+      start = dates[i]
+      end = dates[i+1]
+      sample = self.df.loc[(self.df.index > start) & (self.df.index < end)]
+
+      v = sample[self.volumn_column].values.sum()
+      o = sample[column_name].values.tolist()[0]
+      h = sample[column_name].values.max()
+      l = sample[column_name].values.min()
+      c = sample[column_name].values.tolist()[-1]
+      d = end
+
+      res.append({
+        self.datetimecolumn: d,
+        'open': o,
+        'high': h,
+        'low': l,
+        'close': c,
+        'volume': v
+      })
+
+
+    res = pd.DataFrame(res).set_index(self.datetimecolumn)
+    return res
+
+  def process_ticks(self, btcusd_df, price_column = 'price', volumn_column = 'size'):
+      dates = btcusd_df.index.values()
+      price_df = self.process_column(price_column, dates)
+      return price_df
+
 class QuoteCurrencyVolumeBarSeries(BarSeries):
     '''
         Class for generating "dollar" bars based on bid-ask-size dataframe
