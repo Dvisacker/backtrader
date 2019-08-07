@@ -28,7 +28,7 @@ from utils.cmd import default_parser
 from utils.transforms import boxcox
 from utils import from_exchange_to_standard_notation, from_standard_to_exchange_notation
 
-import models.forests
+import models.forests as
 import statsmodels.api as sm
 
 
@@ -48,10 +48,6 @@ parser.add_argument('-bt', '--bar_type',
                     type=str,
                     choices=list(BAR_TYPES.keys()))
 
-parser.add_argument('-model_type', '--model_type',
-                    type=str,
-                    choices=['regression', 'forest'])
-
 parser.add_argument('-m', '--model',
                      type=str,
                      required=True,
@@ -69,7 +65,7 @@ start = args.from_date or default_settings['default_start_date']
 end = args.to_date or default_settings['default_end_date']
 timeframe = args.timeframe or default_settings['default_timeframe']
 symbol = args.symbols[0]
-correlation_symbol = args.include_correlations
+included_correlation_symbols  = args.include_correlations
 model_type = args.model_type
 bar_type = BAR_TYPES[args.bar_type]
 
@@ -77,9 +73,11 @@ create_model = models[args.model]
 
 print('Processing time bars')
 bars = open_convert_csv_files(exchange_name, symbol, timeframe, start, end, bar_type=bar_type)
-btc_bars = open_convert_csv_files(exchange_name, 'BTC/USD', timeframe, start, end, bar_type=bar_type)
-eth_bars = open_convert_csv_files(exchange_name, 'ETH/USD', timeframe, start, end, bar_type=bar_type)
-ethbtc_bars = open_convert_csv_files(exchange_name, 'ETH/BTC', timeframe, start, end, bar_type=bar_type)
-xrp_bars = open_convert_csv_files(exchange_name, 'XRP/BTC', timeframe, start, end, bar_type=bar_type)
+
+raw_features = {}
+for s in included_correlation_symbols:
+  raw_features[s] = open_convert_csv_files(exchange_name, symbol, timeframe, start, end, bar_type=bar_type)
+
+
 print('Processing tick bars')
-create_model(bars, btc_bars, eth_bars, ethbtc_bars, xrp_bars)
+create_model(bars, raw_features)

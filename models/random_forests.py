@@ -6,36 +6,20 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn import metrics
 
-def random_forest_model_1(df_pair1, df_pair2, df_pair3, df_pair4, df_pair5):
+def random_forest_model_1(main_pair, raw_features, options={}):
+  lags = options.get("lags", 4)
+
   X = pd.DataFrame()
-  X['returns_pair1_lag1'] = df_pair1.returns.shift(1)
-  X['returns_pair1_lag2'] = df_pair1.returns.shift(2)
-  X['returns_pair1_lag3'] = df_pair1.returns.shift(3)
-  X['returns_pair1_lag4'] = df_pair1.returns.shift(4)
+  for i in range(lags):
+    X['returns_lag_{}'.format(i)] = main_pair.returns.shift(i)
 
-  X['returns_pair2_lag1'] = df_pair2.returns.shift(1)
-  X['returns_pair2_lag2'] = df_pair2.returns.shift(2)
-  X['returns_pair2_lag3'] = df_pair2.returns.shift(3)
-  X['returns_pair2_lag4'] = df_pair2.returns.shift(4)
+  for pair in raw_features:
+    for i in range(lags):
+      X['{}_returns_lag_{}'.format(pair, i)] = pair.returns.shift(i)
 
-  X['returns_pair3_lag1'] = df_pair3.returns.shift(1)
-  X['returns_pair3_lag2'] = df_pair3.returns.shift(2)
-  X['returns_pair3_lag3'] = df_pair3.returns.shift(3)
-  X['returns_pair3_lag4'] = df_pair3.returns.shift(4)
 
-  X['returns_pair4_lag1'] = df_pair4.returns.shift(1)
-  X['returns_pair4_lag2'] = df_pair4.returns.shift(2)
-  X['returns_pair4_lag3'] = df_pair4.returns.shift(3)
-  X['returns_pair4_lag4'] = df_pair4.returns.shift(4)
-
-  X['returns_pair5_lag1'] = df_pair5.returns.shift(1)
-  X['returns_pair5_lag2'] = df_pair5.returns.shift(2)
-  X['returns_pair5_lag3'] = df_pair5.returns.shift(3)
-  X['returns_pair5_lag4'] = df_pair5.returns.shift(4)
   X.dropna(inplace=True)
-
-  y = df_pair1['returns']
-
+  y = main_pair['returns']
   X, y = X.align(y, join='inner', axis=0)
   X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
