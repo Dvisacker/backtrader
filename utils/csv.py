@@ -32,7 +32,7 @@ def create_csv_files(exchange, symbols, timeframe, start, end, csv_dir='data'):
         print('Downloaded {}'.format(csv_filename))
 
 
-def open_convert_csv_files(exchange, symbol, timeframe, start, end, csv_dir='data', bar_type='time_bars'):
+def open_convert_csv_files(exchange, symbol, timeframe, start, end, csv_dir='data', bar_type='time_bars', tz=True):
     """
     Opens the CSV files from the data directory, converting
     them into pandas DataFrames within a symbol dictionary.
@@ -53,7 +53,9 @@ def open_convert_csv_files(exchange, symbol, timeframe, start, end, csv_dir='dat
     )
 
     df['returns'] = df['close'].pct_change()
-    df.index = df.index.tz_localize('UTC').tz_convert('US/Eastern')
+    if tz:
+      df.index = df.index.tz_localize('UTC').tz_convert('US/Eastern')
+
     df.dropna(inplace=True)
 
     data = df.sort_index()

@@ -50,6 +50,7 @@ def add_barriers_on_trade_signals(close,events,volatility):
   vertical_barriers=vertical_barriers[vertical_barriers<close.shape[0]]
   vertical_barriers=(pd.Series(close.index[vertical_barriers],index=events[:vertical_barriers.shape[0]]))
 
+
   #2) compute thresholds
   threshold=volatility.loc[events]
 
@@ -81,10 +82,14 @@ def add_barriers_on_buy_sell_signals(close, side, stop_thresholds):
     """
     #1) compute vertical barriers
     events = side.index
-    vertical_barriers=events.searchsorted(events+pd.Timedelta(minutes=30))
-    vertical_barriers=vertical_barriers[vertical_barriers<close.shape[0]]
-    pdb.set_trace()
-    vertical_barriers=(pd.Series(events[vertical_barriers],index=events[:vertical_barriers.shape[0]]))
+    vertical_barriers = pd.Series(events + pd.Timedelta(minutes=30), index=events)
+    # vertical_barriers = events + pd.Timedelta(minutes=30)
+    # vertical_barriers=events.searchsorted(events+pd.Timedelta(minutes=30))
+    # vertical_barriers=vertical_barriers[vertical_barriers<close.shape[0]]
+    # vertical_barriers=(pd.Series(close.index[vertical_barriers],index=events[:vertical_barriers.shape[0]]))
+    # pdb.set_trace()
+
+    # pdb.set_trace()
 
     #2) compute thresholds
     threshold=stop_thresholds.loc[events]
@@ -95,15 +100,15 @@ def add_barriers_on_buy_sell_signals(close, side, stop_thresholds):
     df0 = apply_profit_taking_and_stop_losses(close, events)
 
     #3) we replace NaT by a very large date in order to compare values
-    df0['take_profit'][pd.isnull(df0['take_profit'])] = pd.Timestamp(pd.Timestamp(2100, 1, 1, 1), tz='US/Eastern')
-    df0['stop_loss'][pd.isnull(df0['stop_loss'])] = pd.Timestamp(pd.Timestamp(2100, 1, 1, 1), tz='US/Eastern')
+    df0['take_profit'][pd.isnull(df0['take_profit'])] = pd.Timestamp(2100, 1, 1, 1)
+    df0['stop_loss'][pd.isnull(df0['stop_loss'])] = pd.Timestamp(2100, 1, 1, 1)
 
     events['entry_signal'] = df0.index
     events['take_profit'] = df0['take_profit']
     events['stop_loss'] = df0['stop_loss']
     events['vertical_barrier']=df0['vertical_barrier']
-    events['exit_signal'] = df0.dropna(how='all').min(axis=1)
 
+    events['exit_signal'] = df0.dropna(how='all').min(axis=1)
     return events
 
 
@@ -112,11 +117,12 @@ def apply_profit_taking_and_stop_losses(close,events):
   take_profits=events['threshold']
   stop_losses=-events['threshold']
 
-  for start,end in events['vertical_barrier'].fillna(close.index[-1]).iteritems():
+  # Close has a different index fuck this shit
+  for start,end in events['vertical_barrier'].iteritems():
       df0=close[start:end] # path prices
       df0=(df0/close[start]-1)*events.at[start,'side'] # path returns
-      out.loc[start,'stop_loss']=df0[df0<stop_losses[start]].index.min() # earliest stop loss.
-      out.loc[start,'take_profit']=df0[df0>take_profits[start]].index.min() # earliest profit taking.
+      out.loc[start,'stop_loss']=df0[df0<stop_losses[start]].index.min() # earliest stop loss
+      out.loc[start,'take_profit']=df0[df0>take_profits[start]].index.min() # earliest profit taking
 
   return out
 

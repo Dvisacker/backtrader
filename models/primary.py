@@ -86,11 +86,13 @@ def primary_model_1(main_pair, raw_features, options={}):
   signals_up = pd.Series(1, index=up1.index)
   signals_down = pd.Series(-1, index=down1.index)
   signals = pd.concat([signals_up, signals_down]).sort_index()
-  stop_thresholds = close.ewm(30).std()
+  # stop_thresholds = close.ewm(30).std()
+  stop_thresholds = pd.Series(0.0001, index=close.index)
 
   events = add_barriers_on_buy_sell_signals(close, signals, stop_thresholds)
   events = add_labels(events, close)
 
+  print(events)
 
   X2 = X
   y2 = events['label']
@@ -105,17 +107,18 @@ def primary_model_1(main_pair, raw_features, options={}):
   fpr, tpr, _ = metrics.roc_curve(y2_test, y2_pred_probabilities)
 
   print(metrics.classification_report(y2_test, y2_pred, target_names=['no_trade', 'trade']))
+  print(pd.crosstab(y2_test, y2_pred, rownames=['Actual labels'], colnames=['Predicted labels']))
 
-  plt.figure(1)
-  plt.plot([0,1], [0,1], 'k--')
-  plt.plot(fpr, tpr, label='RF')
-  plt.xlabel('False positive rate')
-  plt.ylabel('True positive rate')
-  plt.title('ROC curve')
-  plt.legend(loc='best')
-  plt.show()
+  pdb.set_trace()
 
-  pd.crosstab(y2_test, y2_pred, rownames=['Actual labels'], colnames=['Predicted labels'])
+  # plt.figure(1)
+  # plt.plot([0,1], [0,1], 'k--')
+  # plt.plot(fpr, tpr, label='RF')
+  # plt.xlabel('False positive rate')
+  # plt.ylabel('True positive rate')
+  # plt.title('ROC curve')
+  # plt.legend(loc='best')
+  # plt.show()
 
 
 primary_models = {
