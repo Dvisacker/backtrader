@@ -14,36 +14,6 @@ from sklearn import metrics
 
 from yellowbrick.regressor import ResidualsPlot, PredictionError
 
-def get_daily_volatility(prices,days=100):
-  # daily vol, reindexed to prices
-  df0=prices.index.searchsorted(prices.index-pd.Timedelta(days=1))
-  df0=df0[df0>0]
-  # df0=pd.Series(prices.index[df0–1], index=prices.index[prices.shape[0]-df0.shape[0]:])
-  # df0=prices.loc[df0.index]/prices.loc[df0.values].values-1 # daily returns
-  # df0=df0.ewm(span=days).std()
-  return df0
-
-def applyPtSlOnT1(close,events,ptSl,molecule):
-  # apply stop loss/profit taking, if it takes place before t1 (end of event)
-  events_=events.loc[molecule]
-  out=events_[['t1']].copy(deep=True)
-  if ptSl[0]>0:
-    pt=ptSl[0]*events_['trgt']
-  else:
-    pt=pd.Series(index=events.index) # NaNs
-  if ptSl[1]>0:
-    sl=-ptSl[1]*events_['trgt']
-  else:
-    sl=pd.Series(index=events.index) # NaNs
-
-  for loc,t1 in events_['t1'].fillna(close.index[-1]).iteritems():
-    df0=close[loc:t1] # path prices
-    df0=(df0/close[loc]-1)*events_.at[loc,'side'] # path returns
-    out.loc[loc,'sl']=df0[df0<sl[loc]].index.min() # earliest stop loss.
-    out.loc[loc,'pt']=df0[df0>pt[loc]].index.min() # earliest profit taking.
-  return out
-
-
 def regression_model_1(main_pair, raw_features, options={}):
   """
   This model correlates returns with lagged returns (checks

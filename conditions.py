@@ -1,6 +1,20 @@
 import numpy as np
 import talib
 
+
+def get_crossovers(x, y):
+  # col is price column
+  crit1 = x.shift(1) < y.shift(1)
+  crit2 = x > y
+  return (crit1) & (crit2)
+
+def get_crossunders(x, y):
+  # col is price column
+  crit1 = x.shift(1) > y.shift(1)
+  crit2 = x < y
+  return (crit1) & (crit2)
+
+
 def crossover_value(x,y):
   return(x[-1] > y and x[-2] < y)
 

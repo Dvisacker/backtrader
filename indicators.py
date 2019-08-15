@@ -9,6 +9,28 @@ from scipy.stats import (
   spearmanr
 )
 
+
+def bollinger_bands(price, window=None, width=None, num_sd=None):
+  """
+  Returns average, upper band, and lower band
+  """
+  av = price.rolling(window).mean()
+  sd = price.rolling(window).std(ddof=0)
+  if width:
+      upper_band = av * (1 + width)
+      lower_band = av * (1 - width)
+
+  if num_sd:
+      upper_band = av + (sd * num_sd)
+      lower_band = av - (sd * num_sd)
+
+  return pd.DataFrame({
+      'price': price,
+      'average': av,
+      'upper': upper_band,
+      'lower': lower_band
+  })
+
 def zscore(series):
     return (series - series.mean()) / np.std(series)
 
