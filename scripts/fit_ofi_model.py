@@ -58,7 +58,7 @@ def fit_next_returns_to_ofi(df, lag=1):
     df.dropna(inplace=True)
     df.plot(kind='scatter', grid=True,
                             x='ofi', y='next_midprice_returns',
-                            title = 'Returns/OFI Correlation',
+                            title='Returns/OFI Correlation',
                             alpha=0.5, figsize=(12,10))
 
 

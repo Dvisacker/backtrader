@@ -4,6 +4,7 @@ import pdb
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.tree import export_graphviz
 from sklearn import metrics
@@ -95,8 +96,46 @@ def random_forest_model_2(main_pair, raw_features, options={}):
   prediction_error_plot(regressor, X_train, y_train, X_test, y_test)
 
 
+def random_forest_model_3(main_pair, raw_features, options={}):
+  '''
+  This model includes
+  * Lagged returns
+  * Lagged volumes
+  * Additional lagged returns of other pairs
+  * Additional lagged volumes of other volumes
+  '''
+  lags = options.get("lags", 4)
+
+  X = pd.DataFrame()
+  for i in range(1, lags + 1):
+    X['returns_lag_{}'.format(i)] = main_pair.returns.shift(i)
+    X['volume_lag_{}'.format(i)] = main_pair.volume.shift(i)
+    X['vol_weighted_return_lag_{}'.format(i)] = main_pair.returns.shift(i) * main_pair.volume.shift(i)
+
+  if raw_features:
+    for pair, bars in raw_features.items():
+      for i in range(1, lags + 1):
+        X['{}_returns_lag_{}'.format(pair, i)] = bars.returns.shift(i)
+        X['{}_volume_lag_{}'.format(pair, i)] = bars.volume.shift(i)
+        X['{}_vol_weighted_return_lag_{}'.format(pair, i)] = bars.returns.shift(i) * bars.volume.shift(i)
 
 
+  X.dropna(inplace=True)
+  y = main_pair['returns']
+  X, y = X.align(y, join='inner', axis=0)
+
+  params_grid = {
+    'n_estimators': [100, 200, 300, 500],
+    'min_weight_fraction_leaf': [0.01, 0.05, 0.1, 0.2],
+    'max_features': [3, 5, 10, 20, 30, 40]
+  }
+
+  regressor = RandomForestRegressor()
+  search = GridSearchCV(regressor, params_grid, iid=False, cv=5)
+  search.fit(X, y)
+  print('Best parameter (CV score={})'.format(search.best_score_))
+  print(search.best_params_)
+  print(search.best_estimator_)
 
 def residuals_plot(model, X_train, y_train, X_test, y_test):
   visualizer = ResidualsPlot(model)
@@ -135,7 +174,8 @@ def export(X, y, regressor):
 
 random_forest_models = {
   'random_forest_model_1': random_forest_model_1,
-  'random_forest_model_2': random_forest_model_2
+  'random_forest_model_2': random_forest_model_2,
+  'random_forest_model_3': random_forest_model_3
 }
 
 

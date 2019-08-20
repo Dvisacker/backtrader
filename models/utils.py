@@ -1,6 +1,10 @@
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import pdb
+
+from sklearn.model_selection import cross_val_score
+from sklearn import metrics
 
 
 def add_barriers_on_timestamps(close, volatility):
@@ -185,9 +189,57 @@ def compute_classification_params(close):
   }
 
 
+def plot_roc_curve(fpr, tpr):
+  plt.figure()
+  plt.plot([0,1],[1,0])
+  plt.plot(fpr, tpr, label='RF')
+  plt.xlabel('False positive rate')
+  plt.ylabel('True positive rate')
+  plt.title('ROC Curve')
+  plt.legend(loc='best')
+  plt.show()
+
+def print_regressor_metrics(model, X,y, kfold=None, scores=None):
+  print('Scores:', scores)
+  print('Mean score: ', np.mean(scores))
+
+  scoring = 'neg_mean_absolute_error'
+  results = cross_val_score(model, X, y, cv=kfold, scoring=scoring)
+  print("MAE: {} ({})".format(results.mean(), results.std()))
+
+  scoring = 'neg_mean_squared_error'
+  results = cross_val_score(model, X, y, cv=kfold, scoring=scoring)
+  print("MSE: {} ({})".format(results.mean(), results.std()))
+
+  scoring = 'r2'
+  results = cross_val_score(model, X, y, cv=kfold, scoring=scoring)
+  print("R^2: {} ({})".format(results.mean(), results.std()))
 
 
+def print_reports(y_test, y_test_pred):
+  print(metrics.classification_report(y_test, y_test_pred, target_names=['short', 'no_trade', 'long']))
+  print(pd.crosstab(y_test, y_test_pred, rownames=['Actual labels'], colnames=['Predicted labels']))
 
+def residuals_plot(model, X_train, y_train, X_test, y_test):
+  visualizer = ResidualsPlot(model)
+  visualizer.fit(X_train, y_train)
+  visualizer.score(X_test, y_test)
+  visualizer.poof()
+
+def prediction_error_plot(model, X_train, y_train, X_test, y_test):
+  visualizer = PredictionError(model)
+  visualizer.fit(X_train, y_train)
+  visualizer.score(X_test, y_test)
+  visualizer.poof()
+
+def create_confusion_matrix(y_pred, y_true):
+  df = pd.DataFrame({'pred': y_pred, 'true': y_true })
+  df['pred_sign'] = np.sign(df['pred'])
+  df['true_sign'] = np.sign(df['true'])
+  df['correct'] = df['pred_sign'] == df['true_sign']
+
+  df2 = df[df['true_sign'] != 0]
+  print(df2['correct'].value_counts())
 
 
 
