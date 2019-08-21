@@ -38,53 +38,13 @@ from statsmodels.graphics.tsaplots import plot_pacf
 
 warnings.filterwarnings("ignore")
 
-# # evaluate an ARIMA model for a given order (p,d,q) and return RMSE
-# def evaluate_arima_model(X, arima_order):
-# 	# prepare training dataset
-# 	train_size = int(len(X) * 0.50)
-# 	train, test = X[0:train_size], X[train_size:]
-# 	history = [x for x in train]
-# 	# make predictions
-# 	predictions = list()
-# 	for t in range(len(test)):
-# 		model = ARIMA(history, order=arima_order)
-# 		model_fit = model.fit(disp=0)
-# 		yhat = model_fit.forecast()[0]
-# 		predictions.append(yhat)
-# 		history.append(test[t])
-# 	# calculate out of sample error
-# 	mse = mean_squared_error(test, predictions)
-# 	rmse = math.sqrt(mse)
-# 	return rmse
-
-# # evaluate combinations of p, d and q values for an ARIMA model
-# def evaluate_models(dataset, p_values, d_values, q_values):
-# 	dataset = dataset.astype('float32')
-# 	best_score, best_cfg = float("inf"), None
-# 	for p in p_values:
-# 		for d in d_values:
-# 			for q in q_values:
-# 				order = (p,d,q)
-# 				try:
-# 					mse = evaluate_arima_model(dataset, order)
-# 					if mse < best_score:
-# 						best_score, best_cfg = mse, order
-# 					print('ARIMA%s MSE=%.3f' % (order,mse))
-# 				except:
-# 					continue
-# 	print('Best ARIMA%s MSE=%.3f' % (best_cfg, best_score))
-
-
 def get_best_arima_model(TS,maxp=2,maxd=2,maxq=2):
     best_aic = np.inf
     best_order = None
     best_model = None
     for i in range(maxp):
-        print('i am here')
         for d in range(maxd):
-            print('i am there')
             for j in range(maxq):
-                print('i am now')
                 try:
                     tmp_mdl = sm.tsa.ARIMA(TS, order=(i,d,j)).fit(
                         method='mle', trend='nc'
@@ -97,8 +57,6 @@ def get_best_arima_model(TS,maxp=2,maxd=2,maxq=2):
                 except: continue
     print('aic: {:6.2f} | order: {}'.format(best_aic, best_order))
     return best_aic, best_order, best_model
-
-
 
 
 configuration_file = "./scripts/default_settings.json"
@@ -169,11 +127,3 @@ model = arima_model[2]
 tsplot(model.resid, lags=30, title='Best ARIMA model (Residuals). Order={}'.format(order))
 tsplot(model.resid**2, lags=30, title='Best ARIMA model (Residuals Squared). Order={}'.format(order))
 plt.show()
-
-# evaluate_models(returns, p_values, d_values, q_values)
-
-
-
-# rmse = evaluate_arima_model(returns, (0, 0, 0))
-# print(rmse)
-# plt.show()

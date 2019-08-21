@@ -25,8 +25,6 @@ def compare_regressors(main_pair, raw_features, options={}):
 
   For case 1) we use add_barriers_on_timestamps and
   """
-
-
   close = main_pair.close
 
   lags = options.get("lags", 4)

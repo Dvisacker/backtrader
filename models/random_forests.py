@@ -10,6 +10,8 @@ from sklearn.tree import export_graphviz
 from sklearn import metrics
 
 from yellowbrick.regressor import ResidualsPlot, PredictionError
+from plot.models import residuals_plot, prediction_error_plot
+from metrics.models import compute_scores
 
 def random_forest_model_1(main_pair, raw_features, options={}):
   lags = options.get("lags", 4)
@@ -37,15 +39,10 @@ def random_forest_model_1(main_pair, raw_features, options={}):
   regressor.fit(X_train, y_train)
 
   y_train_pred = regressor.predict(X_train)
-  y_pred = regressor.predict(X_test)
+  y_test_pred = regressor.predict(X_test)
 
-  print('Mean Absolute Error:', metrics.mean_absolute_error(y_test, y_pred))
-  print('Mean Squared Error:', metrics.mean_squared_error(y_test, y_pred))
-  print('Root Mean Squared Error:', np.sqrt(metrics.mean_squared_error(y_test, y_pred)))
-  print('In sample R2:', np.sqrt(metrics.r2_score(y_train, y_train_pred)))
-  print('Out of sample R2:', np.sqrt(metrics.r2_score(y_test, y_pred)))
-
-  create_confusion_matrix(y_pred, y_test)
+  compute_scores(y_test, y_test_pred, y_train, y_train_pred)
+  create_confusion_matrix(y_test_pred, y_test)
   residuals_plot(regressor, X_train, y_train, X_test, y_test)
   prediction_error_plot(regressor, X_train, y_train, X_test, y_test)
 
@@ -83,15 +80,10 @@ def random_forest_model_2(main_pair, raw_features, options={}):
   regressor.fit(X_train, y_train)
 
   y_train_pred = regressor.predict(X_train)
-  y_pred = regressor.predict(X_test)
+  y_test_pred = regressor.predict(X_test)
 
-  print('Mean Absolute Error:', metrics.mean_absolute_error(y_test, y_pred))
-  print('Mean Squared Error:', metrics.mean_squared_error(y_test, y_pred))
-  print('Root Mean Squared Error:', np.sqrt(metrics.mean_squared_error(y_test, y_pred)))
-  print('In sample R2:', np.sqrt(metrics.r2_score(y_train, y_train_pred)))
-  print('Out of sample R2:', np.sqrt(metrics.r2_score(y_test, y_pred)))
-
-  create_confusion_matrix(y_pred, y_test)
+  compute_scores(y_test, y_test_pred, y_train, y_train_pred)
+  create_confusion_matrix(y_test_pred, y_test)
   residuals_plot(regressor, X_train, y_train, X_test, y_test)
   prediction_error_plot(regressor, X_train, y_train, X_test, y_test)
 
@@ -137,18 +129,6 @@ def random_forest_model_3(main_pair, raw_features, options={}):
   print(search.best_params_)
   print(search.best_estimator_)
 
-def residuals_plot(model, X_train, y_train, X_test, y_test):
-  visualizer = ResidualsPlot(model)
-  visualizer.fit(X_train, y_train)
-  visualizer.score(X_test, y_test)
-  visualizer.poof()
-
-def prediction_error_plot(model, X_train, y_train, X_test, y_test):
-  visualizer = PredictionError(model)
-  visualizer.fit(X_train, y_train)
-  visualizer.score(X_test, y_test)
-  visualizer.poof()
-
 def create_confusion_matrix(y_pred, y_true):
   df = pd.DataFrame({'pred': y_pred, 'true': y_true })
   df['pred_sign'] = np.sign(df['pred'])
@@ -158,18 +138,6 @@ def create_confusion_matrix(y_pred, y_true):
   df2 = df[df['true_sign'] != 0]
   print(df2['correct'].value_counts())
 
-
-def export(X, y, regressor):
-  estimator = regressor.estimators_[5]
-  export_graphviz(estimator, out_file='tree.dot',
-                feature_names = X.columns,
-                class_names = 'returns',
-                rounded = True, proportion = False,
-                precision = 2, filled = True)
-
-  # Convert to png using system command (requires Graphviz)
-  from subprocess import call
-  call(['dot', '-Tpng', 'tree.dot', '-o', 'tree.png', '-Gdpi=600'])
 
 
 random_forest_models = {

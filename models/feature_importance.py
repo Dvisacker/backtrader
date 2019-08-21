@@ -6,6 +6,7 @@ from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
+from sklearn.ensemble import RandomForestRegressor
 
 def pca_model_1(main_pair, raw_features, options={}):
   """
@@ -96,8 +97,41 @@ def pca_model_2(main_pair, raw_features, options={}):
     plt.show()
 
 
+def rf_feature_importance_model_1(main_pair, raw_features, options={}):
+  lags = options.get("lags", 4)
+  X = pd.DataFrame()
 
-pca_models = {
+  for i in range(1, lags + 1):
+    X['returns_lag_{}'.format(i)] = main_pair.returns.shift(i)
+    X['volume_lag_{}'.format(i)] = main_pair.volume.shift(i)
+    X['vol_weighted_return_lag_{}'.format(i)] = main_pair.returns.shift(i) * main_pair.volume.shift(i)
+
+  if raw_features:
+    for pair, bars in raw_features.items():
+      for i in range(1, lags + 1):
+        X['{}_returns_lag_{}'.format(pair, i)] = bars.returns.shift(i)
+        X['{}_volume_lag_{}'.format(pair, i)] = bars.volume.shift(i)
+        X['{}_vol_weighted_return_lag_{}'.format(pair, i)] = bars.returns.shift(i) * bars.volume.shift(i)
+
+  X.dropna(inplace=True)
+  y = main_pair['returns']
+  X, y = X.align(y, join='inner', axis=0)
+
+  model = RandomForestRegressor()
+  model.fit(X,y)
+  print(model.feature_importances_)
+
+  names = X.columns.values
+  ticks = [i for i in range(len(names))]
+  plt.figure(figsize = (20, 15))
+  plt.bar(ticks, model.feature_importances_)
+  plt.xticks(ticks, names, rotation='vertical')
+  plt.subplots_adjust(bottom=0.25)
+  plt.show()
+
+
+feature_importance_models = {
   'pca_model_1': pca_model_1,
-  'pca_model_2': pca_model_2
+  'pca_model_2': pca_model_2,
+  'rf_feature_importance_model': rf_feature_importance_model_1
 }
