@@ -8,6 +8,9 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestRegressor
 
+from features.default import add_default_and_diff_lags
+from plot.models import feature_importance_plot
+
 def pca_model_1(main_pair, raw_features, options={}):
   """
   Primary model based on a bollinger bands strategy
@@ -106,6 +109,7 @@ def rf_feature_importance_model_1(main_pair, raw_features, options={}):
     X['volume_lag_{}'.format(i)] = main_pair.volume.shift(i)
     X['vol_weighted_return_lag_{}'.format(i)] = main_pair.returns.shift(i) * main_pair.volume.shift(i)
 
+
   if raw_features:
     for pair, bars in raw_features.items():
       for i in range(1, lags + 1):
@@ -129,9 +133,20 @@ def rf_feature_importance_model_1(main_pair, raw_features, options={}):
   plt.subplots_adjust(bottom=0.25)
   plt.show()
 
+def rf_feature_importance_model_2(target_data, feature_data, options={}):
+  X = pd.DataFrame()
+  y = target_data.returns
+
+  X, y = add_default_and_diff_lags(X, y, feature_data, options)
+  model = RandomForestRegressor()
+  model.fit(X, y)
+
+  feature_importance_plot(X, model)
+
 
 feature_importance_models = {
   'pca_model_1': pca_model_1,
   'pca_model_2': pca_model_2,
-  'rf_feature_importance_model': rf_feature_importance_model_1
+  'rf_feature_importance_model_1': rf_feature_importance_model_1,
+  'rf_feature_importance_model_2': rf_feature_importance_model_2
 }

@@ -68,11 +68,10 @@ included_correlation_symbols = args.include_correlations
 bar_type = BAR_TYPES[args.bar_type]
 create_model = all_models[args.model]
 
-bars = open_convert_csv_files(exchange_name, symbol, timeframe, start, end, bar_type=bar_type)
-
+target_data = open_convert_csv_files(exchange_name, symbol, timeframe, start, end, bar_type=bar_type)
 feature_data = {}
 if included_correlation_symbols:
   for s in included_correlation_symbols:
     feature_data[s] = open_convert_csv_files(exchange_name, s, timeframe, start, end, bar_type=bar_type)
 
-create_model(bars, feature_data)
+create_model(target_data, feature_data)

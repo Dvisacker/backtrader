@@ -33,6 +33,21 @@ def confusion_matrix(y_pred, y_test):
   print(df2['correct'].value_counts())
 
 
+def compute_adfuller(series):
+  adfuller_result = adfuller(series)
+  print('Returns ADF statistic: {}'.format(adfuller_result[0]))
+  print('P-value: {}'.format(adfuller_result[1]))
+
+def print_ts_model_metrics(aic, order, model):
+  print('Best order: ', order)
+  print('AIC: ', aic)
+  print(model.summary())
+
+def print_classification_report(y, y_pred):
+  print(metrics.classification_report(y, y_pred, target_names=['short', 'no_trade', 'long']))
+
+def print_crosstab(y, y_pred):
+  print(pd.crosstab(y, y_pred, rownames=['Actual Labels'], colnames=['Predicted Labels']))
 
 # def compute_scores(forecast, actual):
 #     mape = np.mean(np.abs(forecast - actual)/np.abs(actual))  # MAPE

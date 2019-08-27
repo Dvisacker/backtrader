@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import statsmodels.api as sm
 import pandas as pd
 import numpy as np
+
 import pdb
 
 from sklearn.preprocessing import StandardScaler
@@ -17,38 +18,34 @@ from yellowbrick.regressor import ResidualsPlot, PredictionError
 from indicators import bollinger_bands
 from conditions import get_crossovers, get_crossunders
 
-from .utils import add_barriers_on_buy_sell_signals, add_labels
+from features.default import add_default_lags, add_lagged_returns
+from features.balance import balance
+from features.targets import classify_target
+from features.labeling import add_barriers_on_buy_sell_signals
+from features.labeling import add_labels
+from features.signals import compute_signals
 
 from metrics.models import compute_kfold_scores
+from metrics.models import print_classification_report
+from metrics.models import print_crosstab
 from plot.models import plot_roc_curve
 
-def primary_model_1(main_pair, raw_features, options={}):
+def primary_model_1(target_data, feature_data, options={}):
   """
-  Primary model based on a bollinger bands strategy
+  Primary model: Linear Regression
+  Secondary model: Random Forest Classifier
+
   Different methodologies:
 
   1) timestamps => events => algo (decide trades + side) => (trades + side) => algo (decide sizes)
   2) timestamps => filter (decide potential trades) => events => algo (decide trades + side) => (trades + side) => algo (decides sizes)
   3) timestamps => algo (decide potential trades + side) => events + sides => algo (decide trades) => algo (decides sizes)
-
-  For case 1) we use add_barriers_on_timestamps and
   """
-  close = main_pair.close
-
-  lags = options.get("lags", 4)
   X = pd.DataFrame()
-  for i in range(1, lags + 1):
-    X['returns_lag_{}'.format(i)] = main_pair.returns.shift(i)
+  y = target_data.returns
+  close = target_data.close
 
-  if raw_features:
-    for pair, bars in raw_features.items():
-      for i in range(1, lags + 1):
-        X['{}_returns_lag_{}'.format(pair, i)] = bars.returns.shift(i)
-
-
-  X.dropna(inplace=True)
-  y = main_pair['returns']
-  X, y = X.align(y, join='inner', axis=0)
+  X, y = add_default_lags(X, y, feature_data)
   X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
   sc = StandardScaler()
@@ -58,21 +55,10 @@ def primary_model_1(main_pair, raw_features, options={}):
   regression = LinearRegression()
   regression.fit(X_train, y_train)
 
-  y_train_pred = regression.predict(X_train)
-  y_test_pred = regression.predict(X_test)
-
-  # print(metrics.classification_report(y_test, y_test_pred, target_names=['no_trade', 'trade']))
-  # print(pd.crosstab(y_test, y_test_pred, rownames=['Actual labels'], colnames=['Predicted labels']))
-
   y_pred = regression.predict(X)
   y_pred = pd.Series(y_pred, index=y.index)
-  up1 = y[y_pred > y_pred.mean() + 1 * y_pred.std()]
-  down1 = y[y_pred < y_pred.mean() - 1 * y_pred.std()]
-  signals_up = pd.Series(1, index=up1.index)
-  signals_down = pd.Series(-1, index=down1.index)
-  signals = pd.concat([signals_up, signals_down]).sort_index()
-  # stop_thresholds = close.ewm(30).std()
-  stop_thresholds = pd.Series(2*close.std(), index=close.index)
+  signals = compute_signals(y, y_pred)
+  stop_thresholds = pd.Series(close.std(), index=close.index)
 
   events = add_barriers_on_buy_sell_signals(close, signals, stop_thresholds)
   events = add_labels(events, close)
@@ -82,7 +68,7 @@ def primary_model_1(main_pair, raw_features, options={}):
   X2, y2 = X2.align(y2, join='inner', axis=0)
   X2_train, X2_test, y2_train, y2_test = train_test_split(X2, y2, test_size=0.2, random_state=0)
 
-  model2 = RandomForestClassifier(max_depth=2, n_estimators=10000, criterion='entropy')
+  model2 = RandomForestClassifier(max_depth=2, n_estimators=500, criterion='entropy')
   model2.fit(X2_train, y2_train)
 
   y2_pred_probabilities = model2.predict_proba(X2_test)[:, 1]
@@ -90,49 +76,61 @@ def primary_model_1(main_pair, raw_features, options={}):
   fpr, tpr, _ = metrics.roc_curve(y2_test, y2_pred_probabilities)
   plot_roc_curve(fpr, tpr)
 
-def primary_model_2(main_pair, raw_features, options={}):
+
+def primary_model_2(target_data, feature_data, options={}):
   """
-  Primary model based on a bollinger bands strategy
-  Different methodologies:
-
-  1) timestamps => events => algo (decide trades + side) => (trades + side) => algo (decide sizes)
-  2) timestamps => filter (decide potential trades) => events => algo (decide trades + side) => (trades + side) => algo (decides sizes)
-  3) timestamps => algo (decide potential trades + side) => events + sides => algo (decide trades) => algo (decides sizes)
-
-  For case 1) we use add_barriers_on_timestamps and
+  Primary model: Random Forest Regressor
+  Secondary model: Random Forest Classifier
   """
-  close = main_pair.close
-  returns = main_pair.returns
-
-  lags = options.get("lags", 4)
   X = pd.DataFrame()
-  for i in range(1, lags + 1):
-    X['returns_lag_{}'.format(i)] = main_pair.returns.shift(i)
+  y = target_data.returns
+  close = target_data.close
 
-  if raw_features:
-    for pair, bars in raw_features.items():
-      for i in range(1, lags + 1):
-        X['{}_returns_lag_{}'.format(pair, i)] = bars.returns.shift(i)
-
-
-  X.dropna(inplace=True)
-  # We classify the return vector
-  y = pd.Series(0, index=X.index)
-  print(returns.std())
-  y[returns > 1.5 * returns.std()] = 1
-  y[returns < - 1.5 * returns.std()] = -1
-  X, y = X.align(y, join='inner', axis=0)
+  X, y = add_default_lags(X, y, feature_data)
   X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
-  sample_n = y_train.value_counts().idxmin()
-  X_train_1 = X_train[y_train == 1].sample(sample_n)
-  y_train_1 = y_train[y_train == 1].sample(sample_n)
-  X_train_0 = X_train[y_train == 0].sample(sample_n)
-  y_train_0 = y_train[y_train == 0].sample(sample_n)
-  X_train_n1 = X_train[y_train == -1].sample(sample_n)
-  y_train_n1 = y_train[y_train == -1].sample(sample_n)
-  X_bal = pd.concat([X_train_1, X_train_0, X_train_n1])
-  y_bal = pd.concat([y_train_1, y_train_0, y_train_n1])
+  sc = StandardScaler()
+  X_train = sc.fit_transform(X_train)
+  X_test = sc.transform(X_test)
+
+  model = RandomForestRegressor(n_estimators=500, random_state=0, min_weight_fraction_leaf=0.05, max_features=1)
+  model.fit(X_train, y_train)
+
+  y_pred = model.predict(X)
+  y_pred = pd.Series(y_pred, index=y.index)
+  signals = compute_signals(y, y_pred)
+  stop_thresholds = pd.Series(close.std(), index=close.index)
+
+  events = add_barriers_on_buy_sell_signals(close, signals, stop_thresholds)
+  events = add_labels(events, close)
+
+  X2 = X
+  y2 = events['label']
+  X2, y2 = X2.align(y2, join='inner', axis=0)
+  X2_train, X2_test, y2_train, y2_test = train_test_split(X2, y2, test_size=0.2, random_state=0)
+
+  model2 = RandomForestClassifier(max_depth=2, n_estimators=500, criterion='entropy')
+  model2.fit(X2_train, y2_train)
+
+  y2_pred_probabilities = model2.predict_proba(X2_test)[:, 1]
+  y2_pred = model2.predict(X2_test)
+  fpr, tpr, _ = metrics.roc_curve(y2_test, y2_pred_probabilities)
+  plot_roc_curve(fpr, tpr)
+
+
+def primary_model_3(target_data, feature_data, options={}):
+  """
+  Primary model: Logistic Regression
+  Secondary model: Random Forest Classifier
+  """
+  X = pd.DataFrame()
+  y = target_data.returns
+  X, y = add_lagged_returns(X, y, feature_data)
+  X, y = classify_target(X, y, options={"nb_std": 1.5})
+  close = target_data.close
+
+  X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+  X_bal, y_bal = balance(X_train, X_test, y_train, y_test)
 
   regression = LogisticRegression()
   regression.fit(X_bal, y_bal)
@@ -140,18 +138,12 @@ def primary_model_2(main_pair, raw_features, options={}):
   y_train_pred = regression.predict(X_train)
   y_test_pred = regression.predict(X_test)
 
-  print(metrics.classification_report(y_test, y_test_pred, target_names=['short', 'no_trade', 'long']))
-  print(pd.crosstab(y_test, y_test_pred, rownames=['Actual labels'], colnames=['Predicted labels']))
+  print_classification_report(y_test, y_test_pred)
+  print_crosstab(y, y_test_pred)
 
   y_pred = regression.predict(X)
-  y_pred = pd.Series(y_pred, index=y.index)
-
-  signals_up = y_pred[y_pred == 1]
-  signals_down = y_pred[y_pred == -1]
-  signals = pd.concat([signals_up, signals_down]).sort_index()
-  # stop_thresholds = close.ewm(30).std()
+  signals = compute_signals(y, y_pred, classified=True)
   stop_thresholds = pd.Series(2*close.std(), index=close.index)
-
   events = add_barriers_on_buy_sell_signals(close, signals, stop_thresholds)
   events = add_labels(events, close)
 
@@ -167,105 +159,106 @@ def primary_model_2(main_pair, raw_features, options={}):
   y2_pred = model2.predict(X2_test)
   fpr, tpr, _ = metrics.roc_curve(y2_test, y2_pred_probabilities)
 
-  # print(metrics.classification_report(y_test, y_test_pred, target_names=['short', 'no_trade', 'long']))
-  # print(pd.crosstab(y_test, y_test_pred, rownames=['Actual labels'], colnames=['Predicted labels']))
   plot_roc_curve(fpr, tpr)
 
 
-def primary_model_3(main_pair, raw_features, options={}):
+def primary_model_4(target_data, feature_data, options={}):
   """
-  Primary model based on a bollinger bands strategy
-  Different methodologies:
+  Primary model: Linear Regression
+  Secondary model: Random Forest Classifier
 
-  1) timestamps => events => algo (decide trades + side) => (trades + side) => algo (decide sizes)
-  2) timestamps => filter (decide potential trades) => events => algo (decide trades + side) => (trades + side) => algo (decides sizes)
-  3) timestamps => algo (decide potential trades + side) => events + sides => algo (decide trades) => algo (decides sizes)
-
-  For case 1) we use add_barriers_on_timestamps and
+  Features: Fractionally Differentiated returns
   """
-  close = main_pair.close
-
-  lags = options.get("lags", 4)
   X = pd.DataFrame()
-  for i in range(1, lags + 1):
-    X['returns_lag_{}'.format(i)] = main_pair.returns.shift(i)
+  y = target_data.returns
+  close = target_data.close
 
-  if raw_features:
-    for pair, bars in raw_features.items():
-      for i in range(1, lags + 1):
-        X['{}_returns_lag_{}'.format(pair, i)] = bars.returns.shift(i)
+  X, y = add_default_lags(X, y, feature_data)
+  X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
+  sc = StandardScaler()
+  X_train = sc.fit_transform(X_train)
+  X_test = sc.transform(X_test)
 
-  X.dropna(inplace=True)
-  y = main_pair['returns']
-  X, y = X.align(y, join='inner', axis=0)
-  num_folds = 10
-  seed = 7
-  kfold = KFold(n_splits=num_folds, random_state=seed)
+  regression = LinearRegression()
+  regression.fit(X_train, y_train)
 
-  model = LinearRegression()
-  scores = []
+  y_pred = regression.predict(X)
+  y_pred = pd.Series(y_pred, index=y.index)
+  signals = compute_signals(y, y_pred)
+  stop_thresholds = pd.Series(close.std(), index=close.index)
 
-  for train_index, test_index in kfold.split(X):
-    X_train, X_test, y_train, y_test = X.iloc[train_index], X.iloc[test_index], y.iloc[train_index], y.iloc[test_index]
-    sc = StandardScaler()
-    X_train = sc.fit_transform(X_train)
-    X_test = sc.transform(X_test)
-    model.fit(X_train, y_train)
-    scores.append(model.score(X_test, y_test))
+  events = add_barriers_on_buy_sell_signals(close, signals, stop_thresholds)
+  events = add_labels(events, close)
 
+  X2 = X
+  y2 = events['label']
+  X2, y2 = X2.align(y2, join='inner', axis=0)
+  X2_train, X2_test, y2_train, y2_test = train_test_split(X2, y2, test_size=0.2, random_state=0)
 
-  print('Scores:', scores)
-  print('Mean score: ', np.mean(scores))
-  compute_kfold(model, X, y, kfold)
+  model2 = RandomForestClassifier(max_depth=2, n_estimators=500, criterion='entropy')
+  model2.fit(X2_train, y2_train)
 
-def primary_model_4(main_pair, raw_features, options={}):
-  """
-  Primary model based on a bollinger bands strategy
-  Different methodologies:
-
-  1) timestamps => events => algo (decide trades + side) => (trades + side) => algo (decide sizes)
-  2) timestamps => filter (decide potential trades) => events => algo (decide trades + side) => (trades + side) => algo (decides sizes)
-  3) timestamps => algo (decide potential trades + side) => events + sides => algo (decide trades) => algo (decides sizes)
-
-  For case 1) we use add_barriers_on_timestamps and
-  """
-  close = main_pair.close
-
-  lags = options.get("lags", 4)
-  X = pd.DataFrame()
-  for i in range(1, lags + 1):
-    X['returns_lag_{}'.format(i)] = main_pair.returns.shift(i)
-
-  if raw_features:
-    for pair, bars in raw_features.items():
-      for i in range(1, lags + 1):
-        X['{}_returns_lag_{}'.format(pair, i)] = bars.returns.shift(i)
+  y2_pred_probabilities = model2.predict_proba(X2_test)[:, 1]
+  y2_pred = model2.predict(X2_test)
+  fpr, tpr, _ = metrics.roc_curve(y2_test, y2_pred_probabilities)
+  plot_roc_curve(fpr, tpr)
 
 
-  X.dropna(inplace=True)
-  y = main_pair['returns']
-  X, y = X.align(y, join='inner', axis=0)
-  num_folds = 10
-  seed = 7
-  kfold = KFold(n_splits=num_folds, random_state=seed)
 
-  model = RandomForestRegressor(n_estimators=500, random_state=0, min_weight_fraction_leaf=0.05, max_features=3)
-  scores = []
+# def primary_model_4(target_data, feature_data, options={}):
+#   """
+#   Primary Model: Linear Regression
+#   """
+#   X = pd.DataFrame()
+#   y = target_data.returns
+#   X, y = add_lagged_returns(X, y, feature_data)
+#   close = target_data.close
 
-  for train_index, test_index in kfold.split(X):
-    X_train, X_test, y_train, y_test = X.iloc[train_index], X.iloc[test_index], y.iloc[train_index], y.iloc[test_index]
-    sc = StandardScaler()
-    X_train = sc.fit_transform(X_train)
-    X_test = sc.transform(X_test)
+#   num_folds = 10
+#   seed = 7
+#   kfold = KFold(n_splits=num_folds, random_state=seed)
+#   model = LinearRegression()
+#   scores = []
 
-    model.fit(X_train, y_train)
-    scores.append(model.score(X_test, y_test))
+#   for train_index, test_index in kfold.split(X):
+#     X_train, X_test, y_train, y_test = X.iloc[train_index], X.iloc[test_index], y.iloc[train_index], y.iloc[test_index]
+#     sc = StandardScaler()
+#     X_train = sc.fit_transform(X_train)
+#     X_test = sc.transform(X_test)
+#     model.fit(X_train, y_train)
+#     scores.append(model.score(X_test, y_test))
 
+#   print('Scores:', scores)
+#   print('Mean score: ', np.mean(scores))
+#   compute_kfold(model, X, y, kfold)
 
-  print('Scores:', scores)
-  print('Mean score: ', np.mean(scores))
-  compute_kfold_scores(model, X, y, kfold)
+# def primary_model_5(target_data, feature_data, options={}):
+#   """
+#   Primary Model: Random Forest Regressor
+#   """
+#   X = pd.DataFrame()
+#   y = target_data.returns
+#   X, y = add_lagged_returns(X, y, feature_data)
+#   num_folds = 10
+#   seed = 7
+#   kfold = KFold(n_splits=num_folds, random_state=seed)
+
+#   model = RandomForestRegressor(n_estimators=500, random_state=0, min_weight_fraction_leaf=0.05, max_features=3)
+#   scores = []
+
+#   for train_index, test_index in kfold.split(X):
+#     X_train, X_test, y_train, y_test = X.iloc[train_index], X.iloc[test_index], y.iloc[train_index], y.iloc[test_index]
+#     sc = StandardScaler()
+#     X_train = sc.fit_transform(X_train)
+#     X_test = sc.transform(X_test)
+
+#     model.fit(X_train, y_train)
+#     scores.append(model.score(X_test, y_test))
+
+#   print('Scores:', scores)
+#   print('Mean score: ', np.mean(scores))
+#   compute_kfold_scores(model, X, y, kfold)
 
 
 primary_models = {

@@ -32,10 +32,11 @@ from models import all_models
 from statsmodels.tsa.stattools import adfuller, coint
 from statsmodels.graphics.gofplots import qqplot
 
+from features.frac import get_optimal_differentiation, compute_fractional_differentiation
+
 warnings.filterwarnings("ignore")
-
-
 configuration_file = "./scripts/default_settings.json"
+
 with open(configuration_file) as f:
   default_settings = json.load(f)
 
@@ -45,17 +46,6 @@ parser.add_argument('-bt', '--bar_type',
                     type=str,
                     choices=list(BAR_TYPES.keys()))
 
-parser.add_argument('-m', '--model',
-                     type=str,
-                     required=True,
-                     choices=list(all_models.keys()))
-
-parser.add_argument('-ic', '--include_correlations',
-                    type=str,
-                    nargs='+',
-                    required=False,
-                    help='Correlations you want to include')
-
 
 args = parser.parse_args()
 
@@ -64,15 +54,22 @@ start = args.from_date or default_settings['default_start_date']
 end = args.to_date or default_settings['default_end_date']
 timeframe = args.timeframe or default_settings['default_timeframe']
 symbol = args.symbols[0]
-included_correlation_symbols = args.include_correlations
 bar_type = BAR_TYPES[args.bar_type]
-create_model = all_models[args.model]
 
 bars = open_convert_csv_files(exchange_name, symbol, timeframe, start, end, bar_type=bar_type)
+prices = bars.close
+returns = bars.returns
+opt_d = get_optimal_differentiation(prices)
+diff = compute_fractional_differentiation(prices, d=opt_d)
 
-feature_data = {}
-if included_correlation_symbols:
-  for s in included_correlation_symbols:
-    feature_data[s] = open_convert_csv_files(exchange_name, s, timeframe, start, end, bar_type=bar_type)
+print(opt_d)
 
-create_model(bars, feature_data)
+plt.style.use('ggplot')
+plt.rcParams['axes.grid'] = True
+plt.rcParams['lines.linewidth'] = 1.5
+
+fig, ax = plt.subplots(3, figsize=(20,15), sharex=True)
+prices.plot(ax=ax[0], color='blue', lw=1., label='{} Prices'.format(symbol))
+returns.plot(ax=ax[1], color='red', lw=1., label='{} Returns'.format(symbol))
+diff.plot(ax=ax[2], color='orange', lw=1., label='{} Prices Optimal Differentiation'.format(symbol))
+plt.show()

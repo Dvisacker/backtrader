@@ -6,6 +6,7 @@ from .regressors import regressor_comparisons
 from .feature_importance import feature_importance_models
 from .knn import knn
 from .ts import ts_models
+from .walkforward import walkforward_models
 
 all_models = {
   **regressions_models,
@@ -15,5 +16,6 @@ all_models = {
   **primary_models,
   **regressor_comparisons,
   **feature_importance_models,
-  **ts_models
+  **ts_models,
+  **walkforward_models
 }

@@ -140,10 +140,6 @@ print(garch_model.summary())
 
 tsplot(garch_model.resid, lags=30, title='Best GARCH Model (Residuals). Order={}'.format(order))
 tsplot(garch_model.resid**2, lags=30, title='Best GARCH Model (Residuals Squared). Order={}'.format(order))
-
-
-
-
 plt.show()
 
 
