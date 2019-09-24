@@ -34,7 +34,6 @@ def pca_model_1(main_pair, raw_features, options={}):
       for i in range(1, lags + 1):
         X['{}_returns_lag_{}'.format(pair, i)] = bars.returns.shift(i)
 
-
   X.dropna(inplace=True)
   y = main_pair['returns']
   X, y = X.align(y, join='inner', axis=0)

@@ -4,9 +4,11 @@ import logging
 import requests
 import pandas as pd
 
+
 from datetime import timedelta, datetime
 from tqdm import tqdm
 from utils import from_exchange_to_standard_notation, from_standard_to_exchange_notation
+from urllib.request import urlopen
 
 def hello():
   return "hi"
@@ -137,11 +139,11 @@ def scrape_bitmex_quotes(from_datestring, to_datestring):
       file_name = date_string + '.csv.gz'
       file_url = url + file_name
       print('Downloading {}'.format(file_name))
-      response = requests.get(file_url, stream=True)
-
-      with open(file_name, "wb") as handle:
-        for data in response.iter_content():
-          handle.write(data)
+      resp = urlopen(file_url)
+      html_response = resp.read()
+      f = open(file_name, "wb")
+      f.write(html_response)
+      f.close()
 
       print('Downloaded trade data for {}'.format(current_datetime))
       current_datetime += timedelta(days=1)
@@ -176,7 +178,6 @@ def scrape_trades(exchange, symbol, from_datestring, to_datestring):
     from_date = datetime.strptime(from_datestring, '%d/%m/%Y')
     to_date = datetime.strptime(to_datestring, '%d/%m/%Y')
     current_time = from_date
-
 
     limit = 500
     trades = []

@@ -14,6 +14,60 @@ def compute_scores(y_test, y_test_pred, y_train=None, y_train_pred=None):
       print('In sample R2:', np.sqrt(metrics.r2_score(y_train, y_train_pred)))
     print('Out of sample R2:', np.sqrt(metrics.r2_score(y_test, y_test_pred)))
 
+
+def compute_custom_scores(y_pred, y_true):
+    y_pred.name = 'y_pred'
+    y_true.name = 'y_true'
+    df = pd.concat([y_pred, y_true],axis=1)
+    df['sign_pred'] = df.y_pred.apply(np.sign)
+    df['sign_true'] = df.y_true.apply(np.sign)
+    df['is_correct'] = 0
+    df.loc[df.sign_pred * df.sign_true > 0, 'is_correct'] = 1
+    df['is_incorrect'] = 0
+    df.loc[df.sign_pred * df.sign_true < 0, 'is_incorrect'] = 1
+    df['is_predicted'] = df.is_correct + df.is_incorrect
+    df['result'] = df.sign_pred * df.y_true
+
+    scorecard = pd.Series()
+    scorecard.loc['accuracy'] = df.is_correct.sum() * 1. / (df.is_predicted.sum() * 1.) * 100
+    scorecard.loc['edge'] = df.result.mean()
+    scorecard.loc['noise'] = df.y_pred.diff().abs().mean()
+
+    # derived metrics
+    scorecard.loc['y_true_chg'] = df.y_true.abs().mean()
+    scorecard.loc['y_pred_chg'] = df.y_pred.abs().mean()
+    scorecard.loc['prediction_calibration'] = scorecard.loc['y_pred_chg']/scorecard.loc['y_true_chg']
+    scorecard.loc['capture_ratio'] = scorecard.loc['edge']/scorecard.loc['y_true_chg']*100
+
+    scorecard.loc['edge_long'] = df[df.sign_pred == 1].result.mean() - df.y_true.mean()
+    scorecard.loc['edge_short'] = df[df.sign_pred == -1].result.mean() - df.y_true.mean()
+    scorecard.loc['edge_win'] = df[df.is_correct == 1].result.mean() - df.y_true.mean()
+    scorecard.loc['edge_lose'] = df[df.is_incorrect == 1].result.mean() - df.y_true.mean()
+
+    return scorecard
+
+
+def compute_custom_scores_over_time(y_pred, y_true):
+    y_pred.name = 'y_pred'
+    y_true.name = 'y_true'
+    df = pd.concat([y_pred, y_true], axis=1).dropna().reset_index().set_index('time')
+
+    scores = df.resample('D').apply(lambda df: compute_custom_scores(df[y_pred.name], df[y_true.name]))
+    return scores
+
+# def compute_scorecard_by_day(df):
+#   df['year'] = df.index.get_level_values('day').year
+#   return df.groupby('day').apply(calc_scorecard).T
+
+# def compute_scorecard_by_hour(df):
+#   df['hour'] = df.index.get_level_values('hour').hour
+#   return df.groupby('hour').apply(calc_scorecard).T
+
+
+
+
+
+
 def compute_kfold_scores(model, X, y, kfold):
     results = cross_val_score(model, X, y, cv=kfold, scoring='neg_mean_absolute_error')
     print("MAE: {} ({})".format(results.mean(), results.std()))
